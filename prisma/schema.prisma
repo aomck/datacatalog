@@ -77,6 +77,26 @@ model Category {
   @@map("categories")
 }
 
+// DatasetType - ประเภทข้อมูล
+model DatasetType {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @map("short_name")
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  datasets Dataset[]
+
+  @@map("dataset_types")
+}
+
 // Dataset - ชุดข้อมูล
 model Dataset {
   id           String  @id @default(uuid())
@@ -84,6 +104,7 @@ model Dataset {
   detail       String? @db.Text
   unitOwnerId  String  @map("unit_owner_id")
   categoryId   String  @map("category_id")
+  typeId       String  @map("type_id")
   metadata     String? // File path to metadata document
 
   // Audit fields
@@ -97,6 +118,7 @@ model Dataset {
   // Relations
   unitOwner        UnitOwner        @relation(fields: [unitOwnerId], references: [id])
   category         Category         @relation(fields: [categoryId], references: [id])
+  type             DatasetType      @relation(fields: [typeId], references: [id])
   services         Service[]
   requestDatasets  RequestDataset[]
 

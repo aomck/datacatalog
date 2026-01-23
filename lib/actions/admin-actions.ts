@@ -102,6 +102,41 @@ export async function deleteUnitOwner(id: string, userId: string) {
 }
 
 // ============================================================================
+// DatasetType Actions
+// ============================================================================
+
+export async function getDatasetTypes(page = 1, limit = 30) {
+  try {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      prisma.datasetType.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.datasetType.count({
+        where: { deletedAt: null },
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error: any) {
+    console.error('Get dataset types error:', error);
+    throw error;
+  }
+}
+
+// ============================================================================
 // Category Actions
 // ============================================================================
 
@@ -212,6 +247,7 @@ export async function getDatasets(page = 1, limit = 30): Promise<PaginatedResult
         include: {
           unitOwner: true,
           category: true,
+          type: true,
           services: {
             where: { deletedAt: null },
           },
@@ -241,7 +277,7 @@ export async function getDatasets(page = 1, limit = 30): Promise<PaginatedResult
 }
 
 export async function createDataset(
-  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; metadata?: string },
+  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; metadata?: string },
   userId: string
 ) {
   try {
@@ -251,6 +287,7 @@ export async function createDataset(
         detail: data.detail,
         unitOwnerId: data.unitOwnerId,
         categoryId: data.categoryId,
+        typeId: data.typeId,
         metadata: data.metadata,
         createdBy: userId,
       },
@@ -270,7 +307,7 @@ export async function createDataset(
 
 export async function updateDataset(
   id: string,
-  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; metadata?: string },
+  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; metadata?: string },
   userId: string
 ) {
   try {
@@ -283,6 +320,7 @@ export async function updateDataset(
       include: {
         unitOwner: true,
         category: true,
+        type: true,
       },
     });
 

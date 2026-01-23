@@ -9,7 +9,8 @@ import {
   getDatasets, createDataset, updateDataset, deleteDataset,
   getServices, createService, updateService, deleteService,
   getUnitOwners, createUnitOwner, updateUnitOwner, deleteUnitOwner,
-  getCategories, createCategory, updateCategory, deleteCategory
+  getCategories, createCategory, updateCategory, deleteCategory,
+  getDatasetTypes
 } from '@/lib/actions/admin-actions';
 import { uploadUnitOwnerIcon, uploadCategoryIcon, uploadServiceHowTo, uploadDatasetMetadata, deleteUploadedFile } from '@/lib/actions/file-actions';
 import { DataTable } from '@/components/ui/DataTable';
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [datasetTypes, setDatasetTypes] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
@@ -51,14 +53,16 @@ export default function AdminPage() {
 
   const loadAllData = async () => {
     try {
-      const [datasetsResult, unitOwnersResult, categoriesResult] = await Promise.all([
+      const [datasetsResult, unitOwnersResult, categoriesResult, typesResult] = await Promise.all([
         getDatasets(1, 100),
         getUnitOwners(1, 100),
         getCategories(1, 100),
+        getDatasetTypes(1, 100),
       ]);
       setDatasets(datasetsResult.data);
       setUnitOwners(unitOwnersResult.data);
       setCategories(categoriesResult.data);
+      setDatasetTypes(typesResult.data);
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -104,6 +108,10 @@ export default function AdminPage() {
         filtered = filtered.filter((d) => d.categoryId === filters.categoryId);
       }
 
+      if (filters.typeId) {
+        filtered = filtered.filter((d) => d.typeId === filters.typeId);
+      }
+
       setFilteredDatasets(filtered);
     }
   };
@@ -116,7 +124,7 @@ export default function AdminPage() {
     } else {
       // Reset form for new item
       if (activeTab === 0) {
-        setFormData({ name: '', detail: '', unitOwnerId: '', categoryId: '' });
+        setFormData({ name: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '' });
       } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
       } else if (activeTab === 2) {
@@ -203,6 +211,7 @@ export default function AdminPage() {
           detail: formData.detail,
           unitOwnerId: formData.unitOwnerId,
           categoryId: formData.categoryId,
+          typeId: formData.typeId,
           metadata,
         };
         console.log('Saving Dataset:', data);
@@ -315,9 +324,11 @@ export default function AdminPage() {
           onFilterChange={handleFilterChange}
           unitOwners={unitOwners}
           categories={categories}
+          datasetTypes={datasetTypes}
           showUnitOwner
           showCategory
           showSearch
+          showDatasetType
         />
       )}
 
@@ -586,6 +597,18 @@ export default function AdminPage() {
               >
                 {categories.map((c) => (
                   <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                select
+                label="ประเภทข้อมูล"
+                value={formData.typeId || ''}
+                onChange={(e) => setFormData({ ...formData, typeId: e.target.value })}
+                sx={{ mb: 2 }}
+              >
+                {datasetTypes.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
                 ))}
               </TextField>
               <FileUpload

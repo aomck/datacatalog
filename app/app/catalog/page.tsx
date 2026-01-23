@@ -5,6 +5,7 @@ import { Tab, Tabs, Card, CardContent, IconButton, Tooltip, Chip } from '@mui/ma
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { getCatalogUnitOwners, getCatalogCategories, getDatasetsByUnitOwner, getDatasetsByCategory, getUserRequestStatus } from '@/lib/actions/catalog-actions';
+import { getDatasetTypes } from '@/lib/actions/admin-actions';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
@@ -17,6 +18,7 @@ export default function CatalogPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [datasetTypes, setDatasetTypes] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
@@ -27,6 +29,7 @@ export default function CatalogPage() {
 
   useEffect(() => {
     loadData();
+    loadDatasetTypes();
     if (user) {
       loadRequestStatus();
     }
@@ -44,6 +47,15 @@ export default function CatalogPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDatasetTypes = async () => {
+    try {
+      const result = await getDatasetTypes(1, 100);
+      setDatasetTypes(result.data);
+    } catch (error) {
+      console.error('Error loading dataset types:', error);
     }
   };
 
@@ -78,6 +90,10 @@ export default function CatalogPage() {
         const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
         return nameMatch || serviceMatch;
       });
+    }
+
+    if (filters.typeId) {
+      filtered = filtered.filter((d) => d.typeId === filters.typeId);
     }
 
     setFilteredDatasets(filtered);
@@ -191,6 +207,8 @@ export default function CatalogPage() {
 
           <FilterPanel
             onFilterChange={handleFilterChange}
+            datasetTypes={datasetTypes}
+            showDatasetType
             showUnitOwner={false}
             showCategory={false}
             showSearch

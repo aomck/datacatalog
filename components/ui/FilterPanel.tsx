@@ -8,10 +8,12 @@ export interface FilterPanelProps {
   onFilterChange: (filters: FilterState) => void;
   unitOwners?: Array<{ id: string; name: string }>;
   categories?: Array<{ id: string; name: string }>;
+  datasetTypes?: Array<{ id: string; name: string }>;
   showUnitOwner?: boolean;
   showCategory?: boolean;
   showSearch?: boolean;
   showStatus?: boolean;
+  showDatasetType?: boolean;
   placeholder?: string;
 }
 
@@ -20,16 +22,19 @@ export interface FilterState {
   unitOwnerId: string;
   categoryId: string;
   status: string;
+  typeId: string;
 }
 
 export function FilterPanel({
   onFilterChange,
   unitOwners = [],
   categories = [],
+  datasetTypes = [],
   showUnitOwner = true,
   showCategory = true,
   showSearch = true,
   showStatus = false,
+  showDatasetType = false,
   placeholder = 'ค้นหาชื่อชุดข้อมูล, บริการ...',
 }: FilterPanelProps) {
   const [filters, setFilters] = useState<FilterState>({
@@ -37,11 +42,13 @@ export function FilterPanel({
     unitOwnerId: '',
     categoryId: '',
     status: '',
+    typeId: '',
   });
 
   useEffect(() => {
     onFilterChange(filters);
-  }, [filters, onFilterChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const handleReset = () => {
     setFilters({
@@ -49,10 +56,11 @@ export function FilterPanel({
       unitOwnerId: '',
       categoryId: '',
       status: '',
+      typeId: '',
     });
   };
 
-  const hasActiveFilters = filters.search || filters.unitOwnerId || filters.categoryId || filters.status;
+  const hasActiveFilters = filters.search || filters.unitOwnerId || filters.categoryId || filters.status || filters.typeId;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
@@ -120,6 +128,24 @@ export function FilterPanel({
             <MenuItem value="PENDING">กำลังพิจารณา</MenuItem>
             <MenuItem value="APPROVED">อนุมัติแล้ว</MenuItem>
             <MenuItem value="DISAPPROVED">ไม่อนุมัติ</MenuItem>
+          </TextField>
+        )}
+
+        {showDatasetType && (
+          <TextField
+            select
+            size="small"
+            label="ประเภทข้อมูล"
+            value={filters.typeId}
+            onChange={(e) => setFilters({ ...filters, typeId: e.target.value })}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {datasetTypes.map((t) => (
+              <MenuItem key={t.id} value={t.id}>
+                {t.name}
+              </MenuItem>
+            ))}
           </TextField>
         )}
 

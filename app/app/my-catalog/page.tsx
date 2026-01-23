@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { getUserApprovedItems } from '@/lib/actions/catalog-actions';
 import { getUserToken, regenerateUserToken } from '@/lib/actions/user-actions';
-import { getUnitOwners, getCategories } from '@/lib/actions/admin-actions';
+import { getUnitOwners, getCategories, getDatasetTypes } from '@/lib/actions/admin-actions';
 import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
@@ -21,6 +21,7 @@ export default function MyCatalogPage() {
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [unitOwners, setUnitOwners] = useState<Array<{ id: string; name: string }>>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [datasetTypes, setDatasetTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [userToken, setUserToken] = useState<string>('');
@@ -57,12 +58,14 @@ export default function MyCatalogPage() {
 
   const loadFilterOptions = async () => {
     try {
-      const [unitOwnersResult, categoriesResult] = await Promise.all([
+      const [unitOwnersResult, categoriesResult, typesResult] = await Promise.all([
         getUnitOwners(1, 100),
         getCategories(1, 100),
+        getDatasetTypes(1, 100),
       ]);
       setUnitOwners(unitOwnersResult.data);
       setCategories(categoriesResult.data);
+      setDatasetTypes(typesResult.data);
     } catch (error) {
       console.error('Error loading filter options:', error);
     }
@@ -73,6 +76,7 @@ export default function MyCatalogPage() {
     unitOwnerId: '',
     categoryId: '',
     status: '',
+    typeId: '',
   });
 
   const handleFilterChange = (newFilters: FilterState) => {
@@ -113,6 +117,10 @@ export default function MyCatalogPage() {
 
     if (filters.status) {
       filtered = filtered.filter((item) => item.requestDataset?.approveStatus === filters.status);
+    }
+
+    if (filters.typeId) {
+      filtered = filtered.filter((item) => item.dataset?.typeId === filters.typeId);
     }
 
     setFilteredData(filtered);
@@ -212,10 +220,12 @@ export default function MyCatalogPage() {
         onFilterChange={handleFilterChange}
         unitOwners={unitOwners}
         categories={categories}
+        datasetTypes={datasetTypes}
         showUnitOwner
         showCategory
         showSearch
         showStatus
+        showDatasetType
       />
 
       {displayData.length === 0 ? (

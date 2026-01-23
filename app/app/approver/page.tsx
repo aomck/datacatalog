@@ -5,7 +5,7 @@ import { Checkbox, Button, Tooltip, IconButton } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { getAllRequests, getRequestStatistics } from '@/lib/actions/request-actions';
-import { getUnitOwners, getCategories } from '@/lib/actions/admin-actions';
+import { getUnitOwners, getCategories, getDatasetTypes } from '@/lib/actions/admin-actions';
 import { getUserToken } from '@/lib/actions/user-actions';
 import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -24,6 +24,7 @@ export default function ApproverPage() {
   const [filteredRequests, setFilteredRequests] = useState<Request[]>([]);
   const [unitOwners, setUnitOwners] = useState<Array<{ id: string; name: string }>>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [datasetTypes, setDatasetTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [stats, setStats] = useState({ requested: 0, pending: 0, approved: 0, disapproved: 0 });
   const [selected, setSelected] = useState<{ datasetIds: string[]; serviceIds: string[] }>({ datasetIds: [], serviceIds: [] });
   const [approvalOpen, setApprovalOpen] = useState(false);
@@ -40,6 +41,7 @@ export default function ApproverPage() {
     unitOwnerId: '',
     categoryId: '',
     status: '',
+    typeId: '',
   });
 
   useEffect(() => {
@@ -88,6 +90,12 @@ export default function ApproverPage() {
       });
     }
 
+    if (filters.typeId) {
+      filtered = filtered.filter((r) =>
+        r.requestDatasets?.some((rd: any) => rd.dataset?.typeId === filters.typeId)
+      );
+    }
+
     setFilteredRequests(filtered);
   }, [requests, filters]);
 
@@ -107,12 +115,14 @@ export default function ApproverPage() {
 
   const loadFilterOptions = async () => {
     try {
-      const [unitOwnersResult, categoriesResult] = await Promise.all([
+      const [unitOwnersResult, categoriesResult, typesResult] = await Promise.all([
         getUnitOwners(1, 100),
         getCategories(1, 100),
+        getDatasetTypes(1, 100),
       ]);
       setUnitOwners(unitOwnersResult.data);
       setCategories(categoriesResult.data);
+      setDatasetTypes(typesResult.data);
     } catch (error) {
       console.error('Error loading filter options:', error);
     }
@@ -249,10 +259,12 @@ export default function ApproverPage() {
         onFilterChange={handleFilterChange}
         unitOwners={unitOwners}
         categories={categories}
+        datasetTypes={datasetTypes}
         showUnitOwner
         showCategory
         showSearch
         showStatus
+        showDatasetType
         placeholder="ค้นหาชื่อผู้ขอ, ชุดข้อมูล, บริการ..."
       />
 
