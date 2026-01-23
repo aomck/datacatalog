@@ -1,0 +1,121 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { usePermission } from '@/components/providers/permission-provider';
+import { getUserRequests } from '@/lib/actions/request-actions';
+import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { RefreshButton } from '@/components/ui/RefreshButton';
+import type { Request } from '@/types';
+
+export default function MyCatalogPage() {
+  const { user } = usePermission();
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadRequests();
+    }
+  }, [user]);
+
+  const loadRequests = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const result = await getUserRequests(user.id, 1, 100);
+      setRequests(result.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">ชุดข้อมูลของฉัน</h1>
+          <p className="text-gray-600">ดูรายการคำขอใช้ข้อมูลและสถานะการอนุมัติ</p>
+        </div>
+        <RefreshButton onRefresh={loadRequests} />
+      </div>
+
+      {requests.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="text-center py-12">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">ยังไม่มีคำขอ</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              คุณยังไม่ได้ส่งคำขอใช้ข้อมูล
+            </p>
+          </div>
+        </div>
+      ) : (
+        <CollapsibleTable
+          columns={[
+            { id: 'createdAt', label: 'วันที่ส่งคำขอ' },
+            { id: 'name', label: 'ชื่อผู้ขอ' },
+            { id: 'unit', label: 'หน่วยงาน' },
+            { id: 'itemCount', label: 'จำนวนรายการ', align: 'center' },
+          ]}
+          rows={requests.map((r) => ({
+            ...r,
+            createdAt: new Date(r.createdAt).toLocaleDateString('th-TH'),
+            itemCount: (r.requestDatasets?.length || 0) + (r.requestServices?.length || 0),
+          }))}
+          getRowId={(row) => row.id}
+          renderCollapse={(row) => (
+            <div className="space-y-4">
+              {row.requestDatasets && row.requestDatasets.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">ชุดข้อมูล</h4>
+                  <div className="space-y-2">
+                    {row.requestDatasets.map((rd: any) => (
+                      <div key={rd.id} className="flex justify-between items-center bg-blue-50 p-3 rounded">
+                        <div>
+                          <p className="font-medium">{rd.dataset?.name}</p>
+                          {rd.comment && <p className="text-xs text-gray-600 mt-1">หมายเหตุ: {rd.comment}</p>}
+                        </div>
+                        <StatusBadge status={rd.approveStatus} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {row.requestServices && row.requestServices.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">บริการข้อมูล</h4>
+                  <div className="space-y-2">
+                    {row.requestServices.map((rs: any) => (
+                      <div key={rs.id} className="flex justify-between items-center bg-green-50 p-3 rounded">
+                        <div>
+                          <p className="font-medium">{rs.service?.name}</p>
+                          <p className="text-xs text-gray-600">{rs.service?.method} {rs.service?.api}</p>
+                          {rs.comment && <p className="text-xs text-gray-600 mt-1">หมายเหตุ: {rs.comment}</p>}
+                        </div>
+                        <StatusBadge status={rs.approveStatus} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        />
+      )}
+    </div>
+  );
+}

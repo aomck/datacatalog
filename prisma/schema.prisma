@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================================
+// User & Authentication
+// ============================================================================
+
+// User model for storing local user data linked to core-api
+model User {
+  id    String @id // User ID from core-api
+  token String @unique @default(uuid()) // API token for service authentication
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  requestsCreated       Request[]        @relation("RequestCreatedBy")
+  requestDatasetsApproved RequestDataset[] @relation("DatasetApprovedBy")
+  requestServicesApproved RequestService[] @relation("ServiceApprovedBy")
+
+  @@map("users")
+}
+
+// ============================================================================
+// Master Data
+// ============================================================================
+
+// Unit Owner - หน่วยงานเจ้าของข้อมูล
+model UnitOwner {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @map("short_name")
+  icon      String? // File path to icon
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  datasets Dataset[]
+
+  @@map("unit_owners")
+}
+
+// Category - หมวดหมู่ข้อมูล
+model Category {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @map("short_name")
+  icon      String? // File path to icon
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  datasets Dataset[]
+
+  @@map("categories")
+}
+
+// Dataset - ชุดข้อมูล
+model Dataset {
+  id           String  @id @default(uuid())
+  name         String
+  detail       String? @db.Text
+  unitOwnerId  String  @map("unit_owner_id")
+  categoryId   String  @map("category_id")
+  metadata     String? // File path to metadata document
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  unitOwner        UnitOwner        @relation(fields: [unitOwnerId], references: [id])
+  category         Category         @relation(fields: [categoryId], references: [id])
+  services         Service[]
+  requestDatasets  RequestDataset[]
+
+  @@map("datasets")
+}
+
+// Service - บริการข้อมูล
+model Service {
+  id        String @id @default(uuid())
+  name      String
+  detail    String? @db.Text
+  datasetId String  @map("dataset_id")
+  method    String // GET, POST, PATCH
+  api       String
+  howTo     String? @map("how_to") // File path to how-to document
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  dataset         Dataset          @relation(fields: [datasetId], references: [id])
+  requestServices RequestService[]
+
+  @@map("services")
+}
+
+// ============================================================================
+// Request Management
+// ============================================================================
+
+// Request - คำร้องขอใช้ข้อมูล
+model Request {
+  id          String  @id @default(uuid())
+  requestedBy String  @map("requested_by") // User ID
+  name        String  // ชื่อผู้ส่งคำร้องขอ
+  unit        String  // หน่วยงานผู้ส่งคำร้องขอ
+  email       String  // เมล์ผู้ส่งคำร้องขอ
+  tel         String  // เบอร์โทรผู้ส่งคำร้องขอ
+  detail      String? @db.Text // รายละเอียดคำร้องขอเพิ่มเติม
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  requester       User             @relation("RequestCreatedBy", fields: [requestedBy], references: [id])
+  requestDatasets RequestDataset[]
+  requestServices RequestService[]
+  requestFiles    RequestFile[]
+
+  @@map("requests")
+}
+
+// RequestDataset - คำร้องขอ dataset
+model RequestDataset {
+  id            String   @id @default(uuid())
+  requestId     String   @map("request_id")
+  datasetId     String   @map("dataset_id")
+  approveStatus String   @default("REQUESTED") @map("approve_status") // REQUESTED | PENDING | APPROVED | DISAPPROVED
+  approvedBy    String?  @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  comment       String?  @db.Text
+
+  // Relations
+  request  Request  @relation(fields: [requestId], references: [id])
+  dataset  Dataset  @relation(fields: [datasetId], references: [id])
+  approver User?    @relation("DatasetApprovedBy", fields: [approvedBy], references: [id])
+
+  @@map("request_datasets")
+}
+
+// RequestService - คำร้องขอ service
+model RequestService {
+  id            String   @id @default(uuid())
+  requestId     String   @map("request_id")
+  serviceId     String   @map("service_id")
+  approveStatus String   @default("REQUESTED") @map("approve_status") // REQUESTED | PENDING | APPROVED | DISAPPROVED
+  approvedBy    String?  @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  comment       String?  @db.Text
+
+  // Relations
+  request  Request  @relation(fields: [requestId], references: [id])
+  service  Service  @relation(fields: [serviceId], references: [id])
+  approver User?    @relation("ServiceApprovedBy", fields: [approvedBy], references: [id])
+
+  @@map("request_services")
+}
+
+// RequestFile - ไฟล์แนบคำร้องขอ
+model RequestFile {
+  id        String @id @default(uuid())
+  requestId String @map("request_id")
+  filePath  String @map("file_path")
+  fileName  String @map("file_name")
+  fileType  String @map("file_type")
+  fileSize  Int    @map("file_size")
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  request Request @relation(fields: [requestId], references: [id])
+
+  @@map("request_files")
+}

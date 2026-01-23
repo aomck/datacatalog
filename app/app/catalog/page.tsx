@@ -1,0 +1,276 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Tab, Tabs, Card, CardContent, IconButton, Tooltip, Chip } from '@mui/material';
+import { Icon } from '@iconify/react';
+import { usePermission } from '@/components/providers/permission-provider';
+import { getCatalogUnitOwners, getCatalogCategories, getDatasetsByUnitOwner, getDatasetsByCategory, getUserRequestStatus } from '@/lib/actions/catalog-actions';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
+import { RefreshButton } from '@/components/ui/RefreshButton';
+import { CartModal } from '@/components/modals/CartModal';
+import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
+import type { UnitOwner, Category, Dataset, CartItem } from '@/types';
+
+export default function CatalogPage() {
+  const { user } = usePermission();
+  const [activeTab, setActiveTab] = useState(0);
+  const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
+  const [cart, setCart, clearCart] = useLocalStorage<CartItem[]>('datacatalog_cart', []);
+  const [requestStatus, setRequestStatus] = useState<any>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadData();
+    if (user) {
+      loadRequestStatus();
+    }
+  }, [activeTab, user]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === 0) {
+        const result = await getCatalogUnitOwners(1, 100);
+        setUnitOwners(result.data);
+      } else {
+        const result = await getCatalogCategories(1, 100);
+        setCategories(result.data);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRequestStatus = async () => {
+    if (user) {
+      const status = await getUserRequestStatus(user.id);
+      setRequestStatus(status);
+    }
+  };
+
+  const loadDatasets = async (id: string) => {
+    setSelectedId(id);
+    setLoading(true);
+    try {
+      const result = activeTab === 0
+        ? await getDatasetsByUnitOwner(id, 1, 100)
+        : await getDatasetsByCategory(id, 1, 100);
+      setDatasets(result.data);
+      setFilteredDatasets(result.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFilterChange = (filters: FilterState) => {
+    let filtered = datasets;
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter((d) => {
+        const nameMatch = d.name.toLowerCase().includes(searchLower);
+        const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
+        return nameMatch || serviceMatch;
+      });
+    }
+
+    setFilteredDatasets(filtered);
+  };
+
+  const addToCart = (item: CartItem) => {
+    if (!cart.find((i) => i.id === item.id && i.type === item.type)) {
+      // If adding a service, ensure the dataset is also in cart
+      if (item.type === 'service' && item.datasetId) {
+        const datasetInCart = cart.find((i) => i.id === item.datasetId && i.type === 'dataset');
+        if (!datasetInCart) {
+          // Find dataset info and add it
+          const dataset = datasets.find((d) => d.id === item.datasetId);
+          if (dataset) {
+            setCart([...cart, { type: 'dataset', id: dataset.id, name: dataset.name }, item]);
+            return;
+          }
+        }
+      }
+      setCart([...cart, item]);
+    }
+  };
+
+  const removeFromCart = (id: string, type: 'dataset' | 'service') => {
+    if (type === 'dataset') {
+      // Remove dataset and all its services
+      setCart(cart.filter((i) => !(i.id === id && i.type === 'dataset') && !(i.datasetId === id && i.type === 'service')));
+    } else {
+      // Remove only the service
+      setCart(cart.filter((i) => !(i.id === id && i.type === type)));
+    }
+  };
+
+  const toggleCart = (item: CartItem) => {
+    const inCart = cart.find((i) => i.id === item.id && i.type === item.type);
+    if (inCart) {
+      removeFromCart(item.id, item.type);
+    } else {
+      addToCart(item);
+    }
+  };
+
+  const getButtonLabel = (id: string, type: 'dataset' | 'service') => {
+    const status = type === 'dataset' ? requestStatus.datasets?.[id] : requestStatus.services?.[id];
+    const inCart = cart.find((i) => i.id === id && i.type === type);
+
+    if (status === 'APPROVED') return 'ขอใช้งานแล้ว';
+    if (status) return 'อยู่ในคำขอแล้ว';
+    if (inCart) return 'ลบออกจากคำขอ';
+    return 'เพิ่มลงคำขอ';
+  };
+
+  const isDisabled = (id: string, type: 'dataset' | 'service') => {
+    const status = type === 'dataset' ? requestStatus.datasets?.[id] : requestStatus.services?.[id];
+    return !!status;
+  };
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">แคตาล็อกข้อมูล</h1>
+          <p className="text-gray-600">ค้นหาและขอใช้งานชุดข้อมูลและบริการข้อมูล</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <RefreshButton onRefresh={loadData} />
+          <Tooltip title="รายการคำร้องขอ">
+            <div className="relative">
+              <IconButton onClick={() => setCartOpen(true)} color="primary">
+                <Icon icon="mdi:cart" className="w-6 h-6" />
+              </IconButton>
+              {cart.length > 0 && (
+                <Chip
+                  label={cart.length}
+                  size="small"
+                  color="error"
+                  sx={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20 }}
+                />
+              )}
+            </div>
+          </Tooltip>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setDatasets([]); }}>
+        <Tab label="หน่วยงาน" />
+        <Tab label="นโยบายด้านความมั่นคง" />
+      </Tabs>
+
+      {!selectedId ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+          {(activeTab === 0 ? unitOwners : categories).map((item) => (
+            <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadDatasets(item.id)}>
+              <CardContent className="text-center">
+                {item.icon ? (
+                  <img src={item.icon} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
+                ) : (
+                  <Icon icon="mdi:folder" className="w-16 h-16 mx-auto mb-3 text-gray-400" />
+                )}
+                <h3 className="font-semibold text-lg">{item.name}</h3>
+                <p className="text-sm text-gray-600">{item.shortName}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6">
+          <button onClick={() => { setSelectedId(null); setDatasets([]); }} className="mb-4 text-blue-600 hover:underline">
+            <Icon icon="mdi:arrow-left" className="inline w-5 h-5" /> กลับ
+          </button>
+
+          <FilterPanel
+            onFilterChange={handleFilterChange}
+            showUnitOwner={false}
+            showCategory={false}
+            showSearch
+          />
+
+          <CollapsibleTable
+            columns={[
+              { id: 'name', label: 'ชื่อชุดข้อมูล' },
+              { id: 'detail', label: 'รายละเอียด' },
+              {
+                id: 'metadata',
+                label: 'Metadata',
+                align: 'center',
+                format: (row: any) => row.metadata ? (
+                  <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                  </IconButton>
+                ) : '-'
+              },
+              { id: 'actions', label: '', align: 'right' },
+            ]}
+            rows={filteredDatasets.map((d) => ({
+              ...d,
+              actions: (
+                <button
+                  onClick={() => toggleCart({ type: 'dataset', id: d.id, name: d.name })}
+                  disabled={isDisabled(d.id, 'dataset')}
+                  className={`px-3 py-1 text-sm rounded ${
+                    cart.find((i) => i.id === d.id && i.type === 'dataset')
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                >
+                  {getButtonLabel(d.id, 'dataset')}
+                </button>
+              ),
+            }))}
+            getRowId={(row) => row.id}
+            renderCollapse={(row) => (
+              <div className="bg-gray-50 p-4 rounded">
+                <h4 className="font-semibold mb-3">บริการข้อมูล</h4>
+                {row.services?.length === 0 ? (
+                  <p className="text-sm text-gray-600">ไม่มีบริการข้อมูล</p>
+                ) : (
+                  <div className="space-y-2">
+                    {row.services?.map((s: any) => (
+                      <div key={s.id} className="flex justify-between items-center bg-white p-3 rounded">
+                        <div>
+                          <p className="font-medium">{s.name}</p>
+                          <p className="text-xs text-gray-600">{s.method} {s.api}</p>
+                        </div>
+                        <button
+                          onClick={() => toggleCart({ type: 'service', id: s.id, name: s.name, datasetId: row.id, datasetName: row.name })}
+                          disabled={isDisabled(s.id, 'service')}
+                          className={`px-3 py-1 text-sm rounded ${
+                            cart.find((i) => i.id === s.id && i.type === 'service')
+                              ? 'bg-red-600 text-white hover:bg-red-700'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                        >
+                          {getButtonLabel(s.id, 'service')}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          />
+        </div>
+      )}
+
+      <CartModal
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cart}
+        onRemoveItem={removeFromCart}
+        onClearCart={clearCart}
+        user={user}
+      />
+    </div>
+  );
+}

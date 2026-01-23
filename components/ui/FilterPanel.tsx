@@ -1,0 +1,136 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { TextField, MenuItem, IconButton, Tooltip } from '@mui/material';
+import { Icon } from '@iconify/react';
+
+export interface FilterPanelProps {
+  onFilterChange: (filters: FilterState) => void;
+  unitOwners?: Array<{ id: string; name: string }>;
+  categories?: Array<{ id: string; name: string }>;
+  showUnitOwner?: boolean;
+  showCategory?: boolean;
+  showSearch?: boolean;
+  showStatus?: boolean;
+  placeholder?: string;
+}
+
+export interface FilterState {
+  search: string;
+  unitOwnerId: string;
+  categoryId: string;
+  status: string;
+}
+
+export function FilterPanel({
+  onFilterChange,
+  unitOwners = [],
+  categories = [],
+  showUnitOwner = true,
+  showCategory = true,
+  showSearch = true,
+  showStatus = false,
+  placeholder = 'ค้นหาชื่อชุดข้อมูล, บริการ...',
+}: FilterPanelProps) {
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    unitOwnerId: '',
+    categoryId: '',
+    status: '',
+  });
+
+  useEffect(() => {
+    onFilterChange(filters);
+  }, [filters, onFilterChange]);
+
+  const handleReset = () => {
+    setFilters({
+      search: '',
+      unitOwnerId: '',
+      categoryId: '',
+      status: '',
+    });
+  };
+
+  const hasActiveFilters = filters.search || filters.unitOwnerId || filters.categoryId || filters.status;
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="flex items-center gap-3">
+        {showSearch && (
+          <TextField
+            size="small"
+            placeholder={placeholder}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            sx={{ flex: 1, minWidth: 200 }}
+            InputProps={{
+              startAdornment: <Icon icon="mdi:magnify" className="w-5 h-5 text-gray-400 mr-2" />,
+            }}
+          />
+        )}
+
+        {showUnitOwner && (
+          <TextField
+            select
+            size="small"
+            label="หน่วยงาน"
+            value={filters.unitOwnerId}
+            onChange={(e) => setFilters({ ...filters, unitOwnerId: e.target.value })}
+            sx={{ minWidth: 200 }}
+          >
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {unitOwners.map((u) => (
+              <MenuItem key={u.id} value={u.id}>
+                {u.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {showCategory && (
+          <TextField
+            select
+            size="small"
+            label="นโยบายความมั่นคง"
+            value={filters.categoryId}
+            onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
+            sx={{ minWidth: 200 }}
+          >
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {categories.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
+
+        {showStatus && (
+          <TextField
+            select
+            size="small"
+            label="สถานะ"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            <MenuItem value="REQUESTED">รอดำเนินการ</MenuItem>
+            <MenuItem value="PENDING">กำลังพิจารณา</MenuItem>
+            <MenuItem value="APPROVED">อนุมัติแล้ว</MenuItem>
+            <MenuItem value="DISAPPROVED">ไม่อนุมัติ</MenuItem>
+          </TextField>
+        )}
+
+        {hasActiveFilters && (
+          <Tooltip title="ล้างตัวกรอง">
+            <IconButton onClick={handleReset} size="small" color="warning">
+              <Icon icon="mdi:filter-off" className="w-5 h-5" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
+    </div>
+  );
+}
