@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { hasAnyAction } from '@/lib/permission-utils';
 import { logoutAction } from '@/lib/auth-actions';
+import { getUnreadNotificationCount } from '@/lib/actions/notification-actions';
 
 interface MenuItem {
   name: string;
@@ -85,11 +86,38 @@ export function Sidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
   const pathname = usePathname();
   const { user, permissions } = usePermission();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   console.log('=== SIDEBAR PERMISSIONS DEBUG ===');
   console.log('Full permissions object:', JSON.stringify(permissions, null, 2));
   console.log('Action permissions:', permissions?.action_permission);
   console.log('datacatalog permissions:', permissions?.action_permission?.datacatalog);
+
+  // Load notification count
+  useEffect(() => {
+    const loadNotificationCount = async () => {
+      if (user?.id) {
+        const count = await getUnreadNotificationCount(user.id);
+        setUnreadCount(count);
+      }
+    };
+
+    loadNotificationCount();
+
+    // Refresh count every 30 seconds
+    const interval = setInterval(loadNotificationCount, 30000);
+
+    // Listen for custom event to refresh count immediately
+    const handleRefreshNotifications = () => {
+      loadNotificationCount();
+    };
+    window.addEventListener('refreshNotifications', handleRefreshNotifications);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refreshNotifications', handleRefreshNotifications);
+    };
+  }, [user?.id, pathname]); // Re-fetch when pathname changes (user navigates)
 
   const handleLogout = async () => {
     await logoutAction();
@@ -192,6 +220,8 @@ export function Sidebar() {
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {visibleMenuItems.map((item) => {
           const isActive = pathname === item.href;
+          const showBadge = item.href === '/app/my-catalog' && unreadCount > 0;
+
           return (
             <Link
               key={item.href}
@@ -202,11 +232,21 @@ export function Sidebar() {
                 isActive
                   ? 'bg-primary-50 text-primary-700 font-semibold'
                   : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              } relative`}
               title={!isExpanded ? item.nameTh : undefined}
             >
               <span className="flex-shrink-0">{item.icon}</span>
               {isExpanded && <span>{item.nameTh}</span>}
+              {showBadge && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1.5">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+              {showBadge && !isExpanded && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1.5">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

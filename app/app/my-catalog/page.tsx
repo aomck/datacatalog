@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { TextField, InputAdornment, IconButton, Tooltip } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { getUserApprovedItems } from '@/lib/actions/catalog-actions';
 import { getUserToken, regenerateUserToken } from '@/lib/actions/user-actions';
 import { getUnitOwners, getCategories, getDatasetTypes } from '@/lib/actions/admin-actions';
+import { getUnreadStatus, markNotificationsAsRead } from '@/lib/actions/notification-actions';
 import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
@@ -35,6 +36,10 @@ export default function MyCatalogPage() {
   const [approvalDetailOpen, setApprovalDetailOpen] = useState(false);
   const [selectedApprovalItem, setSelectedApprovalItem] = useState<any>(null);
   const [selectedApprovalType, setSelectedApprovalType] = useState<'dataset' | 'service'>('dataset');
+  const [unreadStatus, setUnreadStatus] = useState<{
+    datasets: Record<string, boolean>;
+    services: Record<string, boolean>;
+  }>({ datasets: {}, services: {} });
 
   useEffect(() => {
     if (user) {
@@ -43,6 +48,13 @@ export default function MyCatalogPage() {
       loadFilterOptions();
     }
   }, [user]);
+
+  // Load unread status after datasets are loaded
+  useEffect(() => {
+    if (user && (datasets.length > 0 || services.length > 0)) {
+      loadUnreadStatus();
+    }
+  }, [user, datasets.length, services.length]);
 
   const loadData = async () => {
     if (!user) return;
@@ -76,6 +88,61 @@ export default function MyCatalogPage() {
       console.error('Error loading filter options:', error);
     }
   };
+
+  const loadUnreadStatus = async () => {
+    if (!user) return;
+    try {
+      console.log('[MyCatalog] Loading unread status for user:', user.id);
+      const status = await getUnreadStatus(user.id);
+      console.log('[MyCatalog] Received unread status:', status);
+      setUnreadStatus(status);
+    } catch (error) {
+      console.error('Error loading unread status:', error);
+    }
+  };
+
+  const markDatasetAsRead = useCallback(async (datasetId: string) => {
+    if (!user) return;
+    try {
+      console.log('[MyCatalog] Marking dataset as read:', datasetId);
+      await markNotificationsAsRead(user.id, {
+        datasetIds: [datasetId],
+      });
+
+      // Update local unread status
+      setUnreadStatus(prev => ({
+        ...prev,
+        datasets: { ...prev.datasets, [datasetId]: false }
+      }));
+
+      // Notify sidebar to refresh count
+      window.dispatchEvent(new Event('refreshNotifications'));
+
+      console.log('[MyCatalog] Dataset marked as read');
+    } catch (error) {
+      console.error('Error marking dataset as read:', error);
+    }
+  }, [user]);
+
+  const markServiceAsRead = useCallback(async (serviceId: string) => {
+    if (!user) return;
+    try {
+      await markNotificationsAsRead(user.id, {
+        serviceIds: [serviceId],
+      });
+
+      // Update local unread status
+      setUnreadStatus(prev => ({
+        ...prev,
+        services: { ...prev.services, [serviceId]: false }
+      }));
+
+      // Notify sidebar to refresh count
+      window.dispatchEvent(new Event('refreshNotifications'));
+    } catch (error) {
+      console.error('Error marking service as read:', error);
+    }
+  }, [user]);
 
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -157,11 +224,16 @@ export default function MyCatalogPage() {
     setApiTestOpen(true);
   };
 
-  const handleViewApprovalDetail = (item: any, type: 'dataset' | 'service') => {
+  const handleViewApprovalDetail = useCallback((item: any, type: 'dataset' | 'service') => {
     setSelectedApprovalItem(item);
     setSelectedApprovalType(type);
     setApprovalDetailOpen(true);
-  };
+
+    // Mark as read when viewing details
+    if (type === 'service' && item?.id) {
+      markServiceAsRead(item.id);
+    }
+  }, [markServiceAsRead]);
 
   const handleViewRequest = (requestId: string) => {
     // Find all datasets and services for this request
@@ -182,6 +254,50 @@ export default function MyCatalogPage() {
   };
 
   const displayData = filteredData;
+
+  // Memoize the onRowExpand callback to prevent re-creation on every render
+  const handleRowExpand = useCallback(async (row: any) => {
+    if (!user) return;
+
+    try {
+      const datasetId = row.requestDataset?.id;
+      const serviceIds = row.services?.map((s: any) => s.id).filter(Boolean) || [];
+
+      // Mark both dataset and services as read in a single call
+      if (datasetId || serviceIds.length > 0) {
+        await markNotificationsAsRead(user.id, {
+          datasetIds: datasetId ? [datasetId] : undefined,
+          serviceIds: serviceIds.length > 0 ? serviceIds : undefined,
+        });
+
+        // Update local unread status
+        setUnreadStatus(prev => {
+          const newStatus = { ...prev };
+
+          if (datasetId) {
+            newStatus.datasets = { ...prev.datasets, [datasetId]: false };
+          }
+
+          if (serviceIds.length > 0) {
+            const updatedServices = { ...prev.services };
+            serviceIds.forEach((id: string) => {
+              updatedServices[id] = false;
+            });
+            newStatus.services = updatedServices;
+          }
+
+          return newStatus;
+        });
+
+        // Notify sidebar to refresh count
+        window.dispatchEvent(new Event('refreshNotifications'));
+
+        console.log('[MyCatalog] Marked dataset and services as read:', { datasetId, serviceIds });
+      }
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  }, [user]);
 
   return (
     <div>
@@ -297,6 +413,8 @@ export default function MyCatalogPage() {
             ),
           }))}
           getRowId={(row) => row.requestDataset?.id || row.dataset?.id}
+          showUnreadIndicator={(row) => unreadStatus.datasets[row.requestDataset?.id] || false}
+          onRowExpand={handleRowExpand}
           renderCollapse={(row) => (
             <div className="bg-gray-50 p-4 rounded">
               <h4 className="font-semibold mb-3">บริการข้อมูล</h4>
@@ -306,8 +424,15 @@ export default function MyCatalogPage() {
                 <div className="space-y-2">
                   {row.services?.map((rs: any) => {
                     const isApproved = rs.approveStatus === 'APPROVED';
+                    const isUnread = unreadStatus.services[rs.id] || false;
                     return (
-                      <div key={rs.id} className="flex justify-between items-center bg-white p-3 rounded">
+                      <div key={rs.id} className="flex justify-between items-center bg-white p-3 rounded relative">
+                        {isUnread && (
+                          <span
+                            className="absolute left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"
+                            title="มีการอัพเดทใหม่"
+                          />
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{rs.service?.name}</p>

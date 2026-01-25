@@ -20,6 +20,8 @@ interface CollapsibleTableProps {
   rows: any[];
   renderCollapse: (row: any) => React.ReactNode;
   getRowId: (row: any) => string;
+  showUnreadIndicator?: (row: any) => boolean; // Function to determine if row should show red dot
+  onRowExpand?: (row: any) => void; // Callback when row is expanded
 }
 
 export function CollapsibleTable({
@@ -27,10 +29,15 @@ export function CollapsibleTable({
   rows,
   renderCollapse,
   getRowId,
+  showUnreadIndicator,
+  onRowExpand,
 }: CollapsibleTableProps) {
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
 
-  const toggleRow = (rowId: string) => {
+  const toggleRow = (row: any, rowId: string) => {
+    const isCurrentlyOpen = openRows.has(rowId);
+    const isOpening = !isCurrentlyOpen;
+
     setOpenRows((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(rowId)) {
@@ -40,6 +47,14 @@ export function CollapsibleTable({
       }
       return newSet;
     });
+
+    // Call onRowExpand AFTER setState, when opening a row
+    if (onRowExpand && isOpening) {
+      // Use setTimeout to ensure it runs after the current render cycle
+      setTimeout(() => {
+        onRowExpand(row);
+      }, 0);
+    }
   };
 
   return (
@@ -95,6 +110,7 @@ export function CollapsibleTable({
             rows.map((row) => {
               const rowId = getRowId(row);
               const isOpen = openRows.has(rowId);
+              const showUnread = showUnreadIndicator ? showUnreadIndicator(row) : false;
 
               return (
                 <React.Fragment key={rowId}>
@@ -108,7 +124,7 @@ export function CollapsibleTable({
                     <TableCell sx={{ py: 2, px: 3 }}>
                       <IconButton
                         size="small"
-                        onClick={() => toggleRow(rowId)}
+                        onClick={() => toggleRow(row, rowId)}
                         sx={{
                           color: 'grey.600',
                           '&:hover': { backgroundColor: 'grey.100' }
@@ -120,7 +136,7 @@ export function CollapsibleTable({
                         />
                       </IconButton>
                     </TableCell>
-                    {columns.map((column) => (
+                    {columns.map((column, colIndex) => (
                       <TableCell
                         key={column.id}
                         align={column.align}
@@ -128,9 +144,16 @@ export function CollapsibleTable({
                           py: 2,
                           px: 3,
                           fontSize: '0.875rem',
-                          color: 'grey.800'
+                          color: 'grey.800',
+                          position: 'relative'
                         }}
                       >
+                        {colIndex === 0 && showUnread && (
+                          <span
+                            className="absolute left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"
+                            title="มีการอัพเดทใหม่"
+                          />
+                        )}
                         {column.format ? column.format(row) : row[column.id]}
                       </TableCell>
                     ))}

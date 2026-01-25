@@ -315,3 +315,25 @@ model UserServiceLog {
   @@index([createdAt])
   @@map("user_service_logs")
 }
+
+// ============================================================================
+// Notification Management
+// ============================================================================
+
+// UserNotificationRead - บันทึกการอ่าน notification ของ user สำหรับ dataset/service
+model UserNotificationRead {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  requestDatasetId String?   @map("request_dataset_id")
+  requestServiceId String?   @map("request_service_id")
+  lastReadAt       DateTime  @default(now()) @map("last_read_at")
+
+  // Audit fields
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, requestDatasetId])
+  @@unique([userId, requestServiceId])
+  @@index([userId])
+  @@map("user_notification_reads")
+}
