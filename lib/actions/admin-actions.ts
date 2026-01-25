@@ -50,6 +50,7 @@ export async function createUnitOwner(
         shortName: data.shortName,
         icon: data.icon,
         createdBy: userId,
+        updatedBy: userId,
       },
     });
 
@@ -182,6 +183,7 @@ export async function createCategory(
         shortName: data.shortName,
         icon: data.icon,
         createdBy: userId,
+        updatedBy: userId,
       },
     });
 
@@ -291,6 +293,7 @@ export async function createDataset(
         securityLevel: data.securityLevel,
         metadata: data.metadata,
         createdBy: userId,
+        updatedBy: userId,
       },
       include: {
         unitOwner: true,
@@ -418,6 +421,7 @@ export async function createService(
         api: data.api,
         howTo: data.howTo,
         createdBy: userId,
+        updatedBy: userId,
       },
       include: {
         dataset: true,

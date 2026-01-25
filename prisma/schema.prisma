@@ -24,9 +24,10 @@ model User {
   deletedAt  DateTime?
 
   // Relations
-  requestsCreated       Request[]        @relation("RequestCreatedBy")
-  requestDatasetsApproved RequestDataset[] @relation("DatasetApprovedBy")
-  requestServicesApproved RequestService[] @relation("ServiceApprovedBy")
+  requestsCreated         Request[]          @relation("RequestCreatedBy")
+  requestDatasetsApproved RequestDataset[]   @relation("DatasetApprovedBy")
+  requestServicesApproved RequestService[]   @relation("ServiceApprovedBy")
+  serviceLogs             UserServiceLog[]
 
   @@map("users")
 }
@@ -145,8 +146,9 @@ model Service {
   deletedAt  DateTime?
 
   // Relations
-  dataset         Dataset          @relation(fields: [datasetId], references: [id])
+  dataset         Dataset            @relation(fields: [datasetId], references: [id])
   requestServices RequestService[]
+  serviceLogs     UserServiceLog[]
 
   @@map("services")
 }
@@ -287,4 +289,29 @@ model RequestServiceApprovalFile {
   requestService RequestService @relation(fields: [requestServiceId], references: [id])
 
   @@map("request_service_approval_files")
+}
+
+// ============================================================================
+// Service Usage Tracking
+// ============================================================================
+
+// UserServiceLog - บันทึกการใช้งาน service ของ user
+model UserServiceLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  serviceId String   @map("service_id")
+  requestIp String?  @map("request_ip") // IP address ของผู้ใช้
+  userAgent String?  @map("user_agent") // User agent ของผู้ใช้
+
+  // Timestamp
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@index([userId])
+  @@index([serviceId])
+  @@index([createdAt])
+  @@map("user_service_logs")
 }

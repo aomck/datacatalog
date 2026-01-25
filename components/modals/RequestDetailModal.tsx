@@ -2,6 +2,7 @@
 
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { Icon } from '@iconify/react';
+import { Timestamp } from '@/components/ui/Timestamp';
 
 interface RequestDetailModalProps {
   open: boolean;
@@ -29,7 +30,7 @@ export function RequestDetailModal({ open, onClose, request }: RequestDetailModa
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-sm text-gray-600">วันที่ส่งคำขอ</p>
-                <p className="font-medium">{new Date(request.createdAt).toLocaleDateString('th-TH')}</p>
+                <p className="font-medium"><Timestamp date={request.createdAt} type="date-time" /></p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">ชื่อผู้ขอ</p>

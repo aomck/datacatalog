@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { hasAnyAction } from '@/lib/permission-utils';
 import { logoutAction } from '@/lib/auth-actions';
@@ -54,6 +55,18 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    name: 'Dashboard',
+    nameTh: 'สถิติการใช้งาน',
+    href: '/app/dashboard',
+    service: 'datacatalog',
+    route: 'admin',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  {
     name: 'Admin',
     nameTh: 'จัดการข้อมูล',
     href: '/app/admin',
@@ -65,7 +78,7 @@ const menuItems: MenuItem[] = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
-  },
+  }
 ];
 
 export function Sidebar() {
@@ -208,9 +221,7 @@ export function Sidebar() {
           } py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all`}
           title={!isExpanded ? 'ออกจากระบบ' : undefined}
         >
-          <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <Icon icon="mdi:logout" className="w-6 h-6 flex-shrink-0" />
           {isExpanded && <span>ออกจากระบบ</span>}
         </button>
       </div>

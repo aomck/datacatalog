@@ -21,6 +21,8 @@ import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { getUserToken } from '@/lib/actions/user-actions';
+import { User } from '@/components/ui/User';
+import { Timestamp } from '@/components/ui/Timestamp';
 import type { Dataset, Service, UnitOwner, Category } from '@/types';
 
 export default function AdminPage() {
@@ -60,9 +62,9 @@ export default function AdminPage() {
 
   const loadToken = async () => {
     if (user?.id) {
-      const result = await getUserToken(user.id);
-      if (result.token) {
-        setAdminToken(result.token);
+      const token = await getUserToken(user.id);
+      if (token) {
+        setAdminToken(token);
       }
     }
   };
@@ -374,6 +376,16 @@ export default function AdminPage() {
                 </Tooltip>
               ) : '-'
             },
+            {
+              id: 'updatedBy',
+              label: 'อัพเดทโดย',
+              format: (row: any) => row.updatedBy ? <User userId={row.updatedBy} type="avatar-name" size="small" /> : '-'
+            },
+            {
+              id: 'updatedAt',
+              label: 'อัพเดทเมื่อ',
+              format: (row: any) => <Timestamp date={row.updatedAt} type="date-time" />
+            },
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredDatasets.map((d) => ({
@@ -418,31 +430,35 @@ export default function AdminPage() {
               ) : (
                 <div className="space-y-2">
                   {row.services?.map((s: any) => (
-                    <div key={s.id} className="bg-white p-3 rounded flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm">{s.name}</p>
-                          {s.howTo && (
-                            <Tooltip title="ดาวน์โหลดคู่มือ">
-                              <IconButton
-                                size="small"
-                                onClick={() => window.open(s.howTo, '_blank')}
-                                sx={{ p: 0.5 }}
-                              >
-                                <Icon icon="mdi:file-pdf-box" className="w-5 h-5 text-red-600" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
+                    <div key={s.id} className="bg-white p-3 rounded">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{s.name}</p>
+                            {s.howTo && (
+                              <Tooltip title="ดาวน์โหลดคู่มือ">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => window.open(s.howTo, '_blank')}
+                                  sx={{ p: 0.5 }}
+                                >
+                                  <Icon icon="mdi:file-pdf-box" className="w-5 h-5 text-red-600" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600">{s.method} {s.api}</p>
                         </div>
-                        <p className="text-xs text-gray-600">{s.method} {s.api}</p>
-                      </div>
-                      <div className="flex gap-1">
-                        <Tooltip title="ทดสอบ API">
+                        <div className="flex gap-1">
+                        <Tooltip title={adminToken ? "ทดสอบ API" : "กำลังโหลด Token..."}>
                           <IconButton
                             size="small"
+                            disabled={!adminToken}
                             onClick={() => {
-                              setSelectedService(s);
-                              setApiTestOpen(true);
+                              if (adminToken) {
+                                setSelectedService(s);
+                                setApiTestOpen(true);
+                              }
                             }}
                           >
                             <Icon icon="mdi:api" className="w-5 h-5 text-green-600" />
@@ -479,6 +495,17 @@ export default function AdminPage() {
                             <Icon icon="mdi:delete" className="w-4 h-4" />
                           </IconButton>
                         </Tooltip>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+                        <div className="flex items-center gap-1">
+                          <span>อัพเดทโดย:</span>
+                          {s.updatedBy ? <User userId={s.updatedBy} type="avatar-name" size="small" /> : '-'}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>อัพเดทเมื่อ:</span>
+                          <Timestamp date={s.updatedAt} type="date-time" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -496,6 +523,16 @@ export default function AdminPage() {
             { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={value} alt="" className="w-8 h-8 rounded" /> : '-' },
             { id: 'name', label: 'ชื่อ' },
             { id: 'shortName', label: 'ชื่อย่อ' },
+            {
+              id: 'updatedBy',
+              label: 'อัพเดทโดย',
+              format: (value: any, row: any) => row.updatedBy ? <User userId={row.updatedBy} type="avatar-name" size="small" /> : '-'
+            },
+            {
+              id: 'updatedAt',
+              label: 'อัพเดทเมื่อ',
+              format: (value: any) => <Timestamp date={value} type="date-time" />
+            },
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={unitOwners.map((u) => ({
@@ -529,6 +566,16 @@ export default function AdminPage() {
             { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={value} alt="" className="w-8 h-8 rounded" /> : '-' },
             { id: 'name', label: 'ชื่อ' },
             { id: 'shortName', label: 'ชื่อย่อ' },
+            {
+              id: 'updatedBy',
+              label: 'อัพเดทโดย',
+              format: (value: any, row: any) => row.updatedBy ? <User userId={row.updatedBy} type="avatar-name" size="small" /> : '-'
+            },
+            {
+              id: 'updatedAt',
+              label: 'อัพเดทเมื่อ',
+              format: (value: any) => <Timestamp date={value} type="date-time" />
+            },
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={categories.map((c) => ({
@@ -757,6 +804,7 @@ export default function AdminPage() {
         onClose={() => setApiTestOpen(false)}
         service={selectedService}
         token={adminToken}
+        showHowToVerify={true}
       />
     </div>
   );

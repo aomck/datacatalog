@@ -8,22 +8,25 @@ interface ApiTestModalProps {
   open: boolean;
   onClose: () => void;
   service: {
+    id: string;
     name: string;
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     api: string;
     howTo?: string;
   } | null;
   token: string;
+  showHowToVerify?: boolean;
 }
 
-export function ApiTestModal({ open, onClose, service, token }: ApiTestModalProps) {
-  const [method, setMethod] = useState<string>(service?.method || 'GET');
+export function ApiTestModal({ open, onClose, service, token, showHowToVerify = false }: ApiTestModalProps) {
   const [requestBody, setRequestBody] = useState('{\n  \n}');
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [responseTime, setResponseTime] = useState(0);
 
   if (!service) return null;
+
+  const method = service.method; // ใช้ method จาก service โดยตรง ไม่ให้แก้ไข
 
   const handleTestApi = async () => {
     setLoading(true);
@@ -35,6 +38,7 @@ export function ApiTestModal({ open, onClose, service, token }: ApiTestModalProp
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'X-Service-Id': service.id,
         },
       };
 
@@ -154,6 +158,143 @@ export function ApiTestModal({ open, onClose, service, token }: ApiTestModalProp
             </div>
           )}
 
+          {/* How to Verify Token */}
+          {showHowToVerify && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-purple-900">
+                <Icon icon="mdi:shield-check" className="w-5 h-5" />
+                วิธีการตรวจสอบ Token และสิทธิ์การเข้าถึง
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium text-gray-700 mb-2">ขั้นตอนการตรวจสอบ:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-gray-600 ml-2">
+                    <li>เรียก POST /api/verify-token เพื่อตรวจสอบสิทธิ์</li>
+                    <li>ส่ง service_id และ token ใน request body</li>
+                    <li>ตรวจสอบ response ว่า authorized: true หรือไม่</li>
+                    <li>หากได้รับอนุญาต จึงเรียก API จริง</li>
+                  </ol>
+                </div>
+                <div className="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono overflow-x-auto">
+                  <pre>{`// Example: Verify Token Before API Call
+const verifyResponse = await fetch('/api/verify-token', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    service_id: '${service.id}',
+    token: 'YOUR_USER_TOKEN'
+  })
+});
+
+const verifyData = await verifyResponse.json();
+
+if (verifyData.authorized) {
+  // Token is valid, proceed with actual API call
+  const apiResponse = await fetch('${service.api}', {
+    method: '${method}',
+    headers: {
+      'Authorization': 'Bearer YOUR_USER_TOKEN',
+      'Content-Type': 'application/json',
+      'X-Service-Id': '${service.id}'
+    }
+  });
+} else {
+  console.error('Unauthorized:', verifyData.message);
+}`}</pre>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700 mb-1">Request Body:</p>
+                  <div className="bg-white border border-purple-200 rounded p-2 text-xs font-mono">
+                    <pre>{`{
+  "service_id": "${service.id}",
+  "token": "USER_TOKEN_HERE"
+}`}</pre>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700 mb-1">Response (Success):</p>
+                  <div className="bg-white border border-purple-200 rounded p-2 text-xs font-mono">
+                    <pre>{`{
+  "authorized": true,
+  "user_id": "uuid",
+  "service_name": "${service.name}",
+  "message": "Access granted"
+}`}</pre>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700 mb-1">Response (Failure):</p>
+                  <div className="bg-white border border-purple-200 rounded p-2 text-xs font-mono">
+                    <pre>{`{
+  "authorized": false,
+  "message": "Invalid token | Service not found | ..."
+}`}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Example Usage */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-blue-900">
+              <Icon icon="mdi:code-tags" className="w-5 h-5" />
+              ตัวอย่างการเรียกใช้ API
+            </h3>
+
+            <div className="space-y-3">
+              {/* cURL Example */}
+              <div>
+                <p className="text-xs font-semibold text-gray-700 mb-1">cURL:</p>
+                <div className="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono overflow-x-auto">
+                  <pre>{`curl -X ${method} "${service.api}" \\
+  -H "Authorization: Bearer ${token}" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Service-Id: ${service.id}"${['POST', 'PUT', 'PATCH'].includes(method) ? ` \\
+  -d '${requestBody.trim()}'` : ''}`}</pre>
+                </div>
+              </div>
+
+              {/* JavaScript Fetch Example */}
+              <div>
+                <p className="text-xs font-semibold text-gray-700 mb-1">JavaScript (Fetch):</p>
+                <div className="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono overflow-x-auto">
+                  <pre>{`fetch("${service.api}", {
+  method: "${method}",
+  headers: {
+    "Authorization": "Bearer ${token}",
+    "Content-Type": "application/json",
+    "X-Service-Id": "${service.id}"
+  }${['POST', 'PUT', 'PATCH'].includes(method) ? `,
+  body: JSON.stringify(${requestBody.trim()})` : ''}
+})
+  .then(res => res.json())
+  .then(data => console.log(data))
+  .catch(err => console.error(err));`}</pre>
+                </div>
+              </div>
+
+              {/* Python Requests Example */}
+              <div>
+                <p className="text-xs font-semibold text-gray-700 mb-1">Python (Requests):</p>
+                <div className="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono overflow-x-auto">
+                  <pre>{`import requests
+
+url = "${service.api}"
+headers = {
+    "Authorization": "Bearer ${token}",
+    "Content-Type": "application/json",
+    "X-Service-Id": "${service.id}"
+}
+${['POST', 'PUT', 'PATCH'].includes(method) ? `data = ${requestBody.trim()}
+
+response = requests.${method.toLowerCase()}(url, headers=headers, json=data)` : `response = requests.${method.toLowerCase()}(url, headers=headers)`}
+print(response.json())`}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Request Configuration */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -163,19 +304,12 @@ export function ApiTestModal({ open, onClose, service, token }: ApiTestModalProp
 
             <div className="space-y-3">
               <TextField
-                select
                 fullWidth
                 label="HTTP Method"
                 value={method}
-                onChange={(e) => setMethod(e.target.value)}
+                InputProps={{ readOnly: true }}
                 size="small"
-              >
-                <MenuItem value="GET">GET</MenuItem>
-                <MenuItem value="POST">POST</MenuItem>
-                <MenuItem value="PUT">PUT</MenuItem>
-                <MenuItem value="PATCH">PATCH</MenuItem>
-                <MenuItem value="DELETE">DELETE</MenuItem>
-              </TextField>
+              />
 
               <TextField
                 fullWidth
@@ -195,6 +329,10 @@ export function ApiTestModal({ open, onClose, service, token }: ApiTestModalProp
                   <div className="flex">
                     <span className="text-gray-600 w-32">Content-Type:</span>
                     <span className="text-blue-600">application/json</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-600 w-32">X-Service-Id:</span>
+                    <span className="text-blue-600">{service.id}</span>
                   </div>
                 </div>
               </div>

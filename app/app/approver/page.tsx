@@ -18,6 +18,7 @@ import { ApprovalDetailModal } from '@/components/modals/ApprovalDetailModal';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { User } from '@/components/ui/User';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
+import { Timestamp } from '@/components/ui/Timestamp';
 import type { Request } from '@/types';
 
 export default function ApproverPage() {
@@ -331,7 +332,7 @@ export default function ApproverPage() {
 
             return {
               ...r,
-              createdAt: new Date(r.createdAt).toLocaleDateString('th-TH'),
+              createdAt: <Timestamp date={r.createdAt} type="date-time" />,
               requestedBy: r.requestedBy && <User userId={r.requestedBy} displayName={r.name} type="avatar" size="small" />,
               select: (
                 <Checkbox

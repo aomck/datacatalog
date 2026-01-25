@@ -4,6 +4,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton }
 import { Icon } from '@iconify/react';
 import { User } from '@/components/ui/User';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Timestamp } from '@/components/ui/Timestamp';
 
 interface ApprovalDetailModalProps {
   open: boolean;
@@ -15,16 +16,6 @@ interface ApprovalDetailModalProps {
 export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetailModalProps) {
   if (!item) return null;
 
-  const formatDate = (date: string | Date | null) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleString('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -78,7 +69,9 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">วันที่อนุมัติ</label>
-              <p className="text-gray-900">{formatDate(item.approvedAt)}</p>
+              <p className="text-gray-900">
+                {item.approvedAt ? <Timestamp date={item.approvedAt} type="date-time" /> : '-'}
+              </p>
             </div>
           </div>
 
@@ -104,7 +97,7 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{file.fileName}</p>
                         <p className="text-xs text-gray-500">
-                          {(file.fileSize / 1024).toFixed(2)} KB • {formatDate(file.createdAt)}
+                          {(file.fileSize / 1024).toFixed(2)} KB • <Timestamp date={file.createdAt} type="date-time" />
                         </p>
                       </div>
                     </div>

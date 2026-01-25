@@ -3,6 +3,7 @@
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { User } from '@/components/ui/User';
+import { Timestamp } from '@/components/ui/Timestamp';
 
 interface ApprovalHistoryModalProps {
   open: boolean;
@@ -71,7 +72,7 @@ export function ApprovalHistoryModal({ open, onClose, item }: ApprovalHistoryMod
                     <div>
                       <p className="text-xs text-gray-600">วันที่ดำเนินการ</p>
                       <p className="text-sm font-medium">
-                        {new Date(item.approveDate).toLocaleString('th-TH')}
+                        <Timestamp date={item.approveDate} type="date-time" />
                       </p>
                     </div>
                   )}
@@ -102,7 +103,7 @@ export function ApprovalHistoryModal({ open, onClose, item }: ApprovalHistoryMod
                 <div className="flex-1 pb-4">
                   <p className="font-medium text-sm">ส่งคำขอ</p>
                   <p className="text-xs text-gray-600">
-                    {new Date(item.createdAt).toLocaleString('th-TH')}
+                    <Timestamp date={item.createdAt} type="date-time" />
                   </p>
                 </div>
               </div>
@@ -126,7 +127,7 @@ export function ApprovalHistoryModal({ open, onClose, item }: ApprovalHistoryMod
                     <p className="font-medium text-sm">{getStatusText(item.approveStatus)}</p>
                     {item.approveDate && (
                       <p className="text-xs text-gray-600">
-                        {new Date(item.approveDate).toLocaleString('th-TH')}
+                        <Timestamp date={item.approveDate} type="date-time" />
                       </p>
                     )}
                   </div>

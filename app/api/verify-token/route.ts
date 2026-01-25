@@ -95,6 +95,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log successful service access
+    const requestIp = request.headers.get('x-forwarded-for') ||
+                      request.headers.get('x-real-ip') ||
+                      'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
+    await prisma.userServiceLog.create({
+      data: {
+        userId: user.id,
+        serviceId: service_id,
+        requestIp,
+        userAgent,
+      },
+    });
+
     // Access granted
     return NextResponse.json(
       {
