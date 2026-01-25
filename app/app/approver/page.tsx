@@ -16,6 +16,7 @@ import { RequestDetailModal } from '@/components/modals/RequestDetailModal';
 import { ApprovalHistoryModal } from '@/components/modals/ApprovalHistoryModal';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { User } from '@/components/ui/User';
+import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import type { Request } from '@/types';
 
 export default function ApproverPage() {
@@ -369,6 +370,9 @@ export default function ApproverPage() {
                           />
                           <Icon icon="mdi:database" className="w-5 h-5 text-blue-700" />
                           <span className="font-semibold text-blue-900">{rd.dataset?.name}</span>
+                          {rd.dataset?.securityLevel && (
+                            <SecurityLevelBadge level={rd.dataset.securityLevel} size="sm" />
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {rd.dataset?.metadata && (

@@ -178,3 +178,40 @@ export async function isAuthenticated(): Promise<boolean> {
   const user = await getMeAction();
   return user !== null;
 }
+
+/**
+ * Token authentication action - validates token and sets cookies
+ */
+export async function tokenAuthAction(token: string) {
+  try {
+    // Validate token by calling /auth/me
+    const response = await apiClient.get<ApiResponse<User>>('/auth/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.data.status === 200 && response.data.data) {
+      // Token is valid, store it in httpOnly cookies
+      // Note: We don't have refresh_token from token auth, so we'll use the same token
+      await setAuthCookies(token, token);
+
+      return {
+        success: true,
+        message: 'Authentication successful',
+        user: response.data.data,
+      };
+    }
+
+    return {
+      success: false,
+      message: response.data.message || 'Authentication failed',
+    };
+  } catch (error: any) {
+    console.error('Token auth error:', error);
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Invalid or expired token',
+    };
+  }
+}

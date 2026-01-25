@@ -99,13 +99,14 @@ model DatasetType {
 
 // Dataset - ชุดข้อมูล
 model Dataset {
-  id           String  @id @default(uuid())
-  name         String
-  detail       String? @db.Text
-  unitOwnerId  String  @map("unit_owner_id")
-  categoryId   String  @map("category_id")
-  typeId       String  @map("type_id")
-  metadata     String? // File path to metadata document
+  id            String  @id @default(uuid())
+  name          String
+  detail        String? @db.Text
+  unitOwnerId   String  @map("unit_owner_id")
+  categoryId    String  @map("category_id")
+  typeId        String  @map("type_id")
+  securityLevel String? @map("security_level") // ทั่วไป | ลับ | ลับมาก | ลับที่สุด
+  metadata      String? // File path to metadata document
 
   // Audit fields
   createdBy  String?

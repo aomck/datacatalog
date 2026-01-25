@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { Tab, Tabs, Card, CardContent, IconButton, Tooltip, Chip } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
-import { getCatalogUnitOwners, getCatalogCategories, getCategoriesByUnitOwner, getUnitOwnersByCategory, getUserRequestStatus } from '@/lib/actions/catalog-actions';
+import { getCatalogUnitOwners, getCatalogCategories, getDatasetsByUnitOwner, getDatasetsByCategory, getUserRequestStatus } from '@/lib/actions/catalog-actions';
 import { getDatasetTypes } from '@/lib/actions/admin-actions';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { NestedCollapsibleTable } from '@/components/ui/NestedCollapsibleTable';
+import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { CartModal } from '@/components/modals/CartModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
@@ -20,9 +20,8 @@ export default function CatalogPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [datasetTypes, setDatasetTypes] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<UnitOwner | Category | null>(null);
-  const [nestedData, setNestedData] = useState<any[]>([]);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
   const [cart, setCart, clearCart] = useLocalStorage<CartItem[]>('datacatalog_cart', []);
   const [requestStatus, setRequestStatus] = useState<any>({});
   const [cartOpen, setCartOpen] = useState(false);
@@ -67,55 +66,37 @@ export default function CatalogPage() {
     }
   };
 
-  const loadNestedData = async (id: string, item: UnitOwner | Category) => {
+  const loadDatasets = async (id: string) => {
     setSelectedId(id);
-    setSelectedItem(item);
     setLoading(true);
     try {
       const result = activeTab === 0
-        ? await getCategoriesByUnitOwner(id, 1, 100)
-        : await getUnitOwnersByCategory(id, 1, 100);
-      setNestedData(result.data);
-      setFilteredData(result.data);
+        ? await getDatasetsByUnitOwner(id, 1, 100)
+        : await getDatasetsByCategory(id, 1, 100);
+      setDatasets(result.data);
+      setFilteredDatasets(result.data);
     } finally {
       setLoading(false);
     }
   };
 
   const handleFilterChange = (filters: FilterState) => {
-    let filtered = nestedData;
+    let filtered = datasets;
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      filtered = filtered.map((parent) => {
-        const filteredDatasets = parent.datasets?.filter((d: any) => {
-          const nameMatch = d.name.toLowerCase().includes(searchLower);
-          const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
-          return nameMatch || serviceMatch;
-        }) || [];
-
-        return { ...parent, datasets: filteredDatasets };
-      }).filter((parent) => parent.datasets.length > 0);
+      filtered = filtered.filter((d) => {
+        const nameMatch = d.name.toLowerCase().includes(searchLower);
+        const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
+        return nameMatch || serviceMatch;
+      });
     }
 
     if (filters.typeId) {
-      filtered = filtered.map((parent) => {
-        const filteredDatasets = parent.datasets?.filter((d: any) => d.typeId === filters.typeId) || [];
-        return { ...parent, datasets: filteredDatasets };
-      }).filter((parent) => parent.datasets.length > 0);
+      filtered = filtered.filter((d) => d.typeId === filters.typeId);
     }
 
-    // Filter by category (when in unit owner tab)
-    if (activeTab === 0 && filters.categoryId) {
-      filtered = filtered.filter((category) => category.id === filters.categoryId);
-    }
-
-    // Filter by unit owner (when in category tab)
-    if (activeTab === 1 && filters.unitOwnerId) {
-      filtered = filtered.filter((unitOwner) => unitOwner.id === filters.unitOwnerId);
-    }
-
-    setFilteredData(filtered);
+    setFilteredDatasets(filtered);
   };
 
   const addToCart = (item: CartItem) => {
@@ -123,9 +104,13 @@ export default function CatalogPage() {
       // If adding a service, ensure the dataset is also in cart
       if (item.type === 'service' && item.datasetId) {
         const datasetInCart = cart.find((i) => i.id === item.datasetId && i.type === 'dataset');
-        if (!datasetInCart && item.datasetName) {
-          setCart([...cart, { type: 'dataset', id: item.datasetId, name: item.datasetName }, item]);
-          return;
+        if (!datasetInCart) {
+          // Find dataset info and add it
+          const dataset = datasets.find((d) => d.id === item.datasetId);
+          if (dataset) {
+            setCart([...cart, { type: 'dataset', id: dataset.id, name: dataset.name }, item]);
+            return;
+          }
         }
       }
       setCart([...cart, item]);
@@ -193,7 +178,7 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); }}>
+      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setDatasets([]); }}>
         <Tab label="หน่วยงาน" />
         <Tab label="นโยบายด้านความมั่นคง" />
       </Tabs>
@@ -201,7 +186,7 @@ export default function CatalogPage() {
       {!selectedId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {(activeTab === 0 ? unitOwners : categories).map((item) => (
-            <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
+            <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadDatasets(item.id)}>
               <CardContent className="text-center">
                 {item.icon ? (
                   <img src={item.icon} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
@@ -216,70 +201,81 @@ export default function CatalogPage() {
         </div>
       ) : (
         <div className="mt-6">
-          {/* Breadcrumb */}
-          <div className="mb-6 flex items-center gap-2 text-sm">
-            <button
-              onClick={() => { setSelectedId(null); setSelectedItem(null); setNestedData([]); }}
-              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-            >
-              <Icon icon="mdi:home" className="w-4 h-4" />
-              {activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}
-            </button>
-            <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-700 font-medium">{selectedItem?.name}</span>
-          </div>
+          <button onClick={() => { setSelectedId(null); setDatasets([]); }} className="mb-4 text-blue-600 hover:underline">
+            <Icon icon="mdi:arrow-left" className="inline w-5 h-5" /> กลับ
+          </button>
 
           <FilterPanel
             onFilterChange={handleFilterChange}
             datasetTypes={datasetTypes}
-            unitOwners={activeTab === 1 ? unitOwners : []}
-            categories={activeTab === 0 ? categories : []}
             showDatasetType
-            showUnitOwner={activeTab === 1}
-            showCategory={activeTab === 0}
+            showUnitOwner={false}
+            showCategory={false}
             showSearch
           />
 
-          <NestedCollapsibleTable
-            rows={filteredData}
+          <CollapsibleTable
+            columns={[
+              { id: 'name', label: 'ชื่อชุดข้อมูล' },
+              { id: 'detail', label: 'รายละเอียด' },
+              {
+                id: 'metadata',
+                label: 'Metadata',
+                align: 'center',
+                format: (row: any) => row.metadata ? (
+                  <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                  </IconButton>
+                ) : '-'
+              },
+              { id: 'actions', label: '', align: 'right' },
+            ]}
+            rows={filteredDatasets.map((d) => ({
+              ...d,
+              actions: (
+                <button
+                  onClick={() => toggleCart({ type: 'dataset', id: d.id, name: d.name })}
+                  disabled={isDisabled(d.id, 'dataset')}
+                  className={`px-3 py-1 text-sm rounded ${
+                    cart.find((i) => i.id === d.id && i.type === 'dataset')
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                >
+                  {getButtonLabel(d.id, 'dataset')}
+                </button>
+              ),
+            }))}
             getRowId={(row) => row.id}
-            level1Header={activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}
-            level1NameField="name"
-            level1ShortNameField="shortName"
-            level1ChildrenField="datasets"
-            level2NameField="name"
-            level2DetailField="detail"
-            level2MetadataField="metadata"
-            level2ChildrenField="services"
-            level2Actions={(dataset) => (
-              <button
-                onClick={() => toggleCart({ type: 'dataset', id: dataset.id, name: dataset.name })}
-                disabled={isDisabled(dataset.id, 'dataset')}
-                className={`px-3 py-1 text-sm rounded ${
-                  cart.find((i) => i.id === dataset.id && i.type === 'dataset')
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                } disabled:bg-gray-300 disabled:cursor-not-allowed`}
-              >
-                {getButtonLabel(dataset.id, 'dataset')}
-              </button>
-            )}
-            level3NameField="name"
-            level3DetailField="detail"
-            level3MethodField="method"
-            level3ApiField="api"
-            level3Actions={(service, dataset) => (
-              <button
-                onClick={() => toggleCart({ type: 'service', id: service.id, name: service.name, datasetId: dataset.id, datasetName: dataset.name })}
-                disabled={isDisabled(service.id, 'service')}
-                className={`px-3 py-1 text-sm rounded ${
-                  cart.find((i) => i.id === service.id && i.type === 'service')
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                } disabled:bg-gray-300 disabled:cursor-not-allowed`}
-              >
-                {getButtonLabel(service.id, 'service')}
-              </button>
+            renderCollapse={(row) => (
+              <div className="bg-gray-50 p-4 rounded">
+                <h4 className="font-semibold mb-3">บริการข้อมูล</h4>
+                {row.services?.length === 0 ? (
+                  <p className="text-sm text-gray-600">ไม่มีบริการข้อมูล</p>
+                ) : (
+                  <div className="space-y-2">
+                    {row.services?.map((s: any) => (
+                      <div key={s.id} className="flex justify-between items-center bg-white p-3 rounded">
+                        <div>
+                          <p className="font-medium">{s.name}</p>
+                          <p className="text-xs text-gray-600">{s.method} {s.api}</p>
+                        </div>
+                        <button
+                          onClick={() => toggleCart({ type: 'service', id: s.id, name: s.name, datasetId: row.id, datasetName: row.name })}
+                          disabled={isDisabled(s.id, 'service')}
+                          className={`px-3 py-1 text-sm rounded ${
+                            cart.find((i) => i.id === s.id && i.type === 'service')
+                              ? 'bg-red-600 text-white hover:bg-red-700'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                        >
+                          {getButtonLabel(s.id, 'service')}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           />
         </div>

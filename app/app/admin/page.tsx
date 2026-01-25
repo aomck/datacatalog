@@ -18,6 +18,7 @@ import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
+import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import type { Dataset, Service, UnitOwner, Category } from '@/types';
 
 export default function AdminPage() {
@@ -124,7 +125,7 @@ export default function AdminPage() {
     } else {
       // Reset form for new item
       if (activeTab === 0) {
-        setFormData({ name: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '' });
+        setFormData({ name: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '', securityLevel: '' });
       } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
       } else if (activeTab === 2) {
@@ -212,6 +213,7 @@ export default function AdminPage() {
           unitOwnerId: formData.unitOwnerId,
           categoryId: formData.categoryId,
           typeId: formData.typeId,
+          securityLevel: formData.securityLevel,
           metadata,
         };
         console.log('Saving Dataset:', data);
@@ -339,6 +341,12 @@ export default function AdminPage() {
             { id: 'name', label: 'ชื่อ' },
             { id: 'unitOwner', label: 'หน่วยงาน', format: (row: any) => row.unitOwner?.name || '-' },
             { id: 'category', label: 'นโยบาย', format: (row: any) => row.category?.name || '-' },
+            {
+              id: 'securityLevel',
+              label: 'ชั้นความลับ',
+              align: 'center',
+              format: (row: any) => <SecurityLevelBadge level={row.securityLevel} />
+            },
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredDatasets.map((d) => ({
@@ -610,6 +618,20 @@ export default function AdminPage() {
                 {datasetTypes.map((t) => (
                   <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
                 ))}
+              </TextField>
+              <TextField
+                fullWidth
+                select
+                label="ชั้นความลับ"
+                value={formData.securityLevel || ''}
+                onChange={(e) => setFormData({ ...formData, securityLevel: e.target.value })}
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="">ไม่ระบุ</MenuItem>
+                <MenuItem value="ทั่วไป">ทั่วไป</MenuItem>
+                <MenuItem value="ลับ">ลับ</MenuItem>
+                <MenuItem value="ลับมาก">ลับมาก</MenuItem>
+                <MenuItem value="ลับที่สุด">ลับที่สุด</MenuItem>
               </TextField>
               <FileUpload
                 files={files}

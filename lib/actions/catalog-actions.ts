@@ -349,3 +349,141 @@ export async function getUserRequestStatus(userId: string) {
     return { datasets: {}, services: {} };
   }
 }
+
+/**
+ * Get categories grouped by unit owner (for tab หน่วยงาน)
+ */
+export async function getCategoriesByUnitOwner(
+  unitOwnerId: string,
+  page = 1,
+  limit = 100
+): Promise<PaginatedResult<any>> {
+  try {
+    const skip = (page - 1) * limit;
+
+    // Get all categories that have datasets from this unit owner
+    const categories = await prisma.category.findMany({
+      where: {
+        deletedAt: null,
+        datasets: {
+          some: {
+            unitOwnerId,
+            deletedAt: null,
+          },
+        },
+      },
+      include: {
+        datasets: {
+          where: {
+            unitOwnerId,
+            deletedAt: null,
+          },
+          include: {
+            services: {
+              where: { deletedAt: null },
+              orderBy: { name: 'asc' },
+            },
+          },
+          orderBy: { name: 'asc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+      skip,
+      take: limit,
+    });
+
+    const total = await prisma.category.count({
+      where: {
+        deletedAt: null,
+        datasets: {
+          some: {
+            unitOwnerId,
+            deletedAt: null,
+          },
+        },
+      },
+    });
+
+    return {
+      data: categories,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error: any) {
+    console.error('Get categories by unit owner error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get unit owners grouped by category (for tab นโยบายความมั่นคง)
+ */
+export async function getUnitOwnersByCategory(
+  categoryId: string,
+  page = 1,
+  limit = 100
+): Promise<PaginatedResult<any>> {
+  try {
+    const skip = (page - 1) * limit;
+
+    // Get all unit owners that have datasets in this category
+    const unitOwners = await prisma.unitOwner.findMany({
+      where: {
+        deletedAt: null,
+        datasets: {
+          some: {
+            categoryId,
+            deletedAt: null,
+          },
+        },
+      },
+      include: {
+        datasets: {
+          where: {
+            categoryId,
+            deletedAt: null,
+          },
+          include: {
+            services: {
+              where: { deletedAt: null },
+              orderBy: { name: 'asc' },
+            },
+          },
+          orderBy: { name: 'asc' },
+        },
+      },
+      orderBy: { name: 'asc' },
+      skip,
+      take: limit,
+    });
+
+    const total = await prisma.unitOwner.count({
+      where: {
+        deletedAt: null,
+        datasets: {
+          some: {
+            categoryId,
+            deletedAt: null,
+          },
+        },
+      },
+    });
+
+    return {
+      data: unitOwners,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error: any) {
+    console.error('Get unit owners by category error:', error);
+    throw error;
+  }
+}

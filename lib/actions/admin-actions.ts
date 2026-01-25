@@ -277,7 +277,7 @@ export async function getDatasets(page = 1, limit = 30): Promise<PaginatedResult
 }
 
 export async function createDataset(
-  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; metadata?: string },
+  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string },
   userId: string
 ) {
   try {
@@ -288,6 +288,7 @@ export async function createDataset(
         unitOwnerId: data.unitOwnerId,
         categoryId: data.categoryId,
         typeId: data.typeId,
+        securityLevel: data.securityLevel,
         metadata: data.metadata,
         createdBy: userId,
       },
@@ -307,7 +308,7 @@ export async function createDataset(
 
 export async function updateDataset(
   id: string,
-  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; metadata?: string },
+  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string },
   userId: string
 ) {
   try {

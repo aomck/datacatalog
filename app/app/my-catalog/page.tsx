@@ -12,6 +12,7 @@ import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { RequestDetailModal } from '@/components/modals/RequestDetailModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
+import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import type { Dataset, Service } from '@/types';
 
 export default function MyCatalogPage() {
@@ -242,6 +243,12 @@ export default function MyCatalogPage() {
             { id: 'name', label: 'ชื่อชุดข้อมูล' },
             { id: 'unitOwner', label: 'หน่วยงาน', format: (row: any) => row.dataset?.unitOwner?.name || '-' },
             { id: 'category', label: 'นโยบาย', format: (row: any) => row.dataset?.category?.name || '-' },
+            {
+              id: 'securityLevel',
+              label: 'ชั้นความลับ',
+              align: 'center',
+              format: (row: any) => <SecurityLevelBadge level={row.dataset?.securityLevel} size="sm" />
+            },
             {
               id: 'metadata',
               label: 'Metadata',

@@ -9,6 +9,11 @@ export function middleware(request: NextRequest) {
   const publicPaths = ['/', '/login'];
   const isPublicPath = publicPaths.includes(pathname);
 
+  // Allow access to auth token page without authentication
+  if (pathname.startsWith('/auth/token/')) {
+    return NextResponse.next();
+  }
+
   // If accessing /app/* without token, redirect to login
   if (pathname.startsWith('/app') && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
