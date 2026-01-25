@@ -196,6 +196,7 @@ model RequestDataset {
   request  Request  @relation(fields: [requestId], references: [id])
   dataset  Dataset  @relation(fields: [datasetId], references: [id])
   approver User?    @relation("DatasetApprovedBy", fields: [approvedBy], references: [id])
+  approvalFiles RequestDatasetApprovalFile[]
 
   @@map("request_datasets")
 }
@@ -214,6 +215,7 @@ model RequestService {
   request  Request  @relation(fields: [requestId], references: [id])
   service  Service  @relation(fields: [serviceId], references: [id])
   approver User?    @relation("ServiceApprovedBy", fields: [approvedBy], references: [id])
+  approvalFiles RequestServiceApprovalFile[]
 
   @@map("request_services")
 }
@@ -239,4 +241,50 @@ model RequestFile {
   request Request @relation(fields: [requestId], references: [id])
 
   @@map("request_files")
+}
+
+// RequestDatasetApprovalFile - ไฟล์แนบการอนุมัติ dataset
+model RequestDatasetApprovalFile {
+  id               String   @id @default(uuid())
+  requestDatasetId String   @map("request_dataset_id")
+  filePath         String   @map("file_path")
+  fileName         String   @map("file_name")
+  fileType         String   @map("file_type")
+  fileSize         Int      @map("file_size")
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  requestDataset RequestDataset @relation(fields: [requestDatasetId], references: [id])
+
+  @@map("request_dataset_approval_files")
+}
+
+// RequestServiceApprovalFile - ไฟล์แนบการอนุมัติ service
+model RequestServiceApprovalFile {
+  id               String   @id @default(uuid())
+  requestServiceId String   @map("request_service_id")
+  filePath         String   @map("file_path")
+  fileName         String   @map("file_name")
+  fileType         String   @map("file_type")
+  fileSize         Int      @map("file_size")
+
+  // Audit fields
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedBy  String?
+  updatedAt  DateTime  @updatedAt
+  deletedBy  String?
+  deletedAt  DateTime?
+
+  // Relations
+  requestService RequestService @relation(fields: [requestServiceId], references: [id])
+
+  @@map("request_service_approval_files")
 }

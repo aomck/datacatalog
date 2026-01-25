@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, RadioGroup, FormControlLabel, Radio, FormControl, FormLabel } from '@mui/material';
 import { Icon } from '@iconify/react';
+import { FileUpload } from '@/components/ui/FileUpload';
 import { bulkUpdateRequestStatus } from '@/lib/actions/request-actions';
+import { uploadApprovalFiles } from '@/lib/actions/file-actions';
 import type { ApproveStatus } from '@/types';
 
 interface ApprovalModalProps {
@@ -18,6 +20,7 @@ interface ApprovalModalProps {
 export function ApprovalModal({ open, onClose, selectedItems, requests, onSuccess, userId }: ApprovalModalProps) {
   const [status, setStatus] = useState<ApproveStatus>('PENDING');
   const [comment, setComment] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
   const totalItems = selectedItems.datasetIds.length + selectedItems.serviceIds.length;
@@ -43,12 +46,27 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      let uploadedFiles: { filePath: string; fileName: string; fileSize: number }[] = [];
+
+      // Upload files if any
+      if (files.length > 0) {
+        const formDataObj = new FormData();
+        files.forEach((file) => formDataObj.append('files', file));
+
+        const uploadResult = await uploadApprovalFiles(formDataObj);
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error);
+        }
+        uploadedFiles = uploadResult.files!;
+      }
+
       const result = await bulkUpdateRequestStatus(
         selectedItems.datasetIds,
         selectedItems.serviceIds,
         status,
         comment,
-        userId
+        userId,
+        uploadedFiles
       );
 
       if (result.success) {
@@ -57,6 +75,7 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
         onClose();
         setComment('');
         setStatus('PENDING');
+        setFiles([]);
       } else {
         throw new Error(result.error);
       }
@@ -89,6 +108,18 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
           onChange={(e) => setComment(e.target.value)}
           sx={{ mt: 3 }}
         />
+
+        {/* File Upload */}
+        <div className="mt-4">
+          <FileUpload
+            multiple
+            accept="image/*,.pdf"
+            files={files}
+            onChange={setFiles}
+            label="แนบไฟล์ (ถ้ามี)"
+            maxSize={10}
+          />
+        </div>
 
         <div className="mt-4">
           <p className="text-sm font-medium text-gray-700 mb-3">รายการที่เลือก ({totalItems})</p>

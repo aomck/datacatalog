@@ -105,6 +105,13 @@ export default function CatalogPage() {
       }).filter((parent) => parent.datasets.length > 0);
     }
 
+    if (filters.securityLevel) {
+      filtered = filtered.map((parent) => {
+        const filteredDatasets = parent.datasets?.filter((d: any) => d.securityLevel === filters.securityLevel) || [];
+        return { ...parent, datasets: filteredDatasets };
+      }).filter((parent) => parent.datasets.length > 0);
+    }
+
     // Filter by category (when in unit owner tab)
     if (activeTab === 0 && filters.categoryId) {
       filtered = filtered.filter((category) => category.id === filters.categoryId);
@@ -237,6 +244,7 @@ export default function CatalogPage() {
             showDatasetType
             showUnitOwner={activeTab === 1}
             showCategory={activeTab === 0}
+            showSecurityLevel
             showSearch
           />
 
@@ -246,10 +254,12 @@ export default function CatalogPage() {
             level1Header={activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}
             level1NameField="name"
             level1ShortNameField="shortName"
+            level1IconField="icon"
             level1ChildrenField="datasets"
             level2NameField="name"
             level2DetailField="detail"
             level2MetadataField="metadata"
+            level2SecurityLevelField="securityLevel"
             level2ChildrenField="services"
             level2Actions={(dataset) => (
               <button

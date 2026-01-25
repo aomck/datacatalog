@@ -264,12 +264,17 @@ export async function getUserApprovedItems(userId: string) {
             include: {
               unitOwner: true,
               category: true,
+              type: true,
               services: {
                 where: { deletedAt: null },
               },
             },
           },
           request: true,
+          approver: true,
+          approvalFiles: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       }),
       prisma.requestService.findMany({
@@ -286,11 +291,16 @@ export async function getUserApprovedItems(userId: string) {
                 include: {
                   unitOwner: true,
                   category: true,
+                  type: true,
                 },
               },
             },
           },
           request: true,
+          approver: true,
+          approvalFiles: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       }),
     ]);

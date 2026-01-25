@@ -19,6 +19,8 @@ import { RefreshButton } from '@/components/ui/RefreshButton';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
+import { ApiTestModal } from '@/components/modals/ApiTestModal';
+import { getUserToken } from '@/lib/actions/user-actions';
 import type { Dataset, Service, UnitOwner, Category } from '@/types';
 
 export default function AdminPage() {
@@ -36,6 +38,9 @@ export default function AdminPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [isServiceDialog, setIsServiceDialog] = useState(false);
+  const [apiTestOpen, setApiTestOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [adminToken, setAdminToken] = useState<string>('');
 
   // Check admin permission
   if (!checkAdminPermission(permissions)) {
@@ -50,7 +55,17 @@ export default function AdminPage() {
   useEffect(() => {
     // Load all data on mount for dropdown options
     loadAllData();
+    loadToken();
   }, []);
+
+  const loadToken = async () => {
+    if (user?.id) {
+      const result = await getUserToken(user.id);
+      if (result.token) {
+        setAdminToken(result.token);
+      }
+    }
+  };
 
   const loadAllData = async () => {
     try {
@@ -347,6 +362,18 @@ export default function AdminPage() {
               align: 'center',
               format: (row: any) => <SecurityLevelBadge level={row.securityLevel} />
             },
+            {
+              id: 'metadata',
+              label: 'Metadata',
+              align: 'center',
+              format: (row: any) => row.metadata ? (
+                <Tooltip title="ดู Metadata">
+                  <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                  </IconButton>
+                </Tooltip>
+              ) : '-'
+            },
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredDatasets.map((d) => ({
@@ -410,6 +437,17 @@ export default function AdminPage() {
                         <p className="text-xs text-gray-600">{s.method} {s.api}</p>
                       </div>
                       <div className="flex gap-1">
+                        <Tooltip title="ทดสอบ API">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setSelectedService(s);
+                              setApiTestOpen(true);
+                            }}
+                          >
+                            <Icon icon="mdi:api" className="w-5 h-5 text-green-600" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="แก้ไข">
                           <IconButton
                             size="small"
@@ -712,6 +750,14 @@ export default function AdminPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* API Test Modal */}
+      <ApiTestModal
+        open={apiTestOpen}
+        onClose={() => setApiTestOpen(false)}
+        service={selectedService}
+        token={adminToken}
+      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   IconButton,
   Collapse,
   Box,
+  Tooltip,
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { SecurityLevelBadge } from './SecurityLevelBadge';
@@ -24,10 +25,12 @@ interface NestedCollapsibleTableProps {
   // Level 1: Category/UnitOwner
   level1NameField: string;
   level1ShortNameField?: string;
+  level1IconField?: string;
   level1ChildrenField: string;
   // Level 2: Dataset
   level2NameField: string;
   level2DetailField?: string;
+  level2SecurityLevelField?: string;
   level2MetadataField?: string;
   level2ChildrenField: string;
   level2Actions?: (row: any) => React.ReactNode;
@@ -45,9 +48,11 @@ export function NestedCollapsibleTable({
   level1Header,
   level1NameField,
   level1ShortNameField,
+  level1IconField,
   level1ChildrenField,
   level2NameField,
   level2DetailField,
+  level2SecurityLevelField,
   level2MetadataField,
   level2ChildrenField,
   level2Actions,
@@ -163,7 +168,7 @@ export function NestedCollapsibleTable({
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} align="center" sx={{ py: 8, border: 'none' }}>
+              <TableCell colSpan={6} align="center" sx={{ py: 8, border: 'none' }}>
                 <div className="text-gray-400 text-sm">ไม่มีข้อมูล</div>
               </TableCell>
             </TableRow>
@@ -193,7 +198,14 @@ export function NestedCollapsibleTable({
                       </IconButton>
                     </TableCell>
                     <TableCell sx={{ py: 2, px: 3, fontSize: '0.875rem', color: 'grey.800' }}>
-                      <div className="font-semibold">{level1Row[level1NameField]}</div>
+                      <div className="flex items-center gap-2 font-semibold">
+                        {level1IconField && level1Row[level1IconField] ? (
+                          <img src={level1Row[level1IconField]} alt="" className="w-8 h-8 rounded" />
+                        ) : (
+                          <Icon icon="mdi:folder" className="w-8 h-8 text-gray-400" />
+                        )}
+                        {level1Row[level1NameField]}
+                      </div>
                     </TableCell>
                     <TableCell sx={{ py: 2, px: 3, fontSize: '0.875rem', color: 'grey.600' }}>
                       {level1ShortNameField && level1Row[level1ShortNameField]}
@@ -201,6 +213,7 @@ export function NestedCollapsibleTable({
                     <TableCell align="center" sx={{ py: 2, px: 3, fontSize: '0.875rem', color: 'grey.600' }}>
                       {level2Rows.length}
                     </TableCell>
+                    <TableCell sx={{ py: 2, px: 3 }} />
                     <TableCell sx={{ py: 2, px: 3 }} />
                   </TableRow>
                   <TableRow>
@@ -211,10 +224,10 @@ export function NestedCollapsibleTable({
                         borderBottom: isLevel1Open ? '1px solid' : 'none',
                         borderColor: 'grey.100',
                       }}
-                      colSpan={4}
+                      colSpan={6}
                     >
                       <Collapse in={isLevel1Open} timeout="auto" unmountOnExit>
-                        <Box sx={{ py: 2, px: 6, backgroundColor: 'grey.25' }}>
+                        <Box sx={{ py: 2, px: 2, backgroundColor: 'grey.25' }}>
                           {level2Rows.length === 0 ? (
                             <div className="text-sm text-gray-500 py-4">ไม่มีชุดข้อมูล</div>
                           ) : (
@@ -254,12 +267,7 @@ export function NestedCollapsibleTable({
                                           </IconButton>
                                         </TableCell>
                                         <TableCell sx={{ py: 1.5, px: 2, fontSize: '0.875rem' }}>
-                                          <div className="flex items-center gap-2">
-                                            <span>{level2Row[level2NameField]}</span>
-                                            {level2Row.securityLevel && (
-                                              <SecurityLevelBadge level={level2Row.securityLevel} size="sm" />
-                                            )}
-                                          </div>
+                                          {level2Row[level2NameField]}
                                         </TableCell>
                                         <TableCell sx={{ py: 1.5, px: 2, fontSize: '0.875rem' }}>
                                           {level2DetailField && level2Row[level2DetailField]}
@@ -269,17 +277,33 @@ export function NestedCollapsibleTable({
                                           sx={{ py: 1.5, px: 2, width: 100 }}
                                         >
                                           {level2MetadataField && level2Row[level2MetadataField] ? (
-                                            <IconButton
-                                              size="small"
-                                              onClick={() =>
-                                                window.open(level2Row[level2MetadataField], '_blank')
-                                              }
-                                            >
-                                              <Icon
-                                                icon="mdi:file-document"
-                                                className="w-5 h-5 text-blue-600"
-                                              />
-                                            </IconButton>
+                                            <Tooltip title="ดู Metadata">
+                                              <IconButton
+                                                size="small"
+                                                onClick={() =>
+                                                  window.open(level2Row[level2MetadataField], '_blank')
+                                                }
+                                              >
+                                                <Icon
+                                                  icon="mdi:file-document"
+                                                  className="w-5 h-5 text-blue-600"
+                                                />
+                                              </IconButton>
+                                            </Tooltip>
+                                          ) : (
+                                            '-'
+                                          )}
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          sx={{ py: 1.5, px: 2, width: 120 }}
+                                        >
+                                          {level2SecurityLevelField && level2Row[level2SecurityLevelField] ? (
+                                            <Tooltip title="ชั้นความลับ">
+                                              <div>
+                                                <SecurityLevelBadge level={level2Row[level2SecurityLevelField]} size="sm" />
+                                              </div>
+                                            </Tooltip>
                                           ) : (
                                             '-'
                                           )}
@@ -294,10 +318,10 @@ export function NestedCollapsibleTable({
                                       <TableRow>
                                         <TableCell
                                           sx={{ paddingBottom: 0, paddingTop: 0, border: 'none' }}
-                                          colSpan={5}
+                                          colSpan={6}
                                         >
                                           <Collapse in={isLevel2Open} timeout="auto" unmountOnExit>
-                                            <Box sx={{ py: 2, px: 4, backgroundColor: 'grey.50' }}>
+                                            <Box sx={{ py: 2, px: 2, backgroundColor: 'grey.50' }}>
                                               <h4 className="font-semibold text-sm mb-2">
                                                 บริการข้อมูล
                                               </h4>
@@ -310,9 +334,9 @@ export function NestedCollapsibleTable({
                                                   {level3Rows.map((level3Row: any) => (
                                                     <div
                                                       key={level3Row.id}
-                                                      className="flex justify-between items-center bg-white p-3 rounded border border-gray-200"
+                                                      className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200"
                                                     >
-                                                      <div>
+                                                      <div className="flex-1">
                                                         <p className="font-medium text-sm">
                                                           {level3Row[level3NameField]}
                                                         </p>

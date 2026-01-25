@@ -223,9 +223,11 @@ export default function CatalogPage() {
                 label: 'Metadata',
                 align: 'center',
                 format: (row: any) => row.metadata ? (
-                  <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
-                    <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
-                  </IconButton>
+                  <Tooltip title="ดู Metadata">
+                    <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
+                      <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                    </IconButton>
+                  </Tooltip>
                 ) : '-'
               },
               { id: 'actions', label: '', align: 'right' },
@@ -255,8 +257,8 @@ export default function CatalogPage() {
                 ) : (
                   <div className="space-y-2">
                     {row.services?.map((s: any) => (
-                      <div key={s.id} className="flex justify-between items-center bg-white p-3 rounded">
-                        <div>
+                      <div key={s.id} className="flex items-center gap-3 bg-white p-3 rounded">
+                        <div className="flex-1">
                           <p className="font-medium">{s.name}</p>
                           <p className="text-xs text-gray-600">{s.method} {s.api}</p>
                         </div>

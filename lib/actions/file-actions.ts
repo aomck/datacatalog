@@ -147,6 +147,46 @@ export async function uploadRequestFiles(formData: FormData) {
 }
 
 /**
+ * Upload multiple approval files
+ */
+export async function uploadApprovalFiles(formData: FormData) {
+  try {
+    const files = formData.getAll('files') as File[];
+    if (!files || files.length === 0) {
+      return { success: false, error: 'No files provided' };
+    }
+
+    const results = await Promise.all(
+      files.map((file) => uploadFile(file, 'approvals'))
+    );
+
+    const successful = results.filter((r) => r.success);
+    const failed = results.filter((r) => !r.success);
+
+    if (failed.length > 0) {
+      return {
+        success: false,
+        error: `Failed to upload ${failed.length} file(s)`,
+        partial: successful.length > 0,
+        uploaded: successful,
+      };
+    }
+
+    return {
+      success: true,
+      files: successful.map((r) => ({
+        filePath: r.filePath!,
+        fileName: r.fileName!,
+        fileSize: r.fileSize!,
+      })),
+    };
+  } catch (error: any) {
+    console.error('Upload approval files error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Delete file
  */
 export async function deleteUploadedFile(filePath: string) {

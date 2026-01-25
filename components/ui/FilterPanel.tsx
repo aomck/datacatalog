@@ -14,6 +14,7 @@ export interface FilterPanelProps {
   showSearch?: boolean;
   showStatus?: boolean;
   showDatasetType?: boolean;
+  showSecurityLevel?: boolean;
   placeholder?: string;
 }
 
@@ -23,6 +24,7 @@ export interface FilterState {
   categoryId: string;
   status: string;
   typeId: string;
+  securityLevel: string;
 }
 
 export function FilterPanel({
@@ -35,6 +37,7 @@ export function FilterPanel({
   showSearch = true,
   showStatus = false,
   showDatasetType = false,
+  showSecurityLevel = false,
   placeholder = 'ค้นหาชื่อชุดข้อมูล, บริการ...',
 }: FilterPanelProps) {
   const [filters, setFilters] = useState<FilterState>({
@@ -43,6 +46,7 @@ export function FilterPanel({
     categoryId: '',
     status: '',
     typeId: '',
+    securityLevel: '',
   });
 
   useEffect(() => {
@@ -57,10 +61,11 @@ export function FilterPanel({
       categoryId: '',
       status: '',
       typeId: '',
+      securityLevel: '',
     });
   };
 
-  const hasActiveFilters = filters.search || filters.unitOwnerId || filters.categoryId || filters.status || filters.typeId;
+  const hasActiveFilters = filters.search || filters.unitOwnerId || filters.categoryId || filters.status || filters.typeId || filters.securityLevel;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
@@ -146,6 +151,23 @@ export function FilterPanel({
                 {t.name}
               </MenuItem>
             ))}
+          </TextField>
+        )}
+
+        {showSecurityLevel && (
+          <TextField
+            select
+            size="small"
+            label="ชั้นความลับ"
+            value={filters.securityLevel}
+            onChange={(e) => setFilters({ ...filters, securityLevel: e.target.value })}
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            <MenuItem value="ทั่วไป">ทั่วไป</MenuItem>
+            <MenuItem value="ลับ">ลับ</MenuItem>
+            <MenuItem value="ลับมาก">ลับมาก</MenuItem>
+            <MenuItem value="ลับที่สุด">ลับที่สุด</MenuItem>
           </TextField>
         )}
 

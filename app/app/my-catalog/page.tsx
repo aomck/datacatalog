@@ -11,8 +11,10 @@ import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { RequestDetailModal } from '@/components/modals/RequestDetailModal';
+import { ApprovalDetailModal } from '@/components/modals/ApprovalDetailModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { Dataset, Service } from '@/types';
 
 export default function MyCatalogPage() {
@@ -30,6 +32,9 @@ export default function MyCatalogPage() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [apiTestOpen, setApiTestOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [approvalDetailOpen, setApprovalDetailOpen] = useState(false);
+  const [selectedApprovalItem, setSelectedApprovalItem] = useState<any>(null);
+  const [selectedApprovalType, setSelectedApprovalType] = useState<'dataset' | 'service'>('dataset');
 
   useEffect(() => {
     if (user) {
@@ -152,6 +157,12 @@ export default function MyCatalogPage() {
     setApiTestOpen(true);
   };
 
+  const handleViewApprovalDetail = (item: any, type: 'dataset' | 'service') => {
+    setSelectedApprovalItem(item);
+    setSelectedApprovalType(type);
+    setApprovalDetailOpen(true);
+  };
+
   const handleViewRequest = (requestId: string) => {
     // Find all datasets and services for this request
     const requestDatasets = datasets.filter((rd) => rd.request?.id === requestId);
@@ -254,36 +265,35 @@ export default function MyCatalogPage() {
               label: 'Metadata',
               align: 'center',
               format: (row: any) => row.dataset?.metadata ? (
-                <IconButton size="small" onClick={() => window.open(row.dataset.metadata, '_blank')}>
-                  <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
-                </IconButton>
+                <Tooltip title="ดู Metadata">
+                  <IconButton size="small" onClick={() => window.open(row.dataset.metadata, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                  </IconButton>
+                </Tooltip>
               ) : '-'
             },
             { id: 'status', label: 'สถานะ', align: 'center' },
-            { id: 'actions', label: '', align: 'right' },
+            { id: 'actions', label: 'รายละเอียดคำขอ', align: 'center' },
           ]}
           rows={displayData.map((item) => ({
             ...item,
             name: item.dataset?.name,
             status: (
-              <>
-                {item.requestDataset?.approveStatus === 'APPROVED' ? (
-                  <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">อนุมัติแล้ว</span>
-                ) : item.requestDataset?.approveStatus === 'DISAPPROVED' ? (
-                  <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">ไม่อนุมัติ</span>
-                ) : (
-                  <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">รออนุมัติ</span>
-                )}
-              </>
+              <StatusBadge
+                status={item.requestDataset?.approveStatus}
+                onClick={() => handleViewApprovalDetail(item.requestDataset, 'dataset')}
+                clickable={item.requestDataset?.approveStatus !== 'REQUESTED'}
+              />
             ),
             actions: (
-              <button
-                onClick={() => handleViewRequest(item.requestDataset?.request?.id)}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                <Icon icon="mdi:file-document" className="inline w-4 h-4 mr-1" />
-                ดูคำขอ
-              </button>
+              <Tooltip title="ดูรายละเอียดคำขอ">
+                <IconButton
+                  size="small"
+                  onClick={() => handleViewRequest(item.requestDataset?.request?.id)}
+                >
+                  <Icon icon="mdi:text-box-search" className="w-5 h-5 text-blue-600" />
+                </IconButton>
+              </Tooltip>
             ),
           }))}
           getRowId={(row) => row.requestDataset?.id || row.dataset?.id}
@@ -301,40 +311,34 @@ export default function MyCatalogPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{rs.service?.name}</p>
-                            {isApproved ? (
-                              <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">อนุมัติแล้ว</span>
-                            ) : rs.approveStatus === 'DISAPPROVED' ? (
-                              <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">ไม่อนุมัติ</span>
-                            ) : (
-                              <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded">รออนุมัติ</span>
-                            )}
+                            <StatusBadge
+                              status={rs.approveStatus}
+                              onClick={() => handleViewApprovalDetail(rs, 'service')}
+                              clickable={rs.approveStatus !== 'REQUESTED'}
+                            />
                           </div>
                           <p className="text-xs text-gray-600">{rs.service?.method} {rs.service?.api}</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Tooltip title={isApproved ? "ทดสอบ API" : "รออนุมัติก่อนใช้งาน"}>
                             <span>
-                              <button
+                              <IconButton
+                                size="small"
                                 onClick={() => handleOpenApiTest(rs.service)}
                                 disabled={!isApproved}
-                                className={`px-3 py-1 text-sm rounded ${
-                                  isApproved
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                }`}
                               >
-                                <Icon icon="mdi:api" className="inline w-4 h-4 mr-1" />
-                                Test API
-                              </button>
+                                <Icon icon="mdi:api" className={`w-5 h-5 ${isApproved ? 'text-green-600' : 'text-gray-400'}`} />
+                              </IconButton>
                             </span>
                           </Tooltip>
-                          <button
-                            onClick={() => handleViewRequest(rs.request?.id)}
-                            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                          >
-                            <Icon icon="mdi:file-document" className="inline w-4 h-4 mr-1" />
-                            ดูคำขอ
-                          </button>
+                          <Tooltip title="ดูรายละเอียดคำขอ">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewRequest(rs.request?.id)}
+                            >
+                              <Icon icon="mdi:text-box-search" className="w-5 h-5 text-blue-600" />
+                            </IconButton>
+                          </Tooltip>
                         </div>
                       </div>
                     );
@@ -351,6 +355,14 @@ export default function MyCatalogPage() {
         open={requestDialogOpen}
         onClose={() => setRequestDialogOpen(false)}
         request={selectedRequest}
+      />
+
+      {/* Approval Detail Modal */}
+      <ApprovalDetailModal
+        open={approvalDetailOpen}
+        onClose={() => setApprovalDetailOpen(false)}
+        item={selectedApprovalItem}
+        type={selectedApprovalType}
       />
 
       {/* API Test Modal */}

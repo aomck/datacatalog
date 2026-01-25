@@ -164,7 +164,12 @@ export async function getAllRequests(page = 1, limit = 30): Promise<PaginatedRes
                 include: {
                   unitOwner: true,
                   category: true,
+                  type: true,
                 },
+              },
+              approver: true,
+              approvalFiles: {
+                orderBy: { createdAt: 'desc' },
               },
             },
           },
@@ -174,6 +179,10 @@ export async function getAllRequests(page = 1, limit = 30): Promise<PaginatedRes
                 include: {
                   dataset: true,
                 },
+              },
+              approver: true,
+              approvalFiles: {
+                orderBy: { createdAt: 'desc' },
               },
             },
           },
@@ -277,33 +286,74 @@ export async function bulkUpdateRequestStatus(
   serviceIds: string[],
   status: ApproveStatus,
   comment: string,
-  userId: string
+  userId: string,
+  uploadedFiles?: { filePath: string; fileName: string; fileSize: number }[]
 ) {
   try {
-    await prisma.$transaction([
-      prisma.requestDataset.updateMany({
-        where: {
-          id: { in: datasetIds },
-        },
-        data: {
-          approveStatus: status,
-          approvedBy: userId,
-          approvedAt: new Date(),
-          comment,
-        },
-      }),
-      prisma.requestService.updateMany({
-        where: {
-          id: { in: serviceIds },
-        },
-        data: {
-          approveStatus: status,
-          approvedBy: userId,
-          approvedAt: new Date(),
-          comment,
-        },
-      }),
-    ]);
+
+    await prisma.$transaction(async (tx) => {
+      // Update datasets
+      if (datasetIds.length > 0) {
+        await tx.requestDataset.updateMany({
+          where: {
+            id: { in: datasetIds },
+          },
+          data: {
+            approveStatus: status,
+            approvedBy: userId,
+            approvedAt: new Date(),
+            comment,
+          },
+        });
+
+        // Create approval files for each dataset
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          for (const datasetId of datasetIds) {
+            await tx.requestDatasetApprovalFile.createMany({
+              data: uploadedFiles.map((file) => ({
+                requestDatasetId: datasetId,
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: '', // Will be determined from file extension
+                fileSize: file.fileSize,
+                createdBy: userId,
+              })),
+            });
+          }
+        }
+      }
+
+      // Update services
+      if (serviceIds.length > 0) {
+        await tx.requestService.updateMany({
+          where: {
+            id: { in: serviceIds },
+          },
+          data: {
+            approveStatus: status,
+            approvedBy: userId,
+            approvedAt: new Date(),
+            comment,
+          },
+        });
+
+        // Create approval files for each service
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          for (const serviceId of serviceIds) {
+            await tx.requestServiceApprovalFile.createMany({
+              data: uploadedFiles.map((file) => ({
+                requestServiceId: serviceId,
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: '', // Will be determined from file extension
+                fileSize: file.fileSize,
+                createdBy: userId,
+              })),
+            });
+          }
+        }
+      }
+    });
 
     revalidatePath('/app/approver');
     revalidatePath('/app/my-catalog');

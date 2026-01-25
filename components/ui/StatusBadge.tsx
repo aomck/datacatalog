@@ -2,6 +2,8 @@ import type { ApproveStatus } from '@/types';
 
 interface StatusBadgeProps {
   status: ApproveStatus;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
 const statusConfig: Record<
@@ -30,12 +32,18 @@ const statusConfig: Record<
   },
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, onClick, clickable = false }: StatusBadgeProps) {
   const config = statusConfig[status];
+  const isInteractive = clickable && onClick;
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text} ${
+        isInteractive ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
+      }`}
+      onClick={isInteractive ? onClick : undefined}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
     >
       {config.label}
     </span>

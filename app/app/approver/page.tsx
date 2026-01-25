@@ -14,6 +14,7 @@ import { ApprovalModal } from '@/components/modals/ApprovalModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { RequestDetailModal } from '@/components/modals/RequestDetailModal';
 import { ApprovalHistoryModal } from '@/components/modals/ApprovalHistoryModal';
+import { ApprovalDetailModal } from '@/components/modals/ApprovalDetailModal';
 import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { User } from '@/components/ui/User';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
@@ -31,9 +32,12 @@ export default function ApproverPage() {
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [requestDetailOpen, setRequestDetailOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [approvalDetailOpen, setApprovalDetailOpen] = useState(false);
   const [apiTestOpen, setApiTestOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedApprovalItem, setSelectedApprovalItem] = useState<any>(null);
+  const [selectedApprovalType, setSelectedApprovalType] = useState<'dataset' | 'service'>('dataset');
   const [selectedService, setSelectedService] = useState<any>(null);
   const [adminToken, setAdminToken] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -178,6 +182,12 @@ export default function ApproverPage() {
   const handleViewHistory = (item: any) => {
     setSelectedItem(item);
     setHistoryOpen(true);
+  };
+
+  const handleViewApprovalDetail = (item: any, type: 'dataset' | 'service') => {
+    setSelectedApprovalItem(item);
+    setSelectedApprovalType(type);
+    setApprovalDetailOpen(true);
   };
 
   const handleTestApi = (service: any) => {
@@ -334,7 +344,7 @@ export default function ApproverPage() {
                 <div className="flex gap-1">
                   <Tooltip title="ดูรายละเอียดคำขอ">
                     <IconButton size="small" onClick={() => handleViewRequest(r)}>
-                      <Icon icon="mdi:file-document" className="w-5 h-5" />
+                      <Icon icon="mdi:text-box-search" className="w-5 h-5 text-blue-600" />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="ดำเนินการ">
@@ -387,7 +397,11 @@ export default function ApproverPage() {
                               <Icon icon="mdi:history" className="w-5 h-5" />
                             </IconButton>
                           </Tooltip>
-                          <StatusBadge status={rd.approveStatus} />
+                          <StatusBadge
+                            status={rd.approveStatus}
+                            onClick={() => handleViewApprovalDetail(rd, 'dataset')}
+                            clickable={rd.approveStatus !== 'REQUESTED'}
+                          />
                         </div>
                       </div>
 
@@ -410,10 +424,10 @@ export default function ApproverPage() {
                                     <p className="text-xs text-gray-600">{rs.service?.method} {rs.service?.api}</p>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                   <Tooltip title="ทดสอบ API">
                                     <IconButton size="small" onClick={() => handleTestApi(rs.service)}>
-                                      <Icon icon="mdi:play-circle" className="w-5 h-5 text-green-600" />
+                                      <Icon icon="mdi:api" className="w-5 h-5 text-green-600" />
                                     </IconButton>
                                   </Tooltip>
                                   <Tooltip title="ดูประวัติการอนุมัติ">
@@ -421,7 +435,11 @@ export default function ApproverPage() {
                                       <Icon icon="mdi:history" className="w-5 h-5" />
                                     </IconButton>
                                   </Tooltip>
-                                  <StatusBadge status={rs.approveStatus} />
+                                  <StatusBadge
+                                    status={rs.approveStatus}
+                                    onClick={() => handleViewApprovalDetail(rs, 'service')}
+                                    clickable={rs.approveStatus !== 'REQUESTED'}
+                                  />
                                 </div>
                               </div>
                             ))}
@@ -459,6 +477,13 @@ export default function ApproverPage() {
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
         item={selectedItem}
+      />
+
+      <ApprovalDetailModal
+        open={approvalDetailOpen}
+        onClose={() => setApprovalDetailOpen(false)}
+        item={selectedApprovalItem}
+        type={selectedApprovalType}
       />
 
       <ApiTestModal
