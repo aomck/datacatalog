@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getServiceUsageAnalytics } from '@/lib/actions/analytics-actions';
 import { getRecentLogs, getLogFilterOptions } from '@/lib/actions/recent-logs-actions';
 import DashboardClient from './dashboard-client';

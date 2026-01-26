@@ -142,6 +142,8 @@ export async function getRecentLogs(filters: RecentLogsFilters): Promise<RecentL
     const logs = logsData.map((log) => ({
       ...log,
       createdAt: log.createdAt.toISOString(),
+      requestIp: log.requestIp || '',
+      userAgent: log.userAgent || '',
     }));
 
     return {

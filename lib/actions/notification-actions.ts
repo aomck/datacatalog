@@ -244,7 +244,7 @@ export async function getUnreadStatus(userId: string): Promise<{
 
       // ถ้ายังไม่เคยอ่าน หรือ มีการอัพเดทหลังจากอ่านครั้งล่าสุด
       const isUnread = !lastReadAt || (lastUpdateAt && lastUpdateAt > lastReadAt);
-      datasetUnreadStatus[dataset.id] = isUnread;
+      datasetUnreadStatus[dataset.id] = !!isUnread;
 
       if (isUnread) {
         console.log('[UnreadStatus] Dataset unread:', dataset.id, 'lastUpdate:', lastUpdateAt, 'lastRead:', lastReadAt);
@@ -258,7 +258,7 @@ export async function getUnreadStatus(userId: string): Promise<{
 
       // ถ้ายังไม่เคยอ่าน หรือ มีการอัพเดทหลังจากอ่านครั้งล่าสุด
       const isUnread = !lastReadAt || (lastUpdateAt && lastUpdateAt > lastReadAt);
-      serviceUnreadStatus[service.id] = isUnread;
+      serviceUnreadStatus[service.id] = !!isUnread;
 
       if (isUnread) {
         console.log('[UnreadStatus] Service unread:', service.id, 'lastUpdate:', lastUpdateAt, 'lastRead:', lastReadAt);

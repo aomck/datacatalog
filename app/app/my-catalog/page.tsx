@@ -150,6 +150,7 @@ export default function MyCatalogPage() {
     categoryId: '',
     status: '',
     typeId: '',
+    securityLevel: '',
   });
 
   const handleFilterChange = (newFilters: FilterState) => {

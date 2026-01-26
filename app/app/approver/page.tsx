@@ -48,6 +48,7 @@ export default function ApproverPage() {
     categoryId: '',
     status: '',
     typeId: '',
+    securityLevel: '',
   });
 
   useEffect(() => {

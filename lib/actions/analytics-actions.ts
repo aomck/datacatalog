@@ -341,6 +341,8 @@ export async function getServiceUsageAnalytics(
     const recentLogs = recentLogsData.map((log) => ({
       ...log,
       createdAt: log.createdAt.toISOString(),
+      requestIp: log.requestIp || '',
+      userAgent: log.userAgent || '',
     }));
 
     return {

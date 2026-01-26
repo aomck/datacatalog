@@ -178,25 +178,25 @@ export default function AdminPage() {
           console.log('Uploading Service how-to...');
           const result = await uploadServiceHowTo(file);
           console.log('Upload result:', result);
-          if (result.success) howTo = result.filePath;
+          if (result.success && result.filePath) howTo = result.filePath;
         } else if (activeTab === 0) {
           // Dataset metadata
           console.log('Uploading Dataset metadata...');
           const result = await uploadDatasetMetadata(file);
           console.log('Upload result:', result);
-          if (result.success) metadata = result.filePath;
+          if (result.success && result.filePath) metadata = result.filePath;
         } else if (activeTab === 1) {
           // Unit Owner icon
           console.log('Uploading Unit Owner icon...');
           const result = await uploadUnitOwnerIcon(file);
           console.log('Upload result:', result);
-          if (result.success) iconPath = result.filePath;
+          if (result.success && result.filePath) iconPath = result.filePath;
         } else if (activeTab === 2) {
           // Category icon
           console.log('Uploading Category icon...');
           const result = await uploadCategoryIcon(file);
           console.log('Upload result:', result);
-          if (result.success) iconPath = result.filePath;
+          if (result.success && result.filePath) iconPath = result.filePath;
         }
       }
 

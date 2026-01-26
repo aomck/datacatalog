@@ -62,7 +62,7 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">ผู้อนุมัติ</label>
               {item.approvedBy ? (
-                <User userId={item.approvedBy} type="full" size="small" />
+                <User userId={item.approvedBy} type="avatar-name" size="small" />
               ) : (
                 <p className="text-gray-500">-</p>
               )}

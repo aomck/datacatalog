@@ -1,6 +1,6 @@
 'use server';
 
-import { uploadFile, deleteFile, getFileUrl } from '@/lib/file-utils';
+import { uploadFile, deleteFile, getFileUrl, UploadFileResult } from '@/lib/file-utils';
 
 /**
  * Upload icon file
@@ -23,7 +23,7 @@ export async function uploadIconFile(formData: FormData) {
 /**
  * Upload unit owner icon
  */
-export async function uploadUnitOwnerIcon(file: File) {
+export async function uploadUnitOwnerIcon(file: File): Promise<UploadFileResult> {
   try {
     if (!file) {
       return { success: false, error: 'No file provided' };
@@ -40,7 +40,7 @@ export async function uploadUnitOwnerIcon(file: File) {
 /**
  * Upload category icon
  */
-export async function uploadCategoryIcon(file: File) {
+export async function uploadCategoryIcon(file: File): Promise<UploadFileResult> {
   try {
     if (!file) {
       return { success: false, error: 'No file provided' };
@@ -57,7 +57,7 @@ export async function uploadCategoryIcon(file: File) {
 /**
  * Upload service how-to file
  */
-export async function uploadServiceHowTo(file: File) {
+export async function uploadServiceHowTo(file: File): Promise<UploadFileResult> {
   try {
     if (!file) {
       return { success: false, error: 'No file provided' };
@@ -74,7 +74,7 @@ export async function uploadServiceHowTo(file: File) {
 /**
  * Upload dataset metadata file
  */
-export async function uploadDatasetMetadata(file: File) {
+export async function uploadDatasetMetadata(file: File): Promise<UploadFileResult> {
   try {
     if (!file) {
       return { success: false, error: 'No file provided' };

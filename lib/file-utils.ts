@@ -28,12 +28,12 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
 /**
  * Upload file to /public/uploads/{folder}/
  * @param file - File to upload
- * @param folder - Subfolder in uploads (icons, unit-owners, categories, services, requests)
+ * @param folder - Subfolder in uploads (icons, unit-owners, categories, services, requests, approvals)
  * @returns Upload result with file path relative to public/uploads/
  */
 export async function uploadFile(
   file: File,
-  folder: 'icons' | 'unit-owners' | 'categories' | 'services' | 'requests'
+  folder: 'icons' | 'unit-owners' | 'categories' | 'services' | 'requests' | 'approvals'
 ): Promise<UploadFileResult> {
   try {
     // Ensure upload directory exists
