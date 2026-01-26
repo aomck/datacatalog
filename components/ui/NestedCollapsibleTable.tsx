@@ -246,12 +246,14 @@ export function NestedCollapsibleTable({
                                         hover
                                         sx={{
                                           '&:hover': { backgroundColor: 'white' },
+                                          opacity: level2Row._accessLevel === 'disabled' ? 0.5 : 1,
                                         }}
                                       >
                                         <TableCell sx={{ py: 1.5, px: 2, width: 50 }}>
                                           <IconButton
                                             size="small"
                                             onClick={() => toggleLevel2(level2Id)}
+                                            disabled={level2Row._accessLevel === 'disabled'}
                                             sx={{
                                               color: 'grey.600',
                                               '&:hover': { backgroundColor: 'grey.100' },
@@ -267,10 +269,24 @@ export function NestedCollapsibleTable({
                                             />
                                           </IconButton>
                                         </TableCell>
-                                        <TableCell sx={{ py: 1.5, px: 2, fontSize: '0.875rem' }}>
+                                        <TableCell
+                                          sx={{
+                                            py: 1.5,
+                                            px: 2,
+                                            fontSize: '0.875rem',
+                                            color: level2Row._accessLevel === 'disabled' ? 'grey.500' : 'inherit',
+                                          }}
+                                        >
                                           {level2Row[level2NameField]}
                                         </TableCell>
-                                        <TableCell sx={{ py: 1.5, px: 2, fontSize: '0.875rem' }}>
+                                        <TableCell
+                                          sx={{
+                                            py: 1.5,
+                                            px: 2,
+                                            fontSize: '0.875rem',
+                                            color: level2Row._accessLevel === 'disabled' ? 'grey.500' : 'inherit',
+                                          }}
+                                        >
                                           {level2DetailField && level2Row[level2DetailField]}
                                         </TableCell>
                                         <TableCell
@@ -279,17 +295,20 @@ export function NestedCollapsibleTable({
                                         >
                                           {level2MetadataField && level2Row[level2MetadataField] ? (
                                             <Tooltip title="ดู Metadata">
-                                              <IconButton
-                                                size="small"
-                                                onClick={() =>
-                                                  window.open(level2Row[level2MetadataField], '_blank')
-                                                }
-                                              >
-                                                <Icon
-                                                  icon="mdi:file-document"
-                                                  className="w-5 h-5 text-blue-600"
-                                                />
-                                              </IconButton>
+                                              <span>
+                                                <IconButton
+                                                  size="small"
+                                                  disabled={level2Row._accessLevel === 'disabled'}
+                                                  onClick={() =>
+                                                    window.open(level2Row[level2MetadataField], '_blank')
+                                                  }
+                                                >
+                                                  <Icon
+                                                    icon="mdi:file-document"
+                                                    className="w-5 h-5 text-blue-600"
+                                                  />
+                                                </IconButton>
+                                              </span>
                                             </Tooltip>
                                           ) : (
                                             '-'
@@ -336,9 +355,17 @@ export function NestedCollapsibleTable({
                                                     <div
                                                       key={level3Row.id}
                                                       className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200"
+                                                      style={{
+                                                        opacity: level2Row._accessLevel === 'disabled' ? 0.5 : 1,
+                                                      }}
                                                     >
                                                       <div className="flex-1">
-                                                        <p className="font-medium text-sm">
+                                                        <p
+                                                          className="font-medium text-sm"
+                                                          style={{
+                                                            color: level2Row._accessLevel === 'disabled' ? '#9ca3af' : 'inherit',
+                                                          }}
+                                                        >
                                                           {level3Row[level3NameField]}
                                                         </p>
                                                         {level3DetailField &&

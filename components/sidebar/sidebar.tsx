@@ -90,10 +90,10 @@ export function Sidebar() {
   const { user, permissions } = usePermission();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  console.log('=== SIDEBAR PERMISSIONS DEBUG ===');
-  console.log('Full permissions object:', JSON.stringify(permissions, null, 2));
-  console.log('Action permissions:', permissions?.action_permission);
-  console.log('datacatalog permissions:', permissions?.action_permission?.datacatalog);
+  // console.log('=== SIDEBAR PERMISSIONS DEBUG ===');
+  // console.log('Full permissions object:', JSON.stringify(permissions, null, 2));
+  // console.log('Action permissions:', permissions?.action_permission);
+  // console.log('datacatalog permissions:', permissions?.action_permission?.datacatalog);
 
   // Load notification count
   useEffect(() => {
@@ -131,7 +131,7 @@ export function Sidebar() {
     if (!item.service || !item.route) return true;
     // Otherwise check permission
     const hasPermission = hasAnyAction(permissions, item.service, item.route);
-    console.log(`Menu: ${item.nameTh} (${item.service}.${item.route}) - Has Permission: ${hasPermission}`);
+    // console.log(`Menu: ${item.nameTh} (${item.service}.${item.route}) - Has Permission: ${hasPermission}`);
     return hasPermission;
   });
 

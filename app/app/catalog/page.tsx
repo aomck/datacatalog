@@ -33,6 +33,7 @@ export default function CatalogPage() {
     loadData();
     loadDatasetTypes();
     if (user) {
+      console.log("USER:::",user)
       loadRequestStatus();
     }
   }, [activeTab, user]);
@@ -76,11 +77,75 @@ export default function CatalogPage() {
       const result = activeTab === 0
         ? await getCategoriesByUnitOwner(id, 1, 100)
         : await getUnitOwnersByCategory(id, 1, 100);
-      setNestedData(result.data);
-      setFilteredData(result.data);
+
+      console.log('Raw nested data:', result.data);
+      console.log('User confidentiality access:', user?.access?.confidentiality_access);
+
+      // Log first dataset's security level if available
+      if (result.data[0]?.datasets?.[0]) {
+        console.log('First dataset:', result.data[0].datasets[0]);
+        console.log('Security level:', result.data[0].datasets[0].securityLevel);
+      }
+
+      // Apply confidentiality access control immediately after loading
+      const processedData = result.data.map((parent: any) => {
+        const filteredDatasets = parent.datasets?.filter((d: any) => {
+          return getDatasetAccessLevel(d) !== 'hidden';
+        }).map((d: any) => ({
+          ...d,
+          _accessLevel: getDatasetAccessLevel(d)
+        })) || [];
+
+        return { ...parent, datasets: filteredDatasets };
+      }).filter((parent: any) => parent.datasets.length > 0);
+
+      console.log('Processed data after access control:', processedData);
+
+      setNestedData(processedData);
+      setFilteredData(processedData);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Map security level number to text
+  const securityLevelMap: { [key: number]: string | null } = {
+    0: null, // ไม่มีชั้นความลับ
+    1: null, // ทั่วไป
+    2: "ลับ",
+    3: "ลับมาก",
+    4: "ลับที่สุด"
+  };
+
+  // Check dataset access level based on user permissions
+  const getDatasetAccessLevel = (dataset: any): 'full' | 'disabled' | 'hidden' => {
+    // Convert string to number if needed
+    const securityLevel = typeof dataset.securityLevel === 'string'
+      ? parseInt(dataset.securityLevel, 10)
+      : dataset.securityLevel;
+    const securityLabel = securityLevelMap[securityLevel];
+
+    console.log('Checking dataset:', dataset.name, 'securityLevel:', securityLevel, 'securityLabel:', securityLabel);
+
+    // ถ้าเป็น level 0 หรือ 1 = เข้าถึงได้เสมอ
+    if (!securityLabel) {
+      console.log('-> No security label, returning full access');
+      return 'full';
+    }
+
+    const accessLevel = user?.access?.confidentiality_access?.[securityLabel];
+    console.log('-> User access level for', securityLabel, ':', accessLevel);
+
+    if (accessLevel === 2) {
+      console.log('-> Returning hidden');
+      return 'hidden'; // ไม่แสดง
+    }
+    if (accessLevel === 1) {
+      console.log('-> Returning disabled');
+      return 'disabled'; // แสดงแต่ disabled
+    }
+    console.log('-> Returning full access');
+    return 'full'; // เข้าถึงได้
   };
 
   const handleFilterChange = (filters: FilterState) => {
@@ -122,6 +187,18 @@ export default function CatalogPage() {
     if (activeTab === 1 && filters.unitOwnerId) {
       filtered = filtered.filter((unitOwner) => unitOwner.id === filters.unitOwnerId);
     }
+
+    // Apply confidentiality access control
+    filtered = filtered.map((parent) => {
+      const filteredDatasets = parent.datasets?.filter((d: any) => {
+        return getDatasetAccessLevel(d) !== 'hidden';
+      }).map((d: any) => ({
+        ...d,
+        _accessLevel: getDatasetAccessLevel(d)
+      })) || [];
+
+      return { ...parent, datasets: filteredDatasets };
+    }).filter((parent) => parent.datasets.length > 0);
 
     setFilteredData(filtered);
   };
@@ -262,36 +339,50 @@ export default function CatalogPage() {
             level2MetadataField="metadata"
             level2SecurityLevelField="securityLevel"
             level2ChildrenField="services"
-            level2Actions={(dataset) => (
-              <button
-                onClick={() => toggleCart({ type: 'dataset', id: dataset.id, name: dataset.name })}
-                disabled={isDisabled(dataset.id, 'dataset')}
-                className={`px-3 py-1 text-sm rounded ${
-                  cart.find((i) => i.id === dataset.id && i.type === 'dataset')
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                } disabled:bg-gray-300 disabled:cursor-not-allowed`}
-              >
-                {getButtonLabel(dataset.id, 'dataset')}
-              </button>
-            )}
+            level2Actions={(dataset) => {
+              const accessLevel = dataset._accessLevel || 'full';
+              const isAccessDisabled = accessLevel === 'disabled' || isDisabled(dataset.id, 'dataset');
+
+              return (
+                <button
+                  onClick={() => toggleCart({ type: 'dataset', id: dataset.id, name: dataset.name })}
+                  disabled={isAccessDisabled}
+                  className={`px-3 py-1 text-sm rounded ${
+                    accessLevel === 'disabled'
+                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                      : cart.find((i) => i.id === dataset.id && i.type === 'dataset')
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                >
+                  {accessLevel === 'disabled' ? 'ไม่มีสิทธิ์เข้าถึง' : getButtonLabel(dataset.id, 'dataset')}
+                </button>
+              );
+            }}
             level3NameField="name"
             level3DetailField="detail"
             level3MethodField="method"
             level3ApiField="api"
-            level3Actions={(service, dataset) => (
-              <button
-                onClick={() => toggleCart({ type: 'service', id: service.id, name: service.name, datasetId: dataset.id, datasetName: dataset.name })}
-                disabled={isDisabled(service.id, 'service')}
-                className={`px-3 py-1 text-sm rounded ${
-                  cart.find((i) => i.id === service.id && i.type === 'service')
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                } disabled:bg-gray-300 disabled:cursor-not-allowed`}
-              >
-                {getButtonLabel(service.id, 'service')}
-              </button>
-            )}
+            level3Actions={(service, dataset) => {
+              const accessLevel = dataset._accessLevel || 'full';
+              const isAccessDisabled = accessLevel === 'disabled' || isDisabled(service.id, 'service');
+
+              return (
+                <button
+                  onClick={() => toggleCart({ type: 'service', id: service.id, name: service.name, datasetId: dataset.id, datasetName: dataset.name })}
+                  disabled={isAccessDisabled}
+                  className={`px-3 py-1 text-sm rounded ${
+                    accessLevel === 'disabled'
+                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                      : cart.find((i) => i.id === service.id && i.type === 'service')
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                >
+                  {accessLevel === 'disabled' ? 'ไม่มีสิทธิ์เข้าถึง' : getButtonLabel(service.id, 'service')}
+                </button>
+              );
+            }}
           />
         </div>
       )}
