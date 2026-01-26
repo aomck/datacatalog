@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Group by date
     const dailyUsageMap = new Map<string, number>();
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const date = log.createdAt.toISOString().split('T')[0];
       dailyUsageMap.set(date, (dailyUsageMap.get(date) || 0) + 1);
     });
