@@ -675,7 +675,6 @@ export default function AdminPage() {
                     const result = await updateService(editingItem.id, {
                       name: editingItem.name,
                       detail: editingItem.detail,
-                      datasetId: editingItem.datasetId,
                       method: editingItem.method,
                       api: editingItem.api,
                       howTo: null
