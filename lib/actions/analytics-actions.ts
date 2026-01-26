@@ -128,7 +128,7 @@ export async function getServiceUsageAnalytics(
 
     // Group by date for daily usage
     const dailyUsageMap = new Map<string, number>();
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const date = log.createdAt.toISOString().split('T')[0];
       dailyUsageMap.set(date, (dailyUsageMap.get(date) || 0) + 1);
     });
@@ -153,7 +153,7 @@ export async function getServiceUsageAnalytics(
     });
 
     const topServicesData = await Promise.all(
-      serviceUsage.map(async (item) => {
+      serviceUsage.map(async (item: { serviceId: string; _count: { serviceId: number } }) => {
         const service = await prisma.service.findUnique({
           where: { id: item.serviceId },
           select: {
@@ -193,7 +193,7 @@ export async function getServiceUsageAnalytics(
       string,
       { name: string; unitOwner: any; count: number }
     >();
-    topServicesData.forEach((service) => {
+    topServicesData.forEach((service: { datasetId: string; datasetName: string; unitOwnerId: string; unitOwnerName: string; unitOwnerShortName: string; count: number }) => {
       const existing = datasetUsageMap.get(service.datasetId);
       if (existing) {
         existing.count += service.count;
@@ -245,7 +245,7 @@ export async function getServiceUsageAnalytics(
       string,
       { name: string; shortName: string; count: number }
     >();
-    topServicesData.forEach((service) => {
+    topServicesData.forEach((service: { unitOwnerId: string; unitOwnerName: string; unitOwnerShortName: string; count: number }) => {
       const existing = unitOwnerUsageMap.get(service.unitOwnerId);
       if (existing) {
         existing.count += service.count;
@@ -306,7 +306,7 @@ export async function getServiceUsageAnalytics(
 
     // Hourly distribution (for heatmap)
     const hourlyDistribution = new Array(24).fill(0);
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const hour = log.createdAt.getHours();
       hourlyDistribution[hour]++;
     });
@@ -327,7 +327,7 @@ export async function getServiceUsageAnalytics(
       'ศุกร์',
       'เสาร์',
     ];
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const day = log.createdAt.getDay();
       dayOfWeekDistribution[day]++;
     });

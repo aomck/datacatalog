@@ -217,7 +217,7 @@ export async function getUsersFromCore(userIds: string[]): Promise<{
         uncachedIds.map((id) => getUserFromCore(id))
       );
 
-      results.forEach((result, index) => {
+      results.forEach((result: { success: boolean; data?: any }, index: number) => {
         if (result.success && result.data) {
           users[uncachedIds[index]] = result.data;
         }

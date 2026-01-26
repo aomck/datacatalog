@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     });
 
     const topServicesData = await Promise.all(
-      serviceUsage.map(async (item) => {
+      serviceUsage.map(async (item: { serviceId: string; _count: { serviceId: number } }) => {
         const service = await prisma.service.findUnique({
           where: { id: item.serviceId },
           select: {
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     // Top datasets (aggregate from services)
     const datasetUsageMap = new Map<string, { name: string; unitOwner: any; count: number }>();
-    topServicesData.forEach((service) => {
+    topServicesData.forEach((service: { datasetId: string; datasetName: string; unitOwnerId: string; unitOwnerName: string; unitOwnerShortName: string; count: number }) => {
       const existing = datasetUsageMap.get(service.datasetId);
       if (existing) {
         existing.count += service.count;
@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
 
     // Hourly distribution (for heatmap)
     const hourlyDistribution = new Array(24).fill(0);
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const hour = log.createdAt.getHours();
       hourlyDistribution[hour]++;
     });
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
     // Day of week distribution
     const dayOfWeekDistribution = new Array(7).fill(0);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    logs.forEach((log) => {
+    logs.forEach((log: { createdAt: Date }) => {
       const day = log.createdAt.getDay();
       dayOfWeekDistribution[day]++;
     });

@@ -33,19 +33,19 @@ export async function createRequest(data: {
         detail: data.detail,
         createdBy: data.userId,
         requestDatasets: {
-          create: data.datasetIds.map((datasetId) => ({
+          create: data.datasetIds.map((datasetId: string) => ({
             datasetId,
             approveStatus: 'REQUESTED',
           })),
         },
         requestServices: {
-          create: data.serviceIds.map((serviceId) => ({
+          create: data.serviceIds.map((serviceId: string) => ({
             serviceId,
             approveStatus: 'REQUESTED',
           })),
         },
         requestFiles: {
-          create: data.files.map((file) => ({
+          create: data.files.map((file: { filePath: string; fileName: string; fileType: string; fileSize: number }) => ({
             filePath: file.filePath,
             fileName: file.fileName,
             fileType: file.fileType,
@@ -310,7 +310,7 @@ export async function bulkUpdateRequestStatus(
         if (uploadedFiles && uploadedFiles.length > 0) {
           for (const datasetId of datasetIds) {
             await tx.requestDatasetApprovalFile.createMany({
-              data: uploadedFiles.map((file) => ({
+              data: uploadedFiles.map((file: { filePath: string; fileName: string; fileSize: number }) => ({
                 requestDatasetId: datasetId,
                 filePath: file.filePath,
                 fileName: file.fileName,
@@ -341,7 +341,7 @@ export async function bulkUpdateRequestStatus(
         if (uploadedFiles && uploadedFiles.length > 0) {
           for (const serviceId of serviceIds) {
             await tx.requestServiceApprovalFile.createMany({
-              data: uploadedFiles.map((file) => ({
+              data: uploadedFiles.map((file: { filePath: string; fileName: string; fileSize: number }) => ({
                 requestServiceId: serviceId,
                 filePath: file.filePath,
                 fileName: file.fileName,

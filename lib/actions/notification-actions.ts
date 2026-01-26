@@ -52,7 +52,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
 
     // Create a map for quick lookup
     const readMap = new Map<string, Date>();
-    readRecords.forEach((record) => {
+    readRecords.forEach((record: { requestDatasetId: string | null; requestServiceId: string | null; lastReadAt: Date }) => {
       if (record.requestDatasetId) {
         readMap.set(`dataset_${record.requestDatasetId}`, record.lastReadAt);
       }
@@ -220,7 +220,7 @@ export async function getUnreadStatus(userId: string): Promise<{
 
     // Create a map for quick lookup
     const readMap = new Map<string, Date>();
-    readRecords.forEach((record) => {
+    readRecords.forEach((record: { requestDatasetId: string | null; requestServiceId: string | null; lastReadAt: Date }) => {
       if (record.requestDatasetId) {
         readMap.set(`dataset_${record.requestDatasetId}`, record.lastReadAt);
       }

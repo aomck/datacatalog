@@ -117,11 +117,11 @@ export async function uploadRequestFiles(formData: FormData) {
     }
 
     const results = await Promise.all(
-      files.map((file) => uploadFile(file, 'requests'))
+      files.map((file: File) => uploadFile(file, 'requests'))
     );
 
-    const successful = results.filter((r) => r.success);
-    const failed = results.filter((r) => !r.success);
+    const successful = results.filter((r: UploadFileResult) => r.success);
+    const failed = results.filter((r: UploadFileResult) => !r.success);
 
     if (failed.length > 0) {
       return {
@@ -134,7 +134,7 @@ export async function uploadRequestFiles(formData: FormData) {
 
     return {
       success: true,
-      files: successful.map((r) => ({
+      files: successful.map((r: UploadFileResult) => ({
         filePath: r.filePath!,
         fileName: r.fileName!,
         fileSize: r.fileSize!,
@@ -157,11 +157,11 @@ export async function uploadApprovalFiles(formData: FormData) {
     }
 
     const results = await Promise.all(
-      files.map((file) => uploadFile(file, 'approvals'))
+      files.map((file: File) => uploadFile(file, 'approvals'))
     );
 
-    const successful = results.filter((r) => r.success);
-    const failed = results.filter((r) => !r.success);
+    const successful = results.filter((r: UploadFileResult) => r.success);
+    const failed = results.filter((r: UploadFileResult) => !r.success);
 
     if (failed.length > 0) {
       return {
@@ -174,7 +174,7 @@ export async function uploadApprovalFiles(formData: FormData) {
 
     return {
       success: true,
-      files: successful.map((r) => ({
+      files: successful.map((r: UploadFileResult) => ({
         filePath: r.filePath!,
         fileName: r.fileName!,
         fileSize: r.fileSize!,
