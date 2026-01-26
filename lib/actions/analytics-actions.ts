@@ -235,7 +235,7 @@ export async function getServiceUsageAnalytics(
       take: 10,
     });
 
-    const topUsers = userUsage.map((item) => ({
+    const topUsers = userUsage.map((item: { userId: string; _count: { userId: number } }) => ({
       userId: item.userId,
       count: item._count.userId,
     }));
@@ -338,7 +338,7 @@ export async function getServiceUsageAnalytics(
     }));
 
     // Convert dates to ISO strings for serialization
-    const recentLogs = recentLogsData.map((log) => ({
+    const recentLogs = recentLogsData.map((log: any) => ({
       ...log,
       createdAt: log.createdAt.toISOString(),
       requestIp: log.requestIp || '',

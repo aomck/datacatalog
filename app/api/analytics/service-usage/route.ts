@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
       take: 10,
     });
 
-    const topUsers = userUsage.map((item) => ({
+    const topUsers = userUsage.map((item: { userId: string; _count: { userId: number } }) => ({
       userId: item.userId,
       count: item._count.userId,
     }));

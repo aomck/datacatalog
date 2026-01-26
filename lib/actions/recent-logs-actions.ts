@@ -139,7 +139,7 @@ export async function getRecentLogs(filters: RecentLogsFilters): Promise<RecentL
     });
 
     // Convert dates to ISO strings for serialization
-    const logs = logsData.map((log) => ({
+    const logs = logsData.map((log: any) => ({
       ...log,
       createdAt: log.createdAt.toISOString(),
       requestIp: log.requestIp || '',
@@ -247,13 +247,13 @@ export async function getLogFilterOptions(startDate: string, endDate: string) {
     // Deduplicate datasets and unit owners
     const uniqueDatasets = Array.from(
       new Map(
-        datasets.map((d) => [d.service.dataset.id, d.service.dataset])
+        datasets.map((d: any) => [d.service.dataset.id, d.service.dataset])
       ).values()
     );
 
     const uniqueUnitOwners = Array.from(
       new Map(
-        unitOwners.map((u) => [
+        unitOwners.map((u: any) => [
           u.service.dataset.unitOwner.id,
           u.service.dataset.unitOwner,
         ])
@@ -261,10 +261,10 @@ export async function getLogFilterOptions(startDate: string, endDate: string) {
     );
 
     return {
-      services: services.map((s) => s.service),
+      services: services.map((s: any) => s.service),
       datasets: uniqueDatasets,
       unitOwners: uniqueUnitOwners,
-      users: users.map((u) => ({ userId: u.userId })),
+      users: users.map((u: { userId: string }) => ({ userId: u.userId })),
     };
   } catch (error) {
     console.error('Filter options error:', error);

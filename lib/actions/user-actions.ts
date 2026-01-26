@@ -214,7 +214,7 @@ export async function getUsersFromCore(userIds: string[]): Promise<{
     // Fetch uncached users
     if (uncachedIds.length > 0) {
       const results = await Promise.all(
-        uncachedIds.map((id) => getUserFromCore(id))
+        uncachedIds.map((id: string) => getUserFromCore(id))
       );
 
       results.forEach((result: { success: boolean; data?: any }, index: number) => {
