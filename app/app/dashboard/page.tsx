@@ -51,7 +51,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <div className="container mx-auto px-6 pb-8">
         <RecentLogsTable
           initialData={logsData}
-          filterOptions={filterOptions}
+          filterOptions={filterOptions as any}
           dateRange={dateRange}
         />
       </div>
