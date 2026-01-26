@@ -667,6 +667,33 @@ export default function AdminPage() {
                 label="แนบเอกสารวิธีใช้งาน"
                 existingFileUrl={editingItem?.howTo}
                 existingFileName={editingItem?.howTo ? 'เอกสารวิธีใช้งาน.pdf' : undefined}
+                onDeleteExisting={async () => {
+                  if (!editingItem?.howTo || !editingItem?.id) return;
+                  setLoading(true);
+                  try {
+                    await deleteUploadedFile(editingItem.howTo);
+                    const result = await updateService(editingItem.id, {
+                      name: editingItem.name,
+                      detail: editingItem.detail,
+                      datasetId: editingItem.datasetId,
+                      method: editingItem.method,
+                      api: editingItem.api,
+                      howTo: null
+                    }, user!.id);
+                    if (result?.success) {
+                      alert('ลบไฟล์สำเร็จ');
+                      setEditingItem({ ...editingItem, howTo: null });
+                      setFormData({ ...formData, howTo: '' });
+                      loadData();
+                    } else {
+                      throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');
+                    }
+                  } catch (error: any) {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               />
             </>
           ) : null}
@@ -748,6 +775,34 @@ export default function AdminPage() {
                 label="อัปโหลด Metadata"
                 existingFileUrl={editingItem?.metadata}
                 existingFileName={editingItem?.metadata ? 'Metadata' : undefined}
+                onDeleteExisting={async () => {
+                  if (!editingItem?.metadata || !editingItem?.id) return;
+                  setLoading(true);
+                  try {
+                    await deleteUploadedFile(editingItem.metadata);
+                    const result = await updateDataset(editingItem.id, {
+                      name: editingItem.name,
+                      detail: editingItem.detail,
+                      unitOwnerId: editingItem.unitOwnerId,
+                      categoryId: editingItem.categoryId,
+                      typeId: editingItem.typeId,
+                      securityLevel: editingItem.securityLevel,
+                      metadata: null
+                    }, user!.id);
+                    if (result?.success) {
+                      alert('ลบไฟล์สำเร็จ');
+                      setEditingItem({ ...editingItem, metadata: null });
+                      setFormData({ ...formData, metadata: '' });
+                      loadData();
+                    } else {
+                      throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');
+                    }
+                  } catch (error: any) {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               />
             </>
           )}
@@ -777,6 +832,30 @@ export default function AdminPage() {
                 label="อัปโหลดไอคอน"
                 existingFileUrl={editingItem?.icon}
                 existingFileName={editingItem?.icon ? `${editingItem?.name || 'ไอคอน'}.png` : undefined}
+                onDeleteExisting={async () => {
+                  if (!editingItem?.icon || !editingItem?.id) return;
+                  setLoading(true);
+                  try {
+                    await deleteUploadedFile(editingItem.icon);
+                    const result = await updateUnitOwner(editingItem.id, {
+                      name: editingItem.name,
+                      shortName: editingItem.shortName,
+                      icon: null
+                    }, user!.id);
+                    if (result?.success) {
+                      alert('ลบไฟล์สำเร็จ');
+                      setEditingItem({ ...editingItem, icon: null });
+                      setFormData({ ...formData, icon: '' });
+                      loadData();
+                    } else {
+                      throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');
+                    }
+                  } catch (error: any) {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               />
             </>
           )}
@@ -806,6 +885,30 @@ export default function AdminPage() {
                 label="อัปโหลดไอคอน"
                 existingFileUrl={editingItem?.icon}
                 existingFileName={editingItem?.icon ? `${editingItem?.name || 'ไอคอน'}.png` : undefined}
+                onDeleteExisting={async () => {
+                  if (!editingItem?.icon || !editingItem?.id) return;
+                  setLoading(true);
+                  try {
+                    await deleteUploadedFile(editingItem.icon);
+                    const result = await updateCategory(editingItem.id, {
+                      name: editingItem.name,
+                      shortName: editingItem.shortName,
+                      icon: null
+                    }, user!.id);
+                    if (result?.success) {
+                      alert('ลบไฟล์สำเร็จ');
+                      setEditingItem({ ...editingItem, icon: null });
+                      setFormData({ ...formData, icon: '' });
+                      loadData();
+                    } else {
+                      throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');
+                    }
+                  } catch (error: any) {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
               />
             </>
           )}

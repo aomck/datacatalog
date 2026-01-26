@@ -16,6 +16,7 @@ interface FileUploadProps {
   label?: string;
   existingFileUrl?: string; // URL of existing uploaded file
   existingFileName?: string; // Name of existing file
+  onDeleteExisting?: () => void; // Callback when user wants to delete existing file
 }
 
 export function FileUpload({
@@ -29,6 +30,7 @@ export function FileUpload({
   label,
   existingFileUrl,
   existingFileName,
+  onDeleteExisting,
 }: FileUploadProps) {
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -106,11 +108,11 @@ export function FileUpload({
       {existingFileUrl && selectedFiles.length === 0 && (
         <div className="mb-3">
           <p className="text-sm font-medium text-gray-700 mb-2">ไฟล์ปัจจุบัน:</p>
-          <div
-            className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
-            onClick={() => handlePreview(existingFileUrl)}
-          >
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div
+              className="flex items-center space-x-3 flex-1 cursor-pointer hover:bg-blue-100 transition-colors rounded p-2 -m-2"
+              onClick={() => handlePreview(existingFileUrl)}
+            >
               {isImage(existingFileUrl) ? (
                 <img src={getFileUrl(existingFileUrl) || ''} alt="preview" className="w-12 h-12 object-cover rounded" />
               ) : (
@@ -124,6 +126,21 @@ export function FileUpload({
                 </p>
               </div>
             </div>
+            {onDeleteExisting && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (confirm('คุณต้องการลบไฟล์นี้ใช่หรือไม่?')) {
+                    onDeleteExisting();
+                  }
+                }}
+                className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors ml-2"
+                title="ลบไฟล์"
+              >
+                <Icon icon="mdi:delete" className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       )}
