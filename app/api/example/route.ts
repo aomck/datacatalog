@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     // Call verify-token API
     const baseUrl = request.nextUrl.origin;
-    const verifyResponse = await fetch(`${baseUrl}/api/verify-token`, {
+    const verifyResponse = await fetch(`${baseUrl}/datacatalog/api/verify-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
