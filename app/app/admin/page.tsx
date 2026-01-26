@@ -756,15 +756,15 @@ export default function AdminPage() {
                 fullWidth
                 select
                 label="ชั้นความลับ"
-                value={formData.securityLevel || ''}
+                value={formData.securityLevel ?? '0'}
                 onChange={(e) => setFormData({ ...formData, securityLevel: e.target.value })}
                 sx={{ mb: 2 }}
               >
-                <MenuItem value="">ไม่ระบุ</MenuItem>
-                <MenuItem value="ทั่วไป">ทั่วไป</MenuItem>
-                <MenuItem value="ลับ">ลับ</MenuItem>
-                <MenuItem value="ลับมาก">ลับมาก</MenuItem>
-                <MenuItem value="ลับที่สุด">ลับที่สุด</MenuItem>
+                <MenuItem value="0">ไม่มีชั้นความลับ</MenuItem>
+                <MenuItem value="1">ทั่วไป</MenuItem>
+                <MenuItem value="2">ลับ</MenuItem>
+                <MenuItem value="3">ลับมาก</MenuItem>
+                <MenuItem value="4">ลับที่สุด</MenuItem>
               </TextField>
               <FileUpload
                 files={files}

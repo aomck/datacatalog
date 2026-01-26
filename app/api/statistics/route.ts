@@ -1,0 +1,185 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import axios from 'axios';
+
+const CORE_API_URL = process.env.CORE_API_URL || 'https://isoc360-core.isoc.go.th/user-api';
+
+/**
+ * GET /api/statistics
+ *
+ * Headers:
+ * - Authorization: Bearer <token>
+ *
+ * Query Parameters:
+ * - startDate: ISO date (optional, for access logs)
+ * - endDate: ISO date (optional, for access logs)
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Get token from headers
+    const authHeader = request.headers.get('authorization');
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Missing or invalid Authorization header',
+        },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+
+    // Verify token with Core API
+    try {
+      const verifyResponse = await axios.get(`${CORE_API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (verifyResponse.data.status !== 200 || !verifyResponse.data.data) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Unauthorized',
+          },
+          { status: 401 }
+        );
+      }
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Invalid or expired token',
+        },
+        { status: 401 }
+      );
+    }
+
+    // Get query parameters for date filtering
+    const { searchParams } = request.nextUrl;
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    // Build date filter for access logs
+    const dateFilter: any = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      dateFilter.lte = new Date(endDate);
+    }
+
+    // Parallel queries for statistics
+    const [
+      datasetsByType,
+      datasetsBySecurityLevel,
+      totalDatasets,
+      totalServices,
+      accessLogs,
+    ] = await Promise.all([
+      // Count datasets by type
+      prisma.dataset.groupBy({
+        by: ['typeId'],
+        where: {
+          deletedAt: null,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+      // Count datasets by security level
+      prisma.dataset.groupBy({
+        by: ['securityLevel'],
+        where: {
+          deletedAt: null,
+        },
+        _count: {
+          id: true,
+        },
+      }),
+      // Total active datasets
+      prisma.dataset.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+      // Total active services
+      prisma.service.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+      // Access logs count (with optional date filter)
+      prisma.userServiceLog.count({
+        where: Object.keys(dateFilter).length > 0
+          ? { createdAt: dateFilter }
+          : undefined,
+      }),
+    ]);
+
+    // Get type names for the grouped data
+    const typeIds = datasetsByType.map((item) => item.typeId);
+    const types = await prisma.datasetType.findMany({
+      where: {
+        id: { in: typeIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        shortName: true,
+      },
+    });
+
+    // Map type names to counts
+    const typeMap = new Map(types.map((t) => [t.id, t]));
+    const catalogsByType = datasetsByType.map((item) => ({
+      typeId: item.typeId,
+      typeName: typeMap.get(item.typeId)?.name || 'Unknown',
+      typeShortName: typeMap.get(item.typeId)?.shortName || 'Unknown',
+      count: item._count.id,
+    }));
+
+    // Map security levels
+    const securityLevelMap: { [key: string]: string } = {
+      '0': 'ทั่วไป',
+      '1': 'ปกปิด',
+      '2': 'ลับ',
+      '3': 'ลับมาก',
+      '4': 'ลับที่สุด',
+    };
+
+    const datasetsBySecurityLevelMapped = datasetsBySecurityLevel.map((item) => ({
+      securityLevel: item.securityLevel || 'null',
+      securityLevelName: item.securityLevel ? securityLevelMap[item.securityLevel] || 'Unknown' : 'ไม่ระบุ',
+      count: item._count.id,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        catalogsByType,
+        datasetsBySecurityLevel: datasetsBySecurityLevelMapped,
+        totalDatasets,
+        totalServices,
+        accessCount: accessLogs,
+        dateRange: {
+          startDate: startDate || null,
+          endDate: endDate || null,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Statistics API error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Internal server error',
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}

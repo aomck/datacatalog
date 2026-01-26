@@ -161,13 +161,14 @@ export function FilterPanel({
             label="ชั้นความลับ"
             value={filters.securityLevel}
             onChange={(e) => setFilters({ ...filters, securityLevel: e.target.value })}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: 180 }}
           >
             <MenuItem value="">ทั้งหมด</MenuItem>
-            <MenuItem value="ทั่วไป">ทั่วไป</MenuItem>
-            <MenuItem value="ลับ">ลับ</MenuItem>
-            <MenuItem value="ลับมาก">ลับมาก</MenuItem>
-            <MenuItem value="ลับที่สุด">ลับที่สุด</MenuItem>
+            <MenuItem value="0">ไม่มีชั้นความลับ</MenuItem>
+            <MenuItem value="1">ทั่วไป</MenuItem>
+            <MenuItem value="2">ลับ</MenuItem>
+            <MenuItem value="3">ลับมาก</MenuItem>
+            <MenuItem value="4">ลับที่สุด</MenuItem>
           </TextField>
         )}
 

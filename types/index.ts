@@ -98,7 +98,7 @@ export interface LoginResponse {
 
 export type ApproveStatus = 'REQUESTED' | 'PENDING' | 'APPROVED' | 'DISAPPROVED';
 export type ServiceMethod = 'GET' | 'POST' | 'PATCH';
-export type SecurityLevel = 'ทั่วไป' | 'ลับ' | 'ลับมาก' | 'ลับที่สุด';
+export type SecurityLevel = '0' | '1' | '2' | '3' | '4' | null;
 
 // Unit Owner
 export interface UnitOwner {
