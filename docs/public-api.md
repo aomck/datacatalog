@@ -2,7 +2,7 @@
 
 ## Base URL
 ```
-http://localhost:3000/api/public
+https://isoc360.isoc.go.th/datacatalog/api/public
 ```
 
 ---
@@ -80,27 +80,27 @@ GET /api/public/unitowners
 
 #### 1. ดึงข้อมูลหน่วยงานทั้งหมด
 ```bash
-curl http://localhost:3000/api/public/unitowners
+# curl https://isoc360.isoc.go.th/datacatalog/api/public/unitowners
 ```
 
 #### 2. ค้นหาด้วยคำค้นหา
 ```bash
-curl "http://localhost:3000/api/public/unitowners?search=data"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=data"
 ```
 
 #### 3. Filter ตาม category
 ```bash
-curl "http://localhost:3000/api/public/unitowners?categoryId=123e4567-e89b-12d3-a456-426614174000"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?categoryId=123e4567-e89b-12d3-a456-426614174000"
 ```
 
 #### 4. ค้นหาและ filter พร้อมกัน
 ```bash
-curl "http://localhost:3000/api/public/unitowners?search=education&categoryId=123e4567-e89b-12d3-a456-426614174000"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=education&categoryId=123e4567-e89b-12d3-a456-426614174000"
 ```
 
 #### 5. Filter ตาม security level
 ```bash
-curl "http://localhost:3000/api/public/unitowners?securityLevel=ทั่วไป"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel=ทั่วไป"
 ```
 
 ### Response Example
@@ -187,7 +187,7 @@ GET /api/public/stats
 
 #### ดึงข้อมูลสถิติ
 ```bash
-curl http://localhost:3000/api/public/stats
+curl https://isoc360.isoc.go.th/datacatalog/api/public/stats
 ```
 
 ### Response Example
@@ -252,5 +252,5 @@ UnitOwner (หน่วยงาน)
 
 ### Example with URL Encoding
 ```bash
-curl "http://localhost:3000/api/public/unitowners?search=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%A3%E0%B8%A7%E0%B8%87"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%A3%E0%B8%A7%E0%B8%87"
 ```

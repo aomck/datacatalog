@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         unitOwnerCount,
         datasetCount,
@@ -130,15 +130,31 @@ export async function GET(request: NextRequest) {
       },
       { status: 200 }
     );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return response;
 
   } catch (error: any) {
     console.error('Public stats API error:', error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         error: 'Internal server error',
         message: error.message,
       },
       { status: 500 }
     );
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    return response;
   }
+}
+
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 }
