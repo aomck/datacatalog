@@ -14,6 +14,11 @@ export function getFileUrl(filePath: string | null | undefined): string | null {
     return filePath;
   }
 
-  // Add basePath prefix
+  // For uploaded files, use API route to serve them
+  if (filePath.startsWith('/uploads/')) {
+    return basePath + '/api' + filePath;
+  }
+
+  // Add basePath prefix for other files
   return basePath + filePath;
 }
