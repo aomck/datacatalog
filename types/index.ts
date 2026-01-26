@@ -13,6 +13,12 @@ export interface User {
   roles: Role[];
   units: Unit[];
   activeUnit?: Unit;
+  access?: {
+    service_access?: { [key: string]: number };
+    dataservice_access?: { [key: string]: any };
+    confidentiality_access?: { [key: string]: number };
+    dashboard_access?: { [key: string]: any };
+  };
   created_at?: Date;
   updated_at?: Date;
 }
