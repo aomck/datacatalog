@@ -88,6 +88,7 @@ export async function deleteFile(filePath: string): Promise<boolean> {
 /**
  * Get full file URL
  * @param filePath - File path relative to public (e.g., /uploads/icons/xxx.png)
+ * @deprecated Use getFileUrl from @/lib/file-url instead (works in both client and server)
  */
 export function getFileUrl(filePath: string | null | undefined): string | null {
   if (!filePath) return null;

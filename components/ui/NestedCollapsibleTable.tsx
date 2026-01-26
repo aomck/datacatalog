@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { SecurityLevelBadge } from './SecurityLevelBadge';
+import { getFileUrl } from '@/lib/file-url';
 
 interface NestedCollapsibleTableProps {
   rows: any[];
@@ -200,7 +201,7 @@ export function NestedCollapsibleTable({
                     <TableCell sx={{ py: 2, px: 3, fontSize: '0.875rem', color: 'grey.800' }}>
                       <div className="flex items-center gap-2 font-semibold">
                         {level1IconField && level1Row[level1IconField] ? (
-                          <img src={level1Row[level1IconField]} alt="" className="w-8 h-8 rounded" />
+                          <img src={getFileUrl(level1Row[level1IconField]) || ''} alt="" className="w-8 h-8 rounded" />
                         ) : (
                           <Icon icon="mdi:folder" className="w-8 h-8 text-gray-400" />
                         )}

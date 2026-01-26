@@ -19,6 +19,7 @@ import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { User } from '@/components/ui/User';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import { Timestamp } from '@/components/ui/Timestamp';
+import { getFileUrl } from '@/lib/file-url';
 import type { Request } from '@/types';
 
 export default function ApproverPage() {
@@ -389,7 +390,7 @@ export default function ApproverPage() {
                         <div className="flex items-center gap-2">
                           {rd.dataset?.metadata && (
                             <Tooltip title="ดู Metadata">
-                              <IconButton size="small" onClick={() => window.open(rd.dataset.metadata, '_blank')}>
+                              <IconButton size="small" onClick={() => window.open(getFileUrl(rd.dataset.metadata) || rd.dataset.metadata, '_blank')}>
                                 <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
                               </IconButton>
                             </Tooltip>

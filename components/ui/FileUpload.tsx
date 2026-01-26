@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
+import { getFileUrl } from '@/lib/file-url';
 
 interface FileUploadProps {
   accept?: string;
@@ -54,13 +55,16 @@ export function FileUpload({
   };
 
   const handlePreview = (fileUrl: string) => {
+    // Add basePath prefix for proper URL
+    const fullUrl = getFileUrl(fileUrl) || fileUrl;
+
     // If PDF, open in new tab
     if (isPDF(fileUrl)) {
-      window.open(fileUrl, '_blank');
+      window.open(fullUrl, '_blank');
       return;
     }
     // Otherwise, show in dialog
-    setPreviewUrl(fileUrl);
+    setPreviewUrl(fullUrl);
     setPreviewOpen(true);
   };
 
@@ -108,7 +112,7 @@ export function FileUpload({
           >
             <div className="flex items-center space-x-3">
               {isImage(existingFileUrl) ? (
-                <img src={existingFileUrl} alt="preview" className="w-12 h-12 object-cover rounded" />
+                <img src={getFileUrl(existingFileUrl) || ''} alt="preview" className="w-12 h-12 object-cover rounded" />
               ) : (
                 <Icon icon={getFileIcon(existingFileName || existingFileUrl)} className="w-8 h-8 text-blue-600" />
               )}

@@ -23,6 +23,7 @@ import { ApiTestModal } from '@/components/modals/ApiTestModal';
 import { getUserToken } from '@/lib/actions/user-actions';
 import { User } from '@/components/ui/User';
 import { Timestamp } from '@/components/ui/Timestamp';
+import { getFileUrl } from '@/lib/file-url';
 import type { Dataset, Service, UnitOwner, Category } from '@/types';
 
 export default function AdminPage() {
@@ -286,11 +287,28 @@ export default function AdminPage() {
     setLoading(true);
     try {
       let result;
+      let itemToDelete;
+
       if (activeTab === 0) {
+        // Dataset - delete metadata file if exists
+        itemToDelete = datasets.find((d) => d.id === id);
+        if (itemToDelete?.metadata) {
+          await deleteUploadedFile(itemToDelete.metadata);
+        }
         result = await deleteDataset(id, user.id);
       } else if (activeTab === 1) {
+        // Unit Owner - delete icon file if exists
+        itemToDelete = unitOwners.find((u) => u.id === id);
+        if (itemToDelete?.icon) {
+          await deleteUploadedFile(itemToDelete.icon);
+        }
         result = await deleteUnitOwner(id, user.id);
       } else if (activeTab === 2) {
+        // Category - delete icon file if exists
+        itemToDelete = categories.find((c) => c.id === id);
+        if (itemToDelete?.icon) {
+          await deleteUploadedFile(itemToDelete.icon);
+        }
         result = await deleteCategory(id, user.id);
       }
 
@@ -370,7 +388,7 @@ export default function AdminPage() {
               align: 'center',
               format: (row: any) => row.metadata ? (
                 <Tooltip title="ดู Metadata">
-                  <IconButton size="small" onClick={() => window.open(row.metadata, '_blank')}>
+                  <IconButton size="small" onClick={() => window.open(getFileUrl(row.metadata) || row.metadata, '_blank')}>
                     <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
                   </IconButton>
                 </Tooltip>
@@ -439,7 +457,7 @@ export default function AdminPage() {
                               <Tooltip title="ดาวน์โหลดคู่มือ">
                                 <IconButton
                                   size="small"
-                                  onClick={() => window.open(s.howTo, '_blank')}
+                                  onClick={() => window.open(getFileUrl(s.howTo) || s.howTo, '_blank')}
                                   sx={{ p: 0.5 }}
                                 >
                                   <Icon icon="mdi:file-pdf-box" className="w-5 h-5 text-red-600" />
@@ -484,6 +502,10 @@ export default function AdminPage() {
                             size="small"
                             onClick={async () => {
                               if (confirm('คุณต้องการลบบริการนี้ใช่หรือไม่?')) {
+                                // Delete howTo file if exists
+                                if (s.howTo) {
+                                  await deleteUploadedFile(s.howTo);
+                                }
                                 const result = await deleteService(s.id, user!.id);
                                 if (result?.success) {
                                   alert('ลบเรียบร้อยแล้ว');
@@ -520,7 +542,7 @@ export default function AdminPage() {
       {activeTab === 1 && (
         <DataTable
           columns={[
-            { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={value} alt="" className="w-8 h-8 rounded" /> : '-' },
+            { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={getFileUrl(value) || ''} alt="" className="w-8 h-8 rounded" /> : '-' },
             { id: 'name', label: 'ชื่อ' },
             { id: 'shortName', label: 'ชื่อย่อ' },
             {
@@ -563,7 +585,7 @@ export default function AdminPage() {
       {activeTab === 2 && (
         <DataTable
           columns={[
-            { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={value} alt="" className="w-8 h-8 rounded" /> : '-' },
+            { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={getFileUrl(value) || ''} alt="" className="w-8 h-8 rounded" /> : '-' },
             { id: 'name', label: 'ชื่อ' },
             { id: 'shortName', label: 'ชื่อย่อ' },
             {

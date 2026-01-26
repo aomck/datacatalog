@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Chip, IconButton, Tooltip } from '@mui/material';
 import { Icon } from '@iconify/react';
+import { getFileUrl } from '@/lib/file-url';
 
 interface ApiTestModalProps {
   open: boolean;
@@ -150,7 +151,7 @@ export function ApiTestModal({ open, onClose, service, token, showHowToVerify = 
                   size="small"
                   variant="outlined"
                   startIcon={<Icon icon="mdi:download" />}
-                  onClick={() => window.open(service.howTo, '_blank')}
+                  onClick={() => window.open(getFileUrl(service.howTo) || service.howTo, '_blank')}
                 >
                   ดาวน์โหลด PDF
                 </Button>

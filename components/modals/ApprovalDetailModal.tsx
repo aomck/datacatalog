@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { User } from '@/components/ui/User';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Timestamp } from '@/components/ui/Timestamp';
+import { getFileUrl } from '@/lib/file-url';
 
 interface ApprovalDetailModalProps {
   open: boolean;
@@ -103,7 +104,7 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
                     </div>
                     <IconButton
                       size="small"
-                      onClick={() => window.open(file.filePath, '_blank')}
+                      onClick={() => window.open(getFileUrl(file.filePath) || file.filePath, '_blank')}
                       className="text-blue-600"
                     >
                       <Icon icon="mdi:download" className="w-5 h-5" />

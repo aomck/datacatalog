@@ -3,6 +3,7 @@
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { Timestamp } from '@/components/ui/Timestamp';
+import { getFileUrl } from '@/lib/file-url';
 
 interface RequestDetailModalProps {
   open: boolean;
@@ -73,7 +74,7 @@ export function RequestDetailModal({ open, onClose, request }: RequestDetailModa
                         </p>
                       </div>
                     </div>
-                    <IconButton size="small" onClick={() => window.open(file.filePath, '_blank')}>
+                    <IconButton size="small" onClick={() => window.open(getFileUrl(file.filePath) || file.filePath, '_blank')}>
                       <Icon icon="mdi:download" className="w-5 h-5" />
                     </IconButton>
                   </div>

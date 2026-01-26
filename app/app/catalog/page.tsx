@@ -11,6 +11,7 @@ import { NestedCollapsibleTable } from '@/components/ui/NestedCollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { CartModal } from '@/components/modals/CartModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
+import { getFileUrl } from '@/lib/file-url';
 import type { UnitOwner, Category, Dataset, CartItem } from '@/types';
 
 export default function CatalogPage() {
@@ -211,7 +212,7 @@ export default function CatalogPage() {
             <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
               <CardContent className="text-center">
                 {item.icon ? (
-                  <img src={item.icon} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
+                  <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
                 ) : (
                   <Icon icon="mdi:folder" className="w-16 h-16 mx-auto mb-3 text-gray-400" />
                 )}

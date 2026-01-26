@@ -16,6 +16,7 @@ import { ApprovalDetailModal } from '@/components/modals/ApprovalDetailModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { SecurityLevelBadge } from '@/components/ui/SecurityLevelBadge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { getFileUrl } from '@/lib/file-url';
 import type { Dataset, Service } from '@/types';
 
 export default function MyCatalogPage() {
@@ -383,7 +384,7 @@ export default function MyCatalogPage() {
               align: 'center',
               format: (row: any) => row.dataset?.metadata ? (
                 <Tooltip title="ดู Metadata">
-                  <IconButton size="small" onClick={() => window.open(row.dataset.metadata, '_blank')}>
+                  <IconButton size="small" onClick={() => window.open(getFileUrl(row.dataset.metadata) || row.dataset.metadata, '_blank')}>
                     <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
                   </IconButton>
                 </Tooltip>
