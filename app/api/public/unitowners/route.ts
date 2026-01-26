@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Filter out unit owners with no datasets (when filters are applied)
-    const filteredUnitOwners = unitOwners.filter(unitOwner => {
+    const filteredUnitOwners = unitOwners.filter((unitOwner: any) => {
       // If there are dataset filters or search, only include unit owners with matching datasets
       if (categoryId || securityLevel || search) {
         return unitOwner.datasets.length > 0;
@@ -169,7 +169,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       const searchTerm = search.trim().toLowerCase();
 
-      const searchFilteredUnitOwners = filteredUnitOwners.map(unitOwner => {
+      const searchFilteredUnitOwners = filteredUnitOwners.map((unitOwner: any) => {
         // Check if unit owner matches
         const unitOwnerMatches =
           unitOwner.name.toLowerCase().includes(searchTerm) ||
@@ -177,14 +177,14 @@ export async function GET(request: NextRequest) {
 
         // Filter datasets
         const filteredDatasets = unitOwner.datasets
-          .map(dataset => {
+          .map((dataset: any) => {
             // Check if dataset matches
             const datasetMatches =
               dataset.name.toLowerCase().includes(searchTerm) ||
               (dataset.detail && dataset.detail.toLowerCase().includes(searchTerm));
 
             // Filter services
-            const filteredServices = dataset.services.filter(service => {
+            const filteredServices = dataset.services.filter((service: any) => {
               const serviceMatches =
                 service.name.toLowerCase().includes(searchTerm) ||
                 (service.detail && service.detail.toLowerCase().includes(searchTerm));
@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
             }
             return null;
           })
-          .filter(dataset => dataset !== null);
+          .filter((dataset: any) => dataset !== null);
 
         // If unit owner matches, include all datasets; otherwise only matching datasets
         if (unitOwnerMatches) {
@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
         }
         return null;
       })
-      .filter(unitOwner => unitOwner !== null);
+      .filter((unitOwner: any) => unitOwner !== null);
 
       return NextResponse.json(searchFilteredUnitOwners, { status: 200 });
     }
