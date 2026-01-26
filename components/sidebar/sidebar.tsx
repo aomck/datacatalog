@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { Avatar } from '@mui/material';
 import { usePermission } from '@/components/providers/permission-provider';
 import { hasAnyAction } from '@/lib/permission-utils';
 import { logoutAction } from '@/lib/auth-actions';
 import { getUnreadNotificationCount } from '@/lib/actions/notification-actions';
+import { getFileUrl } from '@/lib/file-url';
 
 interface MenuItem {
   name: string;
@@ -189,19 +191,13 @@ export function Sidebar() {
       {user && (
         <div className="p-4 border-b border-gray-200">
           <div className={`flex items-center ${isExpanded ? 'space-x-3' : 'justify-center'}`}>
-            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-              {user.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={`${user.firstname} ${user.lastname}`}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-primary-700 font-semibold text-sm">
-                  {user.firstname?.charAt(0)}{user.lastname?.charAt(0)}
-                </span>
-              )}
-            </div>
+            <Avatar
+              src={user.avatarUrl ? (getFileUrl(user.avatarUrl) || user.avatarUrl) : undefined}
+              alt={`${user.firstname} ${user.lastname}`}
+              sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}
+            >
+              {user.firstname?.charAt(0)}
+            </Avatar>
             {isExpanded && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
