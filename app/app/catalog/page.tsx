@@ -28,6 +28,7 @@ export default function CatalogPage() {
   const [requestStatus, setRequestStatus] = useState<any>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -278,14 +279,33 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); }}>
+      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); setSearchTerm(''); }}>
         <Tab label="หน่วยงาน" />
         <Tab label="นโยบายด้านความมั่นคง" />
       </Tabs>
 
       {!selectedId ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          {(activeTab === 0 ? unitOwners : categories).map((item) => (
+        <>
+          <div className="mt-6 mb-4">
+            <div className="relative">
+              <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder={`ค้นหา${activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {(activeTab === 0 ? unitOwners : categories)
+              .filter((item) => {
+                if (!searchTerm) return true;
+                const search = searchTerm.toLowerCase();
+                return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
+              })
+              .map((item) => (
             <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
               <CardContent className="text-center">
                 {item.icon ? (
@@ -298,7 +318,8 @@ export default function CatalogPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        </>
       ) : (
         <div className="mt-6">
           {/* Breadcrumb */}
