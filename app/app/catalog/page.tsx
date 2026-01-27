@@ -91,11 +91,26 @@ export default function CatalogPage() {
       // Apply confidentiality access control immediately after loading
       const processedData = result.data.map((parent: any) => {
         const filteredDatasets = parent.datasets?.filter((d: any) => {
-          return getDatasetAccessLevel(d) !== 'hidden';
-        }).map((d: any) => ({
-          ...d,
-          _accessLevel: getDatasetAccessLevel(d)
-        })) || [];
+          // Add parent context to dataset for access control
+          const datasetWithContext = {
+            ...d,
+            unitOwner: activeTab === 0 ? { id: parent.id } : { id: id }, // parent is unitOwner in tab 0, id is unitOwner in tab 1
+            category: activeTab === 0 ? { id: id } : { id: parent.id }   // id is category in tab 0, parent is category in tab 1
+          };
+          return getDatasetAccessLevel(datasetWithContext) !== 'hidden';
+        }).map((d: any) => {
+          const datasetWithContext = {
+            ...d,
+            unitOwner: activeTab === 0 ? { id: parent.id } : { id: id },
+            category: activeTab === 0 ? { id: id } : { id: parent.id },
+            _accessLevel: getDatasetAccessLevel({
+              ...d,
+              unitOwner: activeTab === 0 ? { id: parent.id } : { id: id },
+              category: activeTab === 0 ? { id: id } : { id: parent.id }
+            })
+          };
+          return datasetWithContext;
+        }) || [];
 
         return { ...parent, datasets: filteredDatasets };
       }).filter((parent: any) => parent.datasets.length > 0);
@@ -212,17 +227,8 @@ export default function CatalogPage() {
       filtered = filtered.filter((category) => category.id === filters.categoryId);
     }
 
-    // Apply confidentiality access control
-    filtered = filtered.map((parent) => {
-      const filteredDatasets = parent.datasets?.filter((d: any) => {
-        return getDatasetAccessLevel(d) !== 'hidden';
-      }).map((d: any) => ({
-        ...d,
-        _accessLevel: getDatasetAccessLevel(d)
-      })) || [];
-
-      return { ...parent, datasets: filteredDatasets };
-    }).filter((parent) => parent.datasets.length > 0);
+    // Note: Access control is already applied in loadNestedData, no need to re-apply here
+    // Just preserve the existing _accessLevel that was calculated with proper context
 
     setFilteredData(filtered);
   };
