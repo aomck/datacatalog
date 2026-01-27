@@ -38,14 +38,18 @@ export function DataTable({
   onPageChange,
   onRowsPerPageChange,
 }: DataTableProps) {
+  // Convert from 1-based page (from parent) to 0-based (for MUI)
+  const muiPage = page - 1;
+
   const handleChangePage = (_: unknown, newPage: number) => {
-    onPageChange(newPage);
+    // Convert from 0-based (MUI) to 1-based (for parent)
+    onPageChange(newPage + 1);
   };
 
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (onRowsPerPageChange) {
       onRowsPerPageChange(parseInt(event.target.value, 10));
-      onPageChange(0);
+      onPageChange(1); // Reset to page 1 (1-based)
     }
   };
 
@@ -128,7 +132,7 @@ export function DataTable({
         component="div"
         count={totalRows}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={muiPage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage="แถวต่อหน้า:"

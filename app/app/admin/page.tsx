@@ -72,7 +72,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    setPage(1); // Reset to page 1 when switching tabs
+    // Reset page and filters when switching tabs
+    setPage(1);
     setFilters({
       search: '',
       unitOwnerId: '',
