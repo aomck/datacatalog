@@ -128,6 +128,86 @@ curl -X GET "https://isoc360.isoc.go.th/datacatalog/api/statistics?startDate=202
 
 ---
 
+## 3. GET /api/categories
+
+ดึงรายการ categories ที่เปิดใช้งานทั้งหมด
+
+### Query Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `page` | number | No | Page number (default: 1) |
+| `limit` | number | No | Items per page (default: 10, max: 100) |
+
+### Example Request
+```bash
+curl -X GET "https://isoc360.isoc.go.th/datacatalog/api/categories?page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Category Name",
+      "shortName": "CAT",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 50,
+    "totalPages": 5
+  }
+}
+```
+
+---
+
+## 4. GET /api/unit-owners
+
+ดึงรายการ unit owners ที่เปิดใช้งานทั้งหมด
+
+### Query Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `page` | number | No | Page number (default: 1) |
+| `limit` | number | No | Items per page (default: 10, max: 100) |
+
+### Example Request
+```bash
+curl -X GET "https://isoc360.isoc.go.th/datacatalog/api/unit-owners?page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Response
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Unit Owner Name",
+      "shortName": "UO",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 30,
+    "totalPages": 3
+  }
+}
+```
+
+---
+
 ## Security Levels
 
 | Level | ชื่อภาษาไทย |
