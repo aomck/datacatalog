@@ -8,6 +8,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Paper,
   IconButton,
   Collapse,
@@ -22,6 +23,10 @@ interface CollapsibleTableProps {
   getRowId: (row: any) => string;
   showUnreadIndicator?: (row: any) => boolean; // Function to determine if row should show red dot
   onRowExpand?: (row: any) => void; // Callback when row is expanded
+  totalRows?: number;
+  page?: number;
+  rowsPerPage?: number;
+  onPageChange?: (event: unknown, newPage: number) => void;
 }
 
 export function CollapsibleTable({
@@ -31,6 +36,10 @@ export function CollapsibleTable({
   getRowId,
   showUnreadIndicator,
   onRowExpand,
+  totalRows,
+  page,
+  rowsPerPage,
+  onPageChange,
 }: CollapsibleTableProps) {
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
 
@@ -179,6 +188,17 @@ export function CollapsibleTable({
           )}
         </TableBody>
       </Table>
+      {totalRows !== undefined && page !== undefined && rowsPerPage !== undefined && onPageChange && (
+        <TablePagination
+          component="div"
+          count={totalRows}
+          page={page}
+          onPageChange={onPageChange}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`}
+        />
+      )}
     </TableContainer>
   );
 }
