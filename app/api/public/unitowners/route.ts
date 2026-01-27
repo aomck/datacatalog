@@ -218,14 +218,14 @@ export async function GET(request: NextRequest) {
       const response = NextResponse.json(searchFilteredUnitOwners, { status: 200 });
       response.headers.set('Access-Control-Allow-Origin', '*');
       response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-      response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       return response;
     }
 
     const response = NextResponse.json(filteredUnitOwners, { status: 200 });
     response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return response;
 
   } catch (error: any) {
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
     );
     response.headers.set('Access-Control-Allow-Origin', '*');
     response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return response;
   }
 }
@@ -248,6 +248,6 @@ export async function OPTIONS() {
   const response = new NextResponse(null, { status: 200 });
   response.headers.set('Access-Control-Allow-Origin', '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   return response;
 }
