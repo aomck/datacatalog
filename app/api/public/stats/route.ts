@@ -29,9 +29,15 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    // Build dataset filter
+    // Build dataset filter - only show OPEN datasets for public API
     const datasetWhere: any = {
       deletedAt: null,
+      type: {
+        OR: [
+          { shortName: 'OPEN' },
+          { name: 'OPEN' },
+        ],
+      },
     };
 
     if (unitOwnerId) {
@@ -42,14 +48,7 @@ export async function GET(request: NextRequest) {
       datasetWhere.categoryId = categoryId;
     }
 
-    if (datasetType) {
-      datasetWhere.type = {
-        OR: [
-          { shortName: datasetType },
-          { name: datasetType },
-        ],
-      };
-    }
+    // Note: datasetType parameter is ignored as we only show OPEN datasets
 
     // Build service usage filter
     const serviceUsageWhere: any = {};
@@ -64,21 +63,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Count unit owners
+    // Count unit owners that have OPEN datasets
     let unitOwnerCount;
     if (unitOwnerId) {
-      // If filtering by specific unit owner, just check if it exists
+      // If filtering by specific unit owner, check if it exists and has OPEN datasets
       unitOwnerCount = await prisma.unitOwner.count({
         where: {
           id: unitOwnerId,
           deletedAt: null,
+          datasets: {
+            some: datasetWhere,
+          },
         },
       });
     } else {
-      // Count all unit owners
+      // Count all unit owners that have OPEN datasets
       unitOwnerCount = await prisma.unitOwner.count({
         where: {
           deletedAt: null,
+          datasets: {
+            some: datasetWhere,
+          },
         },
       });
     }

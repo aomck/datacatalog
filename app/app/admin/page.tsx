@@ -470,6 +470,10 @@ export default function AdminPage() {
             ),
           }))}
           getRowId={(row) => row.id}
+          totalRows={totalRows}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handlePageChange}
           renderCollapse={(row) => (
             <div className="bg-gray-50 p-4 rounded">
               <div className="flex items-center justify-between mb-3">

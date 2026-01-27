@@ -156,13 +156,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Filter out unit owners with no datasets (when filters are applied)
+    // Filter out unit owners with no OPEN datasets
     const filteredUnitOwners = unitOwners.filter((unitOwner: any) => {
-      // If there are dataset filters or search, only include unit owners with matching datasets
-      if (categoryId || securityLevel || search) {
-        return unitOwner.datasets.length > 0;
-      }
-      return true;
+      // Only include unit owners with OPEN datasets
+      return unitOwner.datasets.length > 0;
     });
 
     // Additional filtering for search within datasets and services
