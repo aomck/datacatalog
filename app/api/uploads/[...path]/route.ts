@@ -2,20 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile, access, stat } from 'fs/promises';
 import { join } from 'path';
 import { constants } from 'fs';
+import { unstable_noStore } from 'next/cache';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  // Completely disable caching at all levels
+  unstable_noStore();
+
   try {
     const { path } = await params;
     const filePath = path.join('/');
-    const fullPath = join(process.cwd(), 'public', 'uploads', filePath);
+    const fullPath = join(process.cwd(), 'uploads', filePath);
 
     // Debug logging
     console.log('=== FILE SERVE DEBUG ===');
@@ -57,10 +62,15 @@ export async function GET(
 
     const contentType = contentTypes[ext || ''] || 'application/octet-stream';
 
+    console.log('Creating response...');
+    console.log('Content Type:', contentType);
+    console.log('Buffer Length:', fileBuffer.length);
+
     const response = new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
+        'Content-Length': String(fileBuffer.length),
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
@@ -70,6 +80,7 @@ export async function GET(
       },
     });
 
+    console.log('Response created successfully');
     return response;
   } catch (error: any) {
     console.error('File serve error:', error);
