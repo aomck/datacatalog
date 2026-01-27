@@ -29,14 +29,17 @@ import type { Dataset, Service, UnitOwner, Category } from '@/types';
 export default function AdminPage() {
   const { user, permissions } = usePermission();
   const [activeTab, setActiveTab] = useState(0);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  // Data for current page/tab (filtered and paginated)
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
   const [filteredUnitOwners, setFilteredUnitOwners] = useState<UnitOwner[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+
+  // Data for dropdown options (all data, no filter)
+  const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [datasetTypes, setDatasetTypes] = useState<any[]>([]);
+
+  const [services, setServices] = useState<Service[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
@@ -101,13 +104,13 @@ export default function AdminPage() {
 
   const loadAllData = async () => {
     try {
-      const [datasetsResult, unitOwnersResult, categoriesResult, typesResult] = await Promise.all([
-        getDatasets(1, 100),
-        getUnitOwners(1, 100),
-        getCategories(1, 100),
-        getDatasetTypes(1, 100),
+      // Load dropdown options only (no filters, high limit to get all)
+      const [unitOwnersResult, categoriesResult, typesResult] = await Promise.all([
+        getUnitOwners(1, 1000),
+        getCategories(1, 1000),
+        getDatasetTypes(1, 1000),
       ]);
-      setDatasets(datasetsResult.data);
+      // These are for dropdown options only, don't set filtered data
       setUnitOwners(unitOwnersResult.data);
       setCategories(categoriesResult.data);
       setDatasetTypes(typesResult.data);
@@ -127,19 +130,16 @@ export default function AdminPage() {
           categoryId: filters.categoryId || undefined,
           typeId: filters.typeId || undefined,
         });
-        setDatasets(result.data);
         setFilteredDatasets(result.data);
         setTotalRows(result.pagination.total);
       } else if (activeTab === 1) {
         // Unit Owner tab with search
         const result = await getUnitOwners(page, rowsPerPage, filters.search || undefined);
-        setUnitOwners(result.data);
         setFilteredUnitOwners(result.data);
         setTotalRows(result.pagination.total);
       } else if (activeTab === 2) {
         // Category tab with search
         const result = await getCategories(page, rowsPerPage, filters.search || undefined);
-        setCategories(result.data);
         setFilteredCategories(result.data);
         setTotalRows(result.pagination.total);
       }
@@ -314,21 +314,21 @@ export default function AdminPage() {
 
       if (activeTab === 0) {
         // Dataset - delete metadata file if exists
-        itemToDelete = datasets.find((d) => d.id === id);
+        itemToDelete = filteredDatasets.find((d) => d.id === id);
         if (itemToDelete?.metadata) {
           await deleteUploadedFile(itemToDelete.metadata);
         }
         result = await deleteDataset(id, user.id);
       } else if (activeTab === 1) {
         // Unit Owner - delete icon file if exists
-        itemToDelete = unitOwners.find((u) => u.id === id);
+        itemToDelete = filteredUnitOwners.find((u) => u.id === id);
         if (itemToDelete?.icon) {
           await deleteUploadedFile(itemToDelete.icon);
         }
         result = await deleteUnitOwner(id, user.id);
       } else if (activeTab === 2) {
         // Category - delete icon file if exists
-        itemToDelete = categories.find((c) => c.id === id);
+        itemToDelete = filteredCategories.find((c) => c.id === id);
         if (itemToDelete?.icon) {
           await deleteUploadedFile(itemToDelete.icon);
         }
