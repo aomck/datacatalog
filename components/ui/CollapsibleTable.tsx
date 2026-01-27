@@ -26,7 +26,7 @@ interface CollapsibleTableProps {
   totalRows?: number;
   page?: number;
   rowsPerPage?: number;
-  onPageChange?: (event: unknown, newPage: number) => void;
+  onPageChange?: (newPage: number) => void;
 }
 
 export function CollapsibleTable({
@@ -42,6 +42,16 @@ export function CollapsibleTable({
   onPageChange,
 }: CollapsibleTableProps) {
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
+
+  // Convert from 1-based page (from parent) to 0-based (for MUI)
+  const muiPage = page !== undefined ? page - 1 : 0;
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    // Convert from 0-based (MUI) to 1-based (for parent)
+    if (onPageChange) {
+      onPageChange(newPage + 1);
+    }
+  };
 
   const toggleRow = (row: any, rowId: string) => {
     const isCurrentlyOpen = openRows.has(rowId);
@@ -192,8 +202,8 @@ export function CollapsibleTable({
         <TablePagination
           component="div"
           count={totalRows}
-          page={page}
-          onPageChange={onPageChange}
+          page={muiPage}
+          onPageChange={handleChangePage}
           rowsPerPage={rowsPerPage}
           rowsPerPageOptions={[rowsPerPage]}
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`}
