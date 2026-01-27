@@ -5,6 +5,7 @@ import { existsSync } from 'fs';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
@@ -14,6 +15,13 @@ export async function GET(
     const { path } = await params;
     const filePath = path.join('/');
     const fullPath = join(process.cwd(), 'public', 'uploads', filePath);
+
+    // Debug logging
+    console.log('=== FILE SERVE DEBUG ===');
+    console.log('Request URL:', request.url);
+    console.log('CWD:', process.cwd());
+    console.log('Full Path:', fullPath);
+    console.log('File Exists:', existsSync(fullPath));
 
     // Check if file exists
     if (!existsSync(fullPath)) {
