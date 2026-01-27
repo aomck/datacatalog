@@ -330,6 +330,10 @@ export default function CatalogPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {(activeTab === 0 ? categories : unitOwners)
               .filter((item) => {
+                // Check dataservice_access - hide if access level is 2
+                const accessLevel = user?.access?.dataservice_access?.[item.id];
+                if (accessLevel === 2) return false;
+
                 if (!searchTerm) return true;
                 const search = searchTerm.toLowerCase();
                 return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
