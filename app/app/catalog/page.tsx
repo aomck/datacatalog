@@ -43,11 +43,11 @@ export default function CatalogPage() {
     setLoading(true);
     try {
       if (activeTab === 0) {
-        const result = await getCatalogUnitOwners(1, 100);
-        setUnitOwners(result.data);
-      } else {
         const result = await getCatalogCategories(1, 100);
         setCategories(result.data);
+      } else {
+        const result = await getCatalogUnitOwners(1, 100);
+        setUnitOwners(result.data);
       }
     } finally {
       setLoading(false);
@@ -76,8 +76,8 @@ export default function CatalogPage() {
     setLoading(true);
     try {
       const result = activeTab === 0
-        ? await getCategoriesByUnitOwner(id, 1, 100)
-        : await getUnitOwnersByCategory(id, 1, 100);
+        ? await getUnitOwnersByCategory(id, 1, 100)
+        : await getCategoriesByUnitOwner(id, 1, 100);
 
       console.log('Raw nested data:', result.data);
       console.log('User confidentiality access:', user?.access?.confidentiality_access);
@@ -120,13 +120,36 @@ export default function CatalogPage() {
 
   // Check dataset access level based on user permissions
   const getDatasetAccessLevel = (dataset: any): 'full' | 'disabled' | 'hidden' => {
-    // Convert string to number if needed
+    // Check dataservice_access for unitOwner and category
+    const unitOwnerId = dataset.unitOwner?.id;
+    const categoryId = dataset.category?.id;
+
+    const unitOwnerAccess = unitOwnerId ? user?.access?.dataservice_access?.[unitOwnerId] : undefined;
+    const categoryAccess = categoryId ? user?.access?.dataservice_access?.[categoryId] : undefined;
+
+    console.log('Checking dataset:', dataset.name);
+    console.log('-> unitOwnerId:', unitOwnerId, 'access:', unitOwnerAccess);
+    console.log('-> categoryId:', categoryId, 'access:', categoryAccess);
+
+    // If either unitOwner or category is hidden (2), hide the dataset
+    if (unitOwnerAccess === 2 || categoryAccess === 2) {
+      console.log('-> Returning hidden (dataservice_access)');
+      return 'hidden';
+    }
+
+    // If either unitOwner or category is disabled (1), disable the dataset
+    if (unitOwnerAccess === 1 || categoryAccess === 1) {
+      console.log('-> Returning disabled (dataservice_access)');
+      return 'disabled';
+    }
+
+    // Check confidentiality_access (security level)
     const securityLevel = typeof dataset.securityLevel === 'string'
       ? parseInt(dataset.securityLevel, 10)
       : dataset.securityLevel;
     const securityLabel = securityLevelMap[securityLevel];
 
-    console.log('Checking dataset:', dataset.name, 'securityLevel:', securityLevel, 'securityLabel:', securityLabel);
+    console.log('-> securityLevel:', securityLevel, 'securityLabel:', securityLabel);
 
     // ถ้าเป็น level 0 หรือ 1 = เข้าถึงได้เสมอ
     if (!securityLabel) {
@@ -138,11 +161,11 @@ export default function CatalogPage() {
     console.log('-> User access level for', securityLabel, ':', accessLevel);
 
     if (accessLevel === 2) {
-      console.log('-> Returning hidden');
+      console.log('-> Returning hidden (confidentiality)');
       return 'hidden'; // ไม่แสดง
     }
     if (accessLevel === 1) {
-      console.log('-> Returning disabled');
+      console.log('-> Returning disabled (confidentiality)');
       return 'disabled'; // แสดงแต่ disabled
     }
     console.log('-> Returning full access');
@@ -179,14 +202,14 @@ export default function CatalogPage() {
       }).filter((parent) => parent.datasets.length > 0);
     }
 
-    // Filter by category (when in unit owner tab)
-    if (activeTab === 0 && filters.categoryId) {
-      filtered = filtered.filter((category) => category.id === filters.categoryId);
+    // Filter by unit owner (when in category tab)
+    if (activeTab === 0 && filters.unitOwnerId) {
+      filtered = filtered.filter((unitOwner) => unitOwner.id === filters.unitOwnerId);
     }
 
-    // Filter by unit owner (when in category tab)
-    if (activeTab === 1 && filters.unitOwnerId) {
-      filtered = filtered.filter((unitOwner) => unitOwner.id === filters.unitOwnerId);
+    // Filter by category (when in unit owner tab)
+    if (activeTab === 1 && filters.categoryId) {
+      filtered = filtered.filter((category) => category.id === filters.categoryId);
     }
 
     // Apply confidentiality access control
@@ -280,8 +303,8 @@ export default function CatalogPage() {
       </div>
 
       <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); setSearchTerm(''); }}>
-        <Tab label="หน่วยงาน" />
         <Tab label="นโยบายด้านความมั่นคง" />
+        <Tab label="หน่วยงาน" />
       </Tabs>
 
       {!selectedId ? (
@@ -291,7 +314,7 @@ export default function CatalogPage() {
               <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder={`ค้นหา${activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}...`}
+                placeholder={`ค้นหา${activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -299,7 +322,7 @@ export default function CatalogPage() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {(activeTab === 0 ? unitOwners : categories)
+            {(activeTab === 0 ? categories : unitOwners)
               .filter((item) => {
                 if (!searchTerm) return true;
                 const search = searchTerm.toLowerCase();
@@ -329,7 +352,7 @@ export default function CatalogPage() {
               className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
             >
               <Icon icon="mdi:home" className="w-4 h-4" />
-              {activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}
+              {activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}
             </button>
             <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
             <span className="text-gray-700 font-medium">{selectedItem?.name}</span>
@@ -338,11 +361,11 @@ export default function CatalogPage() {
           <FilterPanel
             onFilterChange={handleFilterChange}
             datasetTypes={datasetTypes}
-            unitOwners={activeTab === 1 ? unitOwners : []}
-            categories={activeTab === 0 ? categories : []}
+            unitOwners={activeTab === 0 ? unitOwners : []}
+            categories={activeTab === 1 ? categories : []}
             showDatasetType
-            showUnitOwner={activeTab === 1}
-            showCategory={activeTab === 0}
+            showUnitOwner={activeTab === 0}
+            showCategory={activeTab === 1}
             showSecurityLevel
             showSearch
           />
@@ -350,7 +373,7 @@ export default function CatalogPage() {
           <NestedCollapsibleTable
             rows={filteredData}
             getRowId={(row) => row.id}
-            level1Header={activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}
+            level1Header={activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}
             level1NameField="name"
             level1ShortNameField="shortName"
             level1IconField="icon"
