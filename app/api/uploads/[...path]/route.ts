@@ -20,7 +20,7 @@ export async function GET(
   try {
     const { path } = await params;
     const filePath = path.join('/');
-    const fullPath = join(process.cwd(), 'uploads', filePath);
+    const fullPath = join(process.cwd(), 'public', 'uploads', filePath);
 
     // Debug logging
     console.log('=== FILE SERVE DEBUG ===');

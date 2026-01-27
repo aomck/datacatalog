@@ -14,7 +14,7 @@ export interface UploadFileResult {
  * Ensures upload directory exists
  */
 async function ensureUploadDir(dir: string): Promise<void> {
-  const uploadsDir = path.join(process.cwd(), 'uploads', dir);
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', dir);
   try {
     await fs.access(uploadsDir);
   } catch {
@@ -46,7 +46,7 @@ export async function uploadFile(
       .substring(0, 50); // Limit basename length
     const shortId = nanoid();
     const filename = `${basename}-${shortId}${ext}`;
-    const filePath = path.join(process.cwd(), 'uploads', folder, filename);
+    const filePath = path.join(process.cwd(), 'public', 'uploads', folder, filename);
 
     // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -78,12 +78,12 @@ export async function uploadFile(
 }
 
 /**
- * Delete file from /uploads/
- * @param filePath - File path relative to root (e.g., /uploads/icons/xxx.png)
+ * Delete file from /public/uploads/
+ * @param filePath - File path relative to public (e.g., /uploads/icons/xxx.png)
  */
 export async function deleteFile(filePath: string): Promise<boolean> {
   try {
-    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+    const fullPath = path.join(process.cwd(), 'public', filePath);
     await fs.unlink(fullPath);
     return true;
   } catch (error: any) {
@@ -104,11 +104,11 @@ export function getFileUrl(filePath: string | null | undefined): string | null {
 
 /**
  * Check if file exists
- * @param filePath - File path relative to root (e.g., /uploads/icons/xxx.png)
+ * @param filePath - File path relative to public (e.g., /uploads/icons/xxx.png)
  */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
-    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+    const fullPath = path.join(process.cwd(), 'public', filePath);
     await fs.access(fullPath);
     return true;
   } catch {
@@ -118,11 +118,11 @@ export async function fileExists(filePath: string): Promise<boolean> {
 
 /**
  * Get file stats
- * @param filePath - File path relative to root (e.g., /uploads/icons/xxx.png)
+ * @param filePath - File path relative to public (e.g., /uploads/icons/xxx.png)
  */
 export async function getFileStats(filePath: string): Promise<{ size: number; mtime: Date } | null> {
   try {
-    const fullPath = path.join(process.cwd(), filePath.replace(/^\//, ''));
+    const fullPath = path.join(process.cwd(), 'public', filePath);
     const stats = await fs.stat(fullPath);
     return {
       size: stats.size,
