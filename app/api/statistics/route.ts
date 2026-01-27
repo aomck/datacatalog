@@ -144,8 +144,8 @@ export async function GET(request: NextRequest) {
 
     // Map security levels
     const securityLevelMap: { [key: string]: string } = {
-      '0': 'ทั่วไป',
-      '1': 'ปกปิด',
+      '0': 'ไม่มีชั้นความลับ',
+      '1': 'ทั่วไป',
       '2': 'ลับ',
       '3': 'ลับมาก',
       '4': 'ลับที่สุด',
