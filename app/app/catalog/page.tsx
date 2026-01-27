@@ -284,7 +284,7 @@ export default function CatalogPage() {
       </Tabs>
 
       {!selectedId ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           {(activeTab === 0 ? unitOwners : categories).map((item) => (
             <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
               <CardContent className="text-center">
