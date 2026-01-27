@@ -4,8 +4,10 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Skip middleware for API routes
-  if (pathname.startsWith('/api/')) {
+  console.log('[Middleware] Request:', pathname);
+
+  // ALWAYS skip middleware for API routes - no matter what
+  if (pathname.includes('/api/')) {
     console.log('[Middleware] Skipping API route:', pathname);
     return NextResponse.next();
   }
@@ -37,6 +39,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.svg$).*)',
+    // Only match app routes and login, explicitly exclude api
+    '/app/:path*',
+    '/login',
+    '/',
   ],
 };
