@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
       count: item._count.id,
     }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         catalogsByType,
@@ -171,9 +171,15 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return response;
   } catch (error: any) {
     console.error('Statistics API error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       {
         success: false,
         message: 'Internal server error',
@@ -181,5 +187,19 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     );
+
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return response;
 }

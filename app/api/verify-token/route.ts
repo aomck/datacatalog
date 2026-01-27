@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Access granted
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         authorized: true,
         user_id: user.id,
@@ -120,14 +120,34 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     );
+
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return response;
   } catch (error: any) {
     console.error('Token verification error:', error);
-    return NextResponse.json(
+    const errorResponse = NextResponse.json(
       {
         authorized: false,
         message: 'Internal server error',
       },
       { status: 500 }
     );
+
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return errorResponse;
   }
+}
+
+export async function OPTIONS() {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return response;
 }
