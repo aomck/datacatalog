@@ -33,7 +33,9 @@ export default function AdminPage() {
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [unitOwners, setUnitOwners] = useState<UnitOwner[]>([]);
+  const [filteredUnitOwners, setFilteredUnitOwners] = useState<UnitOwner[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [datasetTypes, setDatasetTypes] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -97,9 +99,11 @@ export default function AdminPage() {
       } else if (activeTab === 1) {
         const result = await getUnitOwners(1, 100);
         setUnitOwners(result.data);
+        setFilteredUnitOwners(result.data);
       } else if (activeTab === 2) {
         const result = await getCategories(1, 100);
         setCategories(result.data);
+        setFilteredCategories(result.data);
       }
     } finally {
       setLoading(false);
@@ -132,6 +136,34 @@ export default function AdminPage() {
       }
 
       setFilteredDatasets(filtered);
+    } else if (activeTab === 1) {
+      // Unit Owner filtering
+      let filtered = unitOwners;
+
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter((u) => {
+          const nameMatch = u.name.toLowerCase().includes(searchLower);
+          const shortNameMatch = u.shortName?.toLowerCase().includes(searchLower);
+          return nameMatch || shortNameMatch;
+        });
+      }
+
+      setFilteredUnitOwners(filtered);
+    } else if (activeTab === 2) {
+      // Category filtering
+      let filtered = categories;
+
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter((c) => {
+          const nameMatch = c.name.toLowerCase().includes(searchLower);
+          const shortNameMatch = c.shortName?.toLowerCase().includes(searchLower);
+          return nameMatch || shortNameMatch;
+        });
+      }
+
+      setFilteredCategories(filtered);
     }
   };
 
@@ -355,7 +387,7 @@ export default function AdminPage() {
         <Tab label="นโยบายด้านความมั่นคง" />
       </Tabs>
 
-      {/* Filter Panel - Only for Dataset Tab */}
+      {/* Filter Panel */}
       {activeTab === 0 && (
         <FilterPanel
           onFilterChange={handleFilterChange}
@@ -366,6 +398,28 @@ export default function AdminPage() {
           showCategory
           showSearch
           showDatasetType
+        />
+      )}
+
+      {/* Filter Panel - Unit Owner Tab */}
+      {activeTab === 1 && (
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          showSearch
+          showUnitOwner={false}
+          showCategory={false}
+          placeholder="ค้นหาชื่อ, ชื่อย่อ..."
+        />
+      )}
+
+      {/* Filter Panel - Category Tab */}
+      {activeTab === 2 && (
+        <FilterPanel
+          onFilterChange={handleFilterChange}
+          showSearch
+          showUnitOwner={false}
+          showCategory={false}
+          placeholder="ค้นหาชื่อ, ชื่อย่อ..."
         />
       )}
 
@@ -557,7 +611,7 @@ export default function AdminPage() {
             },
             { id: 'actions', label: '', align: 'right' },
           ]}
-          rows={unitOwners.map((u) => ({
+          rows={filteredUnitOwners.map((u) => ({
             ...u,
             actions: (
               <div className="flex gap-1">
@@ -574,7 +628,7 @@ export default function AdminPage() {
               </div>
             ),
           }))}
-          totalRows={unitOwners.length}
+          totalRows={filteredUnitOwners.length}
           page={1}
           rowsPerPage={100}
           onPageChange={() => {}}
@@ -600,7 +654,7 @@ export default function AdminPage() {
             },
             { id: 'actions', label: '', align: 'right' },
           ]}
-          rows={categories.map((c) => ({
+          rows={filteredCategories.map((c) => ({
             ...c,
             actions: (
               <div className="flex gap-1">
@@ -617,7 +671,7 @@ export default function AdminPage() {
               </div>
             ),
           }))}
-          totalRows={categories.length}
+          totalRows={filteredCategories.length}
           page={1}
           rowsPerPage={100}
           onPageChange={() => {}}
