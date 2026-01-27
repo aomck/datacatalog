@@ -11,13 +11,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Disable all static optimization
-    isrMemoryCacheSize: 0,
-  },
-  // Disable route caching
-  onDemandEntries: {
-    maxInactiveAge: 0,
-    pagesBufferLength: 0,
   },
   async headers() {
     return [
