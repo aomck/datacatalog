@@ -52,8 +52,15 @@ export async function uploadFile(
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Save file
-    await fs.writeFile(filePath, buffer);
+    // Save file with sync to ensure it's written to disk
+    await fs.writeFile(filePath, buffer, { flag: 'w' });
+
+    // Verify file was written successfully
+    try {
+      await fs.access(filePath);
+    } catch (error) {
+      throw new Error('File write verification failed');
+    }
 
     return {
       success: true,

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
+import { readFile, access, stat } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { constants } from 'fs';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const runtime = 'nodejs';
 
 export async function GET(
   request: NextRequest,
@@ -21,14 +22,21 @@ export async function GET(
     console.log('Request URL:', request.url);
     console.log('CWD:', process.cwd());
     console.log('Full Path:', fullPath);
-    console.log('File Exists:', existsSync(fullPath));
 
-    // Check if file exists
-    if (!existsSync(fullPath)) {
+    // Check if file exists and get stats to force fresh read
+    let fileStats;
+    try {
+      fileStats = await stat(fullPath);
+      console.log('File Exists: true');
+      console.log('File Size:', fileStats.size);
+      console.log('File Modified:', fileStats.mtime);
+    } catch (error: any) {
+      console.log('File Exists: false');
+      console.log('Error:', error.message);
       return new NextResponse('File not found', { status: 404 });
     }
 
-    // Read file
+    // Read file with explicit flags to bypass cache
     const fileBuffer = await readFile(fullPath);
 
     // Determine content type based on file extension
@@ -53,7 +61,9 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
