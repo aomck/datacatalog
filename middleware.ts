@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('access_token')?.value;
   const pathname = request.nextUrl.pathname;
+
+  // Skip middleware for API routes
+  if (pathname.startsWith('/api/')) {
+    console.log('[Middleware] Skipping API route:', pathname);
+    return NextResponse.next();
+  }
+
+  const token = request.cookies.get('access_token')?.value;
   const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
   // Public paths that don't require authentication
