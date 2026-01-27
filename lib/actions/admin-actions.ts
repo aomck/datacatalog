@@ -8,19 +8,28 @@ import type { UnitOwner, Category, Dataset, Service, PaginatedResult } from '@/t
 // Unit Owner Actions
 // ============================================================================
 
-export async function getUnitOwners(page = 1, limit = 30): Promise<PaginatedResult<UnitOwner>> {
+export async function getUnitOwners(page = 1, limit = 30, search?: string): Promise<PaginatedResult<UnitOwner>> {
   try {
     const skip = (page - 1) * limit;
 
+    const where: any = { deletedAt: null };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { shortName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     const [data, total] = await Promise.all([
       prisma.unitOwner.findMany({
-        where: { deletedAt: null },
-        orderBy: { createdAt: 'desc' },
+        where,
+        orderBy: { name: 'asc' },
         skip,
         take: limit,
       }),
       prisma.unitOwner.count({
-        where: { deletedAt: null },
+        where,
       }),
     ]);
 
@@ -141,19 +150,28 @@ export async function getDatasetTypes(page = 1, limit = 30) {
 // Category Actions
 // ============================================================================
 
-export async function getCategories(page = 1, limit = 30): Promise<PaginatedResult<Category>> {
+export async function getCategories(page = 1, limit = 30, search?: string): Promise<PaginatedResult<Category>> {
   try {
     const skip = (page - 1) * limit;
 
+    const where: any = { deletedAt: null };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { shortName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
     const [data, total] = await Promise.all([
       prisma.category.findMany({
-        where: { deletedAt: null },
-        orderBy: { createdAt: 'desc' },
+        where,
+        orderBy: { name: 'asc' },
         skip,
         take: limit,
       }),
       prisma.category.count({
-        where: { deletedAt: null },
+        where,
       }),
     ]);
 
@@ -239,13 +257,51 @@ export async function deleteCategory(id: string, userId: string) {
 // Dataset Actions
 // ============================================================================
 
-export async function getDatasets(page = 1, limit = 30): Promise<PaginatedResult<Dataset>> {
+export async function getDatasets(
+  page = 1,
+  limit = 30,
+  filters?: {
+    search?: string;
+    unitOwnerId?: string;
+    categoryId?: string;
+    typeId?: string;
+  }
+): Promise<PaginatedResult<Dataset>> {
   try {
     const skip = (page - 1) * limit;
 
+    const where: any = { deletedAt: null };
+
+    // Apply filters
+    if (filters?.search) {
+      where.OR = [
+        { name: { contains: filters.search, mode: 'insensitive' } },
+        {
+          services: {
+            some: {
+              name: { contains: filters.search, mode: 'insensitive' },
+              deletedAt: null,
+            },
+          },
+        },
+      ];
+    }
+
+    if (filters?.unitOwnerId) {
+      where.unitOwnerId = filters.unitOwnerId;
+    }
+
+    if (filters?.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters?.typeId) {
+      where.typeId = filters.typeId;
+    }
+
     const [data, total] = await Promise.all([
       prisma.dataset.findMany({
-        where: { deletedAt: null },
+        where,
         include: {
           unitOwner: true,
           category: true,
@@ -254,12 +310,12 @@ export async function getDatasets(page = 1, limit = 30): Promise<PaginatedResult
             where: { deletedAt: null },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { name: 'asc' },
         skip,
         take: limit,
       }),
       prisma.dataset.count({
-        where: { deletedAt: null },
+        where,
       }),
     ]);
 

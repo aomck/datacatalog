@@ -47,6 +47,21 @@ export default function AdminPage() {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [adminToken, setAdminToken] = useState<string>('');
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    unitOwnerId: '',
+    categoryId: '',
+    status: '',
+    typeId: '',
+    securityLevel: '',
+  });
+
   // Check admin permission
   if (!checkAdminPermission(permissions)) {
     window.location.href = '/app/catalog';
@@ -54,8 +69,20 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    loadData();
+    setPage(1); // Reset to page 1 when switching tabs
+    setFilters({
+      search: '',
+      unitOwnerId: '',
+      categoryId: '',
+      status: '',
+      typeId: '',
+      securityLevel: '',
+    });
   }, [activeTab]);
+
+  useEffect(() => {
+    loadData();
+  }, [activeTab, page, rowsPerPage, filters]);
 
   useEffect(() => {
     // Load all data on mount for dropdown options
@@ -93,78 +120,42 @@ export default function AdminPage() {
     setLoading(true);
     try {
       if (activeTab === 0) {
-        const result = await getDatasets(1, 100);
+        // Dataset tab with filters
+        const result = await getDatasets(page, rowsPerPage, {
+          search: filters.search || undefined,
+          unitOwnerId: filters.unitOwnerId || undefined,
+          categoryId: filters.categoryId || undefined,
+          typeId: filters.typeId || undefined,
+        });
         setDatasets(result.data);
         setFilteredDatasets(result.data);
+        setTotalRows(result.pagination.total);
       } else if (activeTab === 1) {
-        const result = await getUnitOwners(1, 100);
+        // Unit Owner tab with search
+        const result = await getUnitOwners(page, rowsPerPage, filters.search || undefined);
         setUnitOwners(result.data);
         setFilteredUnitOwners(result.data);
+        setTotalRows(result.pagination.total);
       } else if (activeTab === 2) {
-        const result = await getCategories(1, 100);
+        // Category tab with search
+        const result = await getCategories(page, rowsPerPage, filters.search || undefined);
         setCategories(result.data);
         setFilteredCategories(result.data);
+        setTotalRows(result.pagination.total);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = (filters: FilterState) => {
-    if (activeTab === 0) {
-      let filtered = datasets;
+  const handleFilterChange = (newFilters: FilterState) => {
+    // Reset to page 1 when filtering and update filter state
+    setPage(1);
+    setFilters(newFilters);
+  };
 
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter((d) => {
-          const nameMatch = d.name.toLowerCase().includes(searchLower);
-          const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
-          return nameMatch || serviceMatch;
-        });
-      }
-
-      if (filters.unitOwnerId) {
-        filtered = filtered.filter((d) => d.unitOwnerId === filters.unitOwnerId);
-      }
-
-      if (filters.categoryId) {
-        filtered = filtered.filter((d) => d.categoryId === filters.categoryId);
-      }
-
-      if (filters.typeId) {
-        filtered = filtered.filter((d) => d.typeId === filters.typeId);
-      }
-
-      setFilteredDatasets(filtered);
-    } else if (activeTab === 1) {
-      // Unit Owner filtering
-      let filtered = unitOwners;
-
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter((u) => {
-          const nameMatch = u.name.toLowerCase().includes(searchLower);
-          const shortNameMatch = u.shortName?.toLowerCase().includes(searchLower);
-          return nameMatch || shortNameMatch;
-        });
-      }
-
-      setFilteredUnitOwners(filtered);
-    } else if (activeTab === 2) {
-      // Category filtering
-      let filtered = categories;
-
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter((c) => {
-          const nameMatch = c.name.toLowerCase().includes(searchLower);
-          const shortNameMatch = c.shortName?.toLowerCase().includes(searchLower);
-          return nameMatch || shortNameMatch;
-        });
-      }
-
-      setFilteredCategories(filtered);
-    }
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   const handleOpenDialog = (item?: any) => {
@@ -612,26 +603,26 @@ export default function AdminPage() {
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredUnitOwners.map((u) => ({
-            ...u,
-            actions: (
-              <div className="flex gap-1">
-                <Tooltip title="แก้ไข">
-                  <IconButton size="small" onClick={() => handleOpenDialog(u)}>
-                    <Icon icon="mdi:pencil" className="w-5 h-5" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="ลบ">
-                  <IconButton size="small" onClick={() => handleDelete(u.id)}>
-                    <Icon icon="mdi:delete" className="w-5 h-5" />
-                  </IconButton>
-                </Tooltip>
-              </div>
-            ),
-          }))}
-          totalRows={filteredUnitOwners.length}
-          page={1}
-          rowsPerPage={100}
-          onPageChange={() => {}}
+              ...u,
+              actions: (
+                <div className="flex gap-1">
+                  <Tooltip title="แก้ไข">
+                    <IconButton size="small" onClick={() => handleOpenDialog(u)}>
+                      <Icon icon="mdi:pencil" className="w-5 h-5" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="ลบ">
+                    <IconButton size="small" onClick={() => handleDelete(u.id)}>
+                      <Icon icon="mdi:delete" className="w-5 h-5" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              ),
+            }))}
+          totalRows={totalRows}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handlePageChange}
         />
       )}
 
@@ -655,26 +646,26 @@ export default function AdminPage() {
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredCategories.map((c) => ({
-            ...c,
-            actions: (
-              <div className="flex gap-1">
-                <Tooltip title="แก้ไข">
-                  <IconButton size="small" onClick={() => handleOpenDialog(c)}>
-                    <Icon icon="mdi:pencil" className="w-5 h-5" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="ลบ">
-                  <IconButton size="small" onClick={() => handleDelete(c.id)}>
-                    <Icon icon="mdi:delete" className="w-5 h-5" />
-                  </IconButton>
-                </Tooltip>
-              </div>
-            ),
-          }))}
-          totalRows={filteredCategories.length}
-          page={1}
-          rowsPerPage={100}
-          onPageChange={() => {}}
+              ...c,
+              actions: (
+                <div className="flex gap-1">
+                  <Tooltip title="แก้ไข">
+                    <IconButton size="small" onClick={() => handleOpenDialog(c)}>
+                      <Icon icon="mdi:pencil" className="w-5 h-5" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="ลบ">
+                    <IconButton size="small" onClick={() => handleDelete(c.id)}>
+                      <Icon icon="mdi:delete" className="w-5 h-5" />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              ),
+            }))}
+          totalRows={totalRows}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={handlePageChange}
         />
       )}
 
