@@ -93,15 +93,11 @@ export async function GET(request: NextRequest) {
       where: datasetWhere,
     });
 
-    // Count services related to filtered datasets
+    // Count services related to OPEN datasets only
     const serviceWhere: any = {
       deletedAt: null,
+      dataset: datasetWhere, // Always filter by OPEN datasets
     };
-
-    // If there are dataset filters, apply them to services
-    if (unitOwnerId || categoryId || datasetType) {
-      serviceWhere.dataset = datasetWhere;
-    }
 
     const serviceCount = await prisma.service.count({
       where: serviceWhere,
