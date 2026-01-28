@@ -300,7 +300,7 @@ export function NestedCollapsibleTable({
                                                   size="small"
                                                   disabled={level2Row._accessLevel === 'disabled'}
                                                   onClick={() =>
-                                                    window.open(level2Row[level2MetadataField], '_blank')
+                                                    window.open(getFileUrl(level2Row[level2MetadataField]) || level2Row[level2MetadataField], '_blank')
                                                   }
                                                 >
                                                   <Icon
