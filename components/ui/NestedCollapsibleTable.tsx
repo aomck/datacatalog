@@ -22,7 +22,7 @@ interface NestedCollapsibleTableProps {
   rows: any[];
   getRowId: (row: any) => string;
   // Headers
-  level1Header: string; // Header for level 1 (e.g., "นโยบายความมั่นคง" or "หน่วยงาน")
+  level1Header: string; // Header for level 1 (e.g., "นโยบายและแผนความมั่นคง" or "หน่วยงาน")
   // Level 1: Category/UnitOwner
   level1NameField: string;
   level1ShortNameField?: string;
@@ -206,6 +206,7 @@ export function NestedCollapsibleTable({
                           <Icon icon="mdi:folder" className="w-8 h-8 text-gray-400" />
                         )}
                         {level1Row[level1NameField]}
+                        {level1Row.order !== undefined && ` (นยม.${level1Row.order})`}
                       </div>
                     </TableCell>
                     <TableCell sx={{ py: 2, px: 3, fontSize: '0.875rem', color: 'grey.600' }}>

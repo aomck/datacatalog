@@ -166,7 +166,7 @@ export async function getCategories(page = 1, limit = 30, search?: string): Prom
     const [data, total] = await Promise.all([
       prisma.category.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy: { order: 'asc' },
         skip,
         take: limit,
       }),

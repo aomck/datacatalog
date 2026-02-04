@@ -1,7 +1,7 @@
-'use server';
+"use server";
 
-import { prisma } from '@/lib/prisma';
-import type { UnitOwner, Category, Dataset, PaginatedResult } from '@/types';
+import { prisma } from "@/lib/prisma";
+import type { UnitOwner, Category, Dataset, PaginatedResult } from "@/types";
 
 // ============================================================================
 // Public Catalog Actions (ทุกคนเข้าถึงได้)
@@ -10,14 +10,22 @@ import type { UnitOwner, Category, Dataset, PaginatedResult } from '@/types';
 /**
  * Get all unit owners for catalog browsing
  */
-export async function getCatalogUnitOwners(page = 1, limit = 30): Promise<PaginatedResult<UnitOwner>> {
+export async function getCatalogUnitOwners(
+  page = 1,
+  limit = 30,
+): Promise<PaginatedResult<UnitOwner>> {
   try {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
       prisma.unitOwner.findMany({
         where: { deletedAt: null },
-        orderBy: { name: 'asc' },
+        include: {
+          _count: {
+            select: { datasets: { where: { deletedAt: null } } },
+          },
+        },
+        orderBy: { name: "asc" },
         skip,
         take: limit,
       }),
@@ -36,7 +44,7 @@ export async function getCatalogUnitOwners(page = 1, limit = 30): Promise<Pagina
       },
     };
   } catch (error: any) {
-    console.error('Get catalog unit owners error:', error);
+    console.error("Get catalog unit owners error:", error);
     throw error;
   }
 }
@@ -44,14 +52,22 @@ export async function getCatalogUnitOwners(page = 1, limit = 30): Promise<Pagina
 /**
  * Get all categories for catalog browsing
  */
-export async function getCatalogCategories(page = 1, limit = 30): Promise<PaginatedResult<Category>> {
+export async function getCatalogCategories(
+  page = 1,
+  limit = 30,
+): Promise<PaginatedResult<Category>> {
   try {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
       prisma.category.findMany({
         where: { deletedAt: null },
-        orderBy: { name: 'asc' },
+        include: {
+          _count: {
+            select: { datasets: { where: { deletedAt: null } } },
+          },
+        },
+        orderBy: { order: "asc" },
         skip,
         take: limit,
       }),
@@ -70,7 +86,7 @@ export async function getCatalogCategories(page = 1, limit = 30): Promise<Pagina
       },
     };
   } catch (error: any) {
-    console.error('Get catalog categories error:', error);
+    console.error("Get catalog categories error:", error);
     throw error;
   }
 }
@@ -81,7 +97,7 @@ export async function getCatalogCategories(page = 1, limit = 30): Promise<Pagina
 export async function getDatasetsByUnitOwner(
   unitOwnerId: string,
   page = 1,
-  limit = 30
+  limit = 30,
 ): Promise<PaginatedResult<Dataset>> {
   try {
     const skip = (page - 1) * limit;
@@ -97,10 +113,10 @@ export async function getDatasetsByUnitOwner(
           category: true,
           services: {
             where: { deletedAt: null },
-            orderBy: { name: 'asc' },
+            orderBy: { name: "asc" },
           },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { name: "asc" },
         skip,
         take: limit,
       }),
@@ -122,7 +138,7 @@ export async function getDatasetsByUnitOwner(
       },
     };
   } catch (error: any) {
-    console.error('Get datasets by unit owner error:', error);
+    console.error("Get datasets by unit owner error:", error);
     throw error;
   }
 }
@@ -133,7 +149,7 @@ export async function getDatasetsByUnitOwner(
 export async function getDatasetsByCategory(
   categoryId: string,
   page = 1,
-  limit = 30
+  limit = 30,
 ): Promise<PaginatedResult<Dataset>> {
   try {
     const skip = (page - 1) * limit;
@@ -149,10 +165,10 @@ export async function getDatasetsByCategory(
           category: true,
           services: {
             where: { deletedAt: null },
-            orderBy: { name: 'asc' },
+            orderBy: { name: "asc" },
           },
         },
-        orderBy: { name: 'asc' },
+        orderBy: { name: "asc" },
         skip,
         take: limit,
       }),
@@ -174,7 +190,7 @@ export async function getDatasetsByCategory(
       },
     };
   } catch (error: any) {
-    console.error('Get datasets by category error:', error);
+    console.error("Get datasets by category error:", error);
     throw error;
   }
 }
@@ -182,7 +198,10 @@ export async function getDatasetsByCategory(
 /**
  * Check if user has already requested a dataset
  */
-export async function hasRequestedDataset(userId: string, datasetId: string): Promise<boolean> {
+export async function hasRequestedDataset(
+  userId: string,
+  datasetId: string,
+): Promise<boolean> {
   try {
     const count = await prisma.requestDataset.count({
       where: {
@@ -196,7 +215,7 @@ export async function hasRequestedDataset(userId: string, datasetId: string): Pr
 
     return count > 0;
   } catch (error: any) {
-    console.error('Check requested dataset error:', error);
+    console.error("Check requested dataset error:", error);
     return false;
   }
 }
@@ -204,7 +223,10 @@ export async function hasRequestedDataset(userId: string, datasetId: string): Pr
 /**
  * Check if user has already requested a service
  */
-export async function hasRequestedService(userId: string, serviceId: string): Promise<boolean> {
+export async function hasRequestedService(
+  userId: string,
+  serviceId: string,
+): Promise<boolean> {
   try {
     const count = await prisma.requestService.count({
       where: {
@@ -218,7 +240,7 @@ export async function hasRequestedService(userId: string, serviceId: string): Pr
 
     return count > 0;
   } catch (error: any) {
-    console.error('Check requested service error:', error);
+    console.error("Check requested service error:", error);
     return false;
   }
 }
@@ -226,7 +248,10 @@ export async function hasRequestedService(userId: string, serviceId: string): Pr
 /**
  * Check if user has approved access to a service
  */
-export async function hasApprovedService(userId: string, serviceId: string): Promise<boolean> {
+export async function hasApprovedService(
+  userId: string,
+  serviceId: string,
+): Promise<boolean> {
   try {
     const count = await prisma.requestService.count({
       where: {
@@ -235,13 +260,13 @@ export async function hasApprovedService(userId: string, serviceId: string): Pro
           requestedBy: userId,
           deletedAt: null,
         },
-        approveStatus: 'APPROVED',
+        approveStatus: "APPROVED",
       },
     });
 
     return count > 0;
   } catch (error: any) {
-    console.error('Check approved service error:', error);
+    console.error("Check approved service error:", error);
     return false;
   }
 }
@@ -273,7 +298,7 @@ export async function getUserApprovedItems(userId: string) {
           request: true,
           approver: true,
           approvalFiles: {
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
           },
         },
       }),
@@ -299,7 +324,7 @@ export async function getUserApprovedItems(userId: string) {
           request: true,
           approver: true,
           approvalFiles: {
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
           },
         },
       }),
@@ -307,7 +332,7 @@ export async function getUserApprovedItems(userId: string) {
 
     return { datasets, services };
   } catch (error: any) {
-    console.error('Get user requested items error:', error);
+    console.error("Get user requested items error:", error);
     throw error;
   }
 }
@@ -345,17 +370,23 @@ export async function getUserRequestStatus(userId: string) {
     ]);
 
     return {
-      datasets: datasets.reduce((acc, item) => {
-        acc[item.datasetId] = item.approveStatus;
-        return acc;
-      }, {} as Record<string, string>),
-      services: services.reduce((acc, item) => {
-        acc[item.serviceId] = item.approveStatus;
-        return acc;
-      }, {} as Record<string, string>),
+      datasets: datasets.reduce(
+        (acc, item) => {
+          acc[item.datasetId] = item.approveStatus;
+          return acc;
+        },
+        {} as Record<string, string>,
+      ),
+      services: services.reduce(
+        (acc, item) => {
+          acc[item.serviceId] = item.approveStatus;
+          return acc;
+        },
+        {} as Record<string, string>,
+      ),
     };
   } catch (error: any) {
-    console.error('Get user request status error:', error);
+    console.error("Get user request status error:", error);
     return { datasets: {}, services: {} };
   }
 }
@@ -366,7 +397,7 @@ export async function getUserRequestStatus(userId: string) {
 export async function getCategoriesByUnitOwner(
   unitOwnerId: string,
   page = 1,
-  limit = 100
+  limit = 100,
 ): Promise<PaginatedResult<any>> {
   try {
     const skip = (page - 1) * limit;
@@ -391,13 +422,13 @@ export async function getCategoriesByUnitOwner(
           include: {
             services: {
               where: { deletedAt: null },
-              orderBy: { name: 'asc' },
+              orderBy: { name: "asc" },
             },
           },
-          orderBy: { name: 'asc' },
+          orderBy: { name: "asc" },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { order: "asc" },
       skip,
       take: limit,
     });
@@ -424,18 +455,18 @@ export async function getCategoriesByUnitOwner(
       },
     };
   } catch (error: any) {
-    console.error('Get categories by unit owner error:', error);
+    console.error("Get categories by unit owner error:", error);
     throw error;
   }
 }
 
 /**
- * Get unit owners grouped by category (for tab นโยบายความมั่นคง)
+ * Get unit owners grouped by category (for tab นโยบายและแผนความมั่นคง)
  */
 export async function getUnitOwnersByCategory(
   categoryId: string,
   page = 1,
-  limit = 100
+  limit = 100,
 ): Promise<PaginatedResult<any>> {
   try {
     const skip = (page - 1) * limit;
@@ -460,13 +491,13 @@ export async function getUnitOwnersByCategory(
           include: {
             services: {
               where: { deletedAt: null },
-              orderBy: { name: 'asc' },
+              orderBy: { name: "asc" },
             },
           },
-          orderBy: { name: 'asc' },
+          orderBy: { name: "asc" },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
       skip,
       take: limit,
     });
@@ -493,7 +524,7 @@ export async function getUnitOwnersByCategory(
       },
     };
   } catch (error: any) {
-    console.error('Get unit owners by category error:', error);
+    console.error("Get unit owners by category error:", error);
     throw error;
   }
 }

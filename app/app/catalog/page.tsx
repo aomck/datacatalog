@@ -34,7 +34,7 @@ export default function CatalogPage() {
     loadData();
     loadDatasetTypes();
     if (user) {
-      console.log("USER:::",user)
+      console.log("USER:::", user)
       loadRequestStatus();
     }
   }, [activeTab, user]);
@@ -309,7 +309,7 @@ export default function CatalogPage() {
       </div>
 
       <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); setSearchTerm(''); }}>
-        <Tab label="นโยบายด้านความมั่นคง" />
+        <Tab label="นโยบายและแผนความมั่นคง" />
         <Tab label="หน่วยงาน" />
       </Tabs>
 
@@ -320,7 +320,7 @@ export default function CatalogPage() {
               <Icon icon="mdi:magnify" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder={`ค้นหา${activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}...`}
+                placeholder={`ค้นหา${activeTab === 0 ? 'นโยบายและแผนความมั่นคง' : 'หน่วยงาน'}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -339,18 +339,22 @@ export default function CatalogPage() {
                 return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
               })
               .map((item) => (
-            <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
-              <CardContent className="text-center">
-                {item.icon ? (
-                  <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
-                ) : (
-                  <Icon icon="mdi:folder" className="w-16 h-16 mx-auto mb-3 text-gray-400" />
-                )}
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <p className="text-sm text-gray-600">{item.shortName}</p>
-              </CardContent>
-            </Card>
-          ))}
+                <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
+                  <CardContent className="text-center">
+                    {item.icon ? (
+                      <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
+                    ) : (
+                      <Icon icon="mdi:folder" className="w-16 h-16 mx-auto mb-3 text-gray-400" />
+                    )}
+                    {(item as any).order !== undefined && (
+                      <p className="text-sm text-gray-600">นยม.{(item as any).order}</p>
+                    )}
+                    <h3 className="font-semibold text-lg">{item.name}</h3>
+                    <p className="text-sm text-gray-600">{item.shortName}</p>
+                    <p className="text-xs text-gray-500 mt-2">{(item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </>
       ) : (
@@ -362,7 +366,7 @@ export default function CatalogPage() {
               className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
             >
               <Icon icon="mdi:home" className="w-4 h-4" />
-              {activeTab === 0 ? 'นโยบายความมั่นคง' : 'หน่วยงาน'}
+              {activeTab === 0 ? 'นโยบายและแผนความมั่นคง' : 'หน่วยงาน'}
             </button>
             <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
             <span className="text-gray-700 font-medium">{selectedItem?.name}</span>
@@ -383,7 +387,7 @@ export default function CatalogPage() {
           <NestedCollapsibleTable
             rows={filteredData}
             getRowId={(row) => row.id}
-            level1Header={activeTab === 0 ? 'หน่วยงาน' : 'นโยบายความมั่นคง'}
+            level1Header={activeTab === 0 ? 'หน่วยงาน' : 'นโยบายและแผนความมั่นคง'}
             level1NameField="name"
             level1ShortNameField="shortName"
             level1IconField="icon"
@@ -401,13 +405,12 @@ export default function CatalogPage() {
                 <button
                   onClick={() => toggleCart({ type: 'dataset', id: dataset.id, name: dataset.name })}
                   disabled={isAccessDisabled}
-                  className={`px-3 py-1 text-sm rounded ${
-                    accessLevel === 'disabled'
-                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                      : cart.find((i) => i.id === dataset.id && i.type === 'dataset')
+                  className={`px-3 py-1 text-sm rounded ${accessLevel === 'disabled'
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : cart.find((i) => i.id === dataset.id && i.type === 'dataset')
                       ? 'bg-red-600 text-white hover:bg-red-700'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
-                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                    } disabled:bg-gray-300 disabled:cursor-not-allowed`}
                 >
                   {accessLevel === 'disabled' ? 'ไม่มีสิทธิ์เข้าถึง' : getButtonLabel(dataset.id, 'dataset')}
                 </button>
@@ -425,13 +428,12 @@ export default function CatalogPage() {
                 <button
                   onClick={() => toggleCart({ type: 'service', id: service.id, name: service.name, datasetId: dataset.id, datasetName: dataset.name })}
                   disabled={isAccessDisabled}
-                  className={`px-3 py-1 text-sm rounded ${
-                    accessLevel === 'disabled'
-                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                      : cart.find((i) => i.id === service.id && i.type === 'service')
+                  className={`px-3 py-1 text-sm rounded ${accessLevel === 'disabled'
+                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                    : cart.find((i) => i.id === service.id && i.type === 'service')
                       ? 'bg-red-600 text-white hover:bg-red-700'
                       : 'bg-green-600 text-white hover:bg-green-700'
-                  } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+                    } disabled:bg-gray-300 disabled:cursor-not-allowed`}
                 >
                   {accessLevel === 'disabled' ? 'ไม่มีสิทธิ์เข้าถึง' : getButtonLabel(service.id, 'service')}
                 </button>

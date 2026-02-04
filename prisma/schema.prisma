@@ -63,6 +63,7 @@ model Category {
   name      String
   shortName String  @map("short_name")
   icon      String? // File path to icon
+  order     Int     @default(0) // Display order
 
   // Audit fields
   createdBy  String?

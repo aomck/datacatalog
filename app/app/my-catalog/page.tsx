@@ -371,7 +371,12 @@ export default function MyCatalogPage() {
           columns={[
             { id: 'name', label: 'ชื่อชุดข้อมูล' },
             { id: 'unitOwner', label: 'หน่วยงาน', format: (row: any) => row.dataset?.unitOwner?.name || '-' },
-            { id: 'category', label: 'นโยบาย', format: (row: any) => row.dataset?.category?.name || '-' },
+            { id: 'category', label: 'นโยบายและแผนความมั่นคง', format: (row: any) => {
+              const category = row.dataset?.category;
+              if (!category) return '-';
+              const orderText = category.order !== undefined ? ` (นยม.${category.order})` : '';
+              return `${category.name}${orderText}`;
+            }},
             {
               id: 'securityLevel',
               label: 'ชั้นความลับ',

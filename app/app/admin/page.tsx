@@ -171,7 +171,7 @@ export default function AdminPage() {
       } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
       } else if (activeTab === 2) {
-        setFormData({ name: '', shortName: '' });
+        setFormData({ name: '', shortName: '', order: 0 });
       }
     }
     setFiles([]);
@@ -279,6 +279,7 @@ export default function AdminPage() {
           name: formData.name,
           shortName: formData.shortName,
           icon: iconPath,
+          order: parseInt(formData.order) || 0,
         };
         console.log('Saving Category:', data);
         result = editingItem
@@ -354,7 +355,7 @@ export default function AdminPage() {
     if (isServiceDialog) {
       return (editingItem ? 'แก้ไข' : 'เพิ่ม') + 'บริการข้อมูล';
     }
-    const labels = ['ชุดข้อมูล', 'หน่วยงาน', 'นโยบายด้านความมั่นคง'];
+    const labels = ['ชุดข้อมูล', 'หน่วยงาน', 'นโยบายและแผนความมั่นคง'];
     return (editingItem ? 'แก้ไข' : 'เพิ่ม') + labels[activeTab];
   };
 
@@ -376,7 +377,7 @@ export default function AdminPage() {
       <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} className="mb-6">
         <Tab label="ชุดข้อมูล" />
         <Tab label="หน่วยงาน" />
-        <Tab label="นโยบายด้านความมั่นคง" />
+        <Tab label="นโยบายและแผนความมั่นคง" />
       </Tabs>
 
       {/* Filter Panel */}
@@ -518,55 +519,55 @@ export default function AdminPage() {
                           <p className="text-xs text-gray-600">{s.method} {s.api}</p>
                         </div>
                         <div className="flex gap-1">
-                        <Tooltip title={adminToken ? "ทดสอบ API" : "กำลังโหลด Token..."}>
-                          <IconButton
-                            size="small"
-                            disabled={!adminToken}
-                            onClick={() => {
-                              if (adminToken) {
-                                setSelectedService(s);
-                                setApiTestOpen(true);
-                              }
-                            }}
-                          >
-                            <Icon icon="mdi:api" className="w-5 h-5 text-green-600" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="แก้ไข">
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              console.log('Edit service:', s);
-                              setEditingItem(s);
-                              setFormData(s);
-                              setFiles([]);
-                              setIsServiceDialog(true);
-                              setDialogOpen(true);
-                            }}
-                          >
-                            <Icon icon="mdi:pencil" className="w-4 h-4" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="ลบ">
-                          <IconButton
-                            size="small"
-                            onClick={async () => {
-                              if (confirm('คุณต้องการลบบริการนี้ใช่หรือไม่?')) {
-                                // Delete howTo file if exists
-                                if (s.howTo) {
-                                  await deleteUploadedFile(s.howTo);
+                          <Tooltip title={adminToken ? "ทดสอบ API" : "กำลังโหลด Token..."}>
+                            <IconButton
+                              size="small"
+                              disabled={!adminToken}
+                              onClick={() => {
+                                if (adminToken) {
+                                  setSelectedService(s);
+                                  setApiTestOpen(true);
                                 }
-                                const result = await deleteService(s.id, user!.id);
-                                if (result?.success) {
-                                  alert('ลบเรียบร้อยแล้ว');
-                                  loadData();
+                              }}
+                            >
+                              <Icon icon="mdi:api" className="w-5 h-5 text-green-600" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="แก้ไข">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                console.log('Edit service:', s);
+                                setEditingItem(s);
+                                setFormData(s);
+                                setFiles([]);
+                                setIsServiceDialog(true);
+                                setDialogOpen(true);
+                              }}
+                            >
+                              <Icon icon="mdi:pencil" className="w-4 h-4" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="ลบ">
+                            <IconButton
+                              size="small"
+                              onClick={async () => {
+                                if (confirm('คุณต้องการลบบริการนี้ใช่หรือไม่?')) {
+                                  // Delete howTo file if exists
+                                  if (s.howTo) {
+                                    await deleteUploadedFile(s.howTo);
+                                  }
+                                  const result = await deleteService(s.id, user!.id);
+                                  if (result?.success) {
+                                    alert('ลบเรียบร้อยแล้ว');
+                                    loadData();
+                                  }
                                 }
-                              }
-                            }}
-                          >
-                            <Icon icon="mdi:delete" className="w-4 h-4" />
-                          </IconButton>
-                        </Tooltip>
+                              }}
+                            >
+                              <Icon icon="mdi:delete" className="w-4 h-4" />
+                            </IconButton>
+                          </Tooltip>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
@@ -608,22 +609,22 @@ export default function AdminPage() {
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredUnitOwners.map((u) => ({
-              ...u,
-              actions: (
-                <div className="flex gap-1">
-                  <Tooltip title="แก้ไข">
-                    <IconButton size="small" onClick={() => handleOpenDialog(u)}>
-                      <Icon icon="mdi:pencil" className="w-5 h-5" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="ลบ">
-                    <IconButton size="small" onClick={() => handleDelete(u.id)}>
-                      <Icon icon="mdi:delete" className="w-5 h-5" />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              ),
-            }))}
+            ...u,
+            actions: (
+              <div className="flex gap-1">
+                <Tooltip title="แก้ไข">
+                  <IconButton size="small" onClick={() => handleOpenDialog(u)}>
+                    <Icon icon="mdi:pencil" className="w-5 h-5" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="ลบ">
+                  <IconButton size="small" onClick={() => handleDelete(u.id)}>
+                    <Icon icon="mdi:delete" className="w-5 h-5" />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            ),
+          }))}
           totalRows={totalRows}
           page={page}
           rowsPerPage={rowsPerPage}
@@ -635,7 +636,8 @@ export default function AdminPage() {
       {activeTab === 2 && (
         <DataTable
           columns={[
-            { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={getFileUrl(value) || ''} alt="" className="w-8 h-8 rounded" /> : '-' },
+            { id: 'order', label: 'ลำดับ', align: 'center' },
+            { id: 'icon', label: 'ไอคอน', align: 'center', format: (value: any) => value ? <img src={getFileUrl(value) || ''} alt="" className="w-8 h-8 rounded" /> : '-' },
             { id: 'name', label: 'ชื่อ' },
             { id: 'shortName', label: 'ชื่อย่อ' },
             {
@@ -651,22 +653,22 @@ export default function AdminPage() {
             { id: 'actions', label: '', align: 'right' },
           ]}
           rows={filteredCategories.map((c) => ({
-              ...c,
-              actions: (
-                <div className="flex gap-1">
-                  <Tooltip title="แก้ไข">
-                    <IconButton size="small" onClick={() => handleOpenDialog(c)}>
-                      <Icon icon="mdi:pencil" className="w-5 h-5" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="ลบ">
-                    <IconButton size="small" onClick={() => handleDelete(c.id)}>
-                      <Icon icon="mdi:delete" className="w-5 h-5" />
-                    </IconButton>
-                  </Tooltip>
-                </div>
-              ),
-            }))}
+            ...c,
+            actions: (
+              <div className="flex gap-1">
+                <Tooltip title="แก้ไข">
+                  <IconButton size="small" onClick={() => handleOpenDialog(c)}>
+                    <Icon icon="mdi:pencil" className="w-5 h-5" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="ลบ">
+                  <IconButton size="small" onClick={() => handleDelete(c.id)}>
+                    <Icon icon="mdi:delete" className="w-5 h-5" />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            ),
+          }))}
           totalRows={totalRows}
           page={page}
           rowsPerPage={rowsPerPage}
@@ -924,6 +926,14 @@ export default function AdminPage() {
                 label="ชื่อย่อ"
                 value={formData.shortName || ''}
                 onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="ลำดับ"
+                type="number"
+                value={formData.order || 0}
+                onChange={(e) => setFormData({ ...formData, order: e.target.value })}
                 sx={{ mb: 2 }}
               />
               <FileUpload
