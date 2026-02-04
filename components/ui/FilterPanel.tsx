@@ -105,7 +105,7 @@ export function FilterPanel({
           <TextField
             select
             size="small"
-            label="นโยบายความมั่นคง"
+            label="นโยบายและแผนความมั่นคง"
             value={filters.categoryId}
             onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}
             sx={{ minWidth: 200 }}

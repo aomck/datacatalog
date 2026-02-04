@@ -180,7 +180,7 @@ export default function CatalogPage() {
 
       <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setDatasets([]); }}>
         <Tab label="หน่วยงาน" />
-        <Tab label="นโยบายด้านความมั่นคง" />
+        <Tab label="นโยบายและแผนความมั่นคง" />
       </Tabs>
 
       {!selectedId ? (
