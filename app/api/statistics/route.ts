@@ -72,40 +72,28 @@ export async function GET(request: NextRequest) {
       dateFilter.lte = new Date(endDate);
     }
 
+    // Get distinct dataset names first
+    const distinctDatasets = await prisma.dataset.findMany({
+      where: {
+        deletedAt: null,
+      },
+      distinct: ['name'],
+      select: {
+        id: true,
+        name: true,
+        typeId: true,
+        securityLevel: true,
+      },
+    });
+
+    // Extract distinct dataset IDs for further queries
+    const distinctDatasetIds = distinctDatasets.map((d) => d.id);
+
     // Parallel queries for statistics
     const [
-      datasetsByType,
-      datasetsBySecurityLevel,
-      totalDatasets,
       totalServices,
       accessLogs,
     ] = await Promise.all([
-      // Count datasets by type
-      prisma.dataset.groupBy({
-        by: ['typeId'],
-        where: {
-          deletedAt: null,
-        },
-        _count: {
-          id: true,
-        },
-      }),
-      // Count datasets by security level
-      prisma.dataset.groupBy({
-        by: ['securityLevel'],
-        where: {
-          deletedAt: null,
-        },
-        _count: {
-          id: true,
-        },
-      }),
-      // Total active datasets
-      prisma.dataset.count({
-        where: {
-          deletedAt: null,
-        },
-      }),
       // Total active services
       prisma.service.count({
         where: {
@@ -119,6 +107,32 @@ export async function GET(request: NextRequest) {
           : undefined,
       }),
     ]);
+
+    // Count datasets by type from distinct datasets
+    const datasetsByTypeMap = new Map<string, number>();
+    distinctDatasets.forEach((dataset) => {
+      const count = datasetsByTypeMap.get(dataset.typeId) || 0;
+      datasetsByTypeMap.set(dataset.typeId, count + 1);
+    });
+    const datasetsByType = Array.from(datasetsByTypeMap.entries()).map(([typeId, count]) => ({
+      typeId,
+      _count: { id: count },
+    }));
+
+    // Count datasets by security level from distinct datasets
+    const datasetsBySecurityLevelMap = new Map<string | null, number>();
+    distinctDatasets.forEach((dataset) => {
+      const level = dataset.securityLevel || null;
+      const count = datasetsBySecurityLevelMap.get(level) || 0;
+      datasetsBySecurityLevelMap.set(level, count + 1);
+    });
+    const datasetsBySecurityLevel = Array.from(datasetsBySecurityLevelMap.entries()).map(([securityLevel, count]) => ({
+      securityLevel,
+      _count: { id: count },
+    }));
+
+    // Total distinct datasets
+    const totalDatasets = distinctDatasets.length;
 
     // Get type names for the grouped data
     const typeIds = datasetsByType.map((item) => item.typeId);
