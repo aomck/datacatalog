@@ -21,6 +21,10 @@ module.exports = {
           900: '#0d47a1',
         },
       },
+      fontFamily: {
+        kanit: ['var(--font-kanit)'],
+        sans: ['var(--font-kanit)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
     },
   },
   plugins: [],

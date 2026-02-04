@@ -339,19 +339,30 @@ export default function CatalogPage() {
                 return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
               })
               .map((item) => (
-                <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => loadNestedData(item.id, item)}>
-                  <CardContent className="text-center">
-                    {item.icon ? (
-                      <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 mx-auto mb-3 rounded" />
-                    ) : (
-                      <Icon icon="mdi:folder" className="w-16 h-16 mx-auto mb-3 text-gray-400" />
-                    )}
-                    {(item as any).order !== undefined && (
-                      <p className="text-sm text-gray-600">นยม.{(item as any).order}</p>
-                    )}
-                    <h3 className="font-semibold text-lg">{item.name}</h3>
-                    <p className="text-sm text-gray-600">{item.shortName}</p>
-                    <p className="text-xs text-gray-500 mt-2">{(item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow h-64" onClick={() => loadNestedData(item.id, item)}>
+                  <CardContent className="h-full flex flex-col justify-between p-4">
+                    {/* Logo Section - 40% */}
+                    <div className="flex items-center justify-center" style={{ height: '40%' }}>
+                      {item.icon ? (
+                        <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 rounded object-contain" />
+                      ) : (
+                        <Icon icon="mdi:folder" className="w-16 h-16 text-gray-400" />
+                      )}
+                    </div>
+
+                    {/* Name Section - 50% */}
+                    <div className="flex flex-col items-center justify-center gap-1" style={{ height: '50%' }}>
+                      {(item as any).order !== undefined && (
+                        <p className="text-sm text-gray-600">นยม.{(item as any).order}</p>
+                      )}
+                      <h3 className="font-semibold text-lg text-center">{item.name}</h3>
+                      <p className="text-sm text-gray-600 text-center">{item.shortName}</p>
+                    </div>
+
+                    {/* Dataset Count Section - 10% */}
+                    <div className="flex items-center justify-center" style={{ height: '10%' }}>
+                      <p className="text-xs text-gray-500">{(item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
