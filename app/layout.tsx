@@ -10,8 +10,8 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  title: "Data Catalog - ISOC",
-  description: "Data Catalog Management System",
+  title: "ศูนย์กลางข้อมูลด้านความมั่นคง",
+  description: "ศูนย์กลางข้อมูลด้านความมั่นคง",
 };
 
 export default function RootLayout({

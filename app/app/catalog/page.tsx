@@ -285,7 +285,7 @@ export default function CatalogPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">แคตาล็อกข้อมูล</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">บัญชีข้อมูลด้านความมั่นคง (Data Catalog)</h1>
           <p className="text-gray-600">ค้นหาและขอใช้งานชุดข้อมูลและบริการข้อมูล</p>
         </div>
         <div className="flex items-center gap-2">

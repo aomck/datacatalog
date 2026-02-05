@@ -23,7 +23,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   {
     name: 'Data Catalog',
-    nameTh: 'แคตาล็อกข้อมูล',
+    nameTh: 'บัญชีข้อมูลด้านความมั่นคง',
     href: '/app/catalog',
     service: '', // No permission required, everyone can access
     route: '',
@@ -137,31 +137,22 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`${
-        isExpanded ? 'w-64' : 'w-20'
-      } bg-white border-r border-gray-200 min-h-screen flex flex-col transition-all duration-300 ease-in-out`}
+      className={`${isExpanded ? 'w-64' : 'w-20'
+        } bg-white border-r border-gray-200 min-h-screen flex flex-col transition-all duration-300 ease-in-out`}
     >
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className={`flex items-center ${isExpanded ? 'space-x-3' : 'justify-center'}`}>
-            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
-                />
-              </svg>
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+              <img
+                src="/datacatalog/360logo.png"
+                alt="Logo"
+                className="w-10 h-10 object-contain"
+              />
             </div>
             {isExpanded && (
-              <span className="font-bold text-gray-900 text-lg">Data Catalog</span>
+              <span className="font-bold text-gray-900 text-lg">ศูนย์กลางข้อมูลด้านความมั่นคง</span>
             )}
           </div>
           <button
@@ -169,9 +160,8 @@ export function Sidebar() {
             className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <svg
-              className={`w-5 h-5 text-gray-500 transition-transform ${
-                isExpanded ? '' : 'rotate-180'
-              }`}
+              className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? '' : 'rotate-180'
+                }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -222,13 +212,11 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center ${
-                isExpanded ? 'space-x-3 px-4' : 'justify-center px-2'
-              } py-3 rounded-lg transition-all ${
-                isActive
+              className={`flex items-center ${isExpanded ? 'space-x-3 px-4' : 'justify-center px-2'
+                } py-3 rounded-lg transition-all ${isActive
                   ? 'bg-primary-50 text-primary-700 font-semibold'
                   : 'text-gray-700 hover:bg-gray-100'
-              } relative`}
+                } relative`}
               title={!isExpanded ? item.nameTh : undefined}
             >
               <span className="flex-shrink-0">{item.icon}</span>
@@ -252,9 +240,8 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className={`w-full flex items-center ${
-            isExpanded ? 'space-x-3 px-4' : 'justify-center px-2'
-          } py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all`}
+          className={`w-full flex items-center ${isExpanded ? 'space-x-3 px-4' : 'justify-center px-2'
+            } py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all`}
           title={!isExpanded ? 'ออกจากระบบ' : undefined}
         >
           <Icon icon="mdi:logout" className="w-6 h-6 flex-shrink-0" />
