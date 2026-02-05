@@ -344,7 +344,7 @@ export default function CatalogPage() {
                     {/* Logo Section - 40% */}
                     <div className="flex items-center justify-center" style={{ height: '40%' }}>
                       {item.icon ? (
-                        <img src={getFileUrl(item.icon) || ''} alt={item.name} className="w-16 h-16 rounded object-contain" />
+                        <img src={getFileUrl(item.icon) || ''} alt={item.name} className={`w-16 h-16 rounded object-contain ${activeTab === 0 ? 'opacity-60' : ''}`} />
                       ) : (
                         <Icon icon="mdi:folder" className="w-16 h-16 text-gray-400" />
                       )}
