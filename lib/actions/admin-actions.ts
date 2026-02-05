@@ -335,7 +335,7 @@ export async function getDatasets(
 }
 
 export async function createDataset(
-  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string },
+  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string; datadict?: string },
   userId: string
 ) {
   try {
@@ -348,6 +348,7 @@ export async function createDataset(
         typeId: data.typeId,
         securityLevel: data.securityLevel,
         metadata: data.metadata,
+        datadict: data.datadict,
         createdBy: userId,
         updatedBy: userId,
       },
@@ -367,16 +368,35 @@ export async function createDataset(
 
 export async function updateDataset(
   id: string,
-  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string },
+  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string; datadict?: string },
   userId: string
 ) {
   try {
+    const updateData: any = {
+      updatedBy: userId,
+    };
+
+    // Only include fields that are provided and valid for Prisma update
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.detail !== undefined) updateData.detail = data.detail;
+    if (data.securityLevel !== undefined) updateData.securityLevel = data.securityLevel;
+    if (data.metadata !== undefined) updateData.metadata = data.metadata;
+    if (data.datadict !== undefined) updateData.datadict = data.datadict;
+
+    // Handle relation fields
+    if (data.unitOwnerId) {
+      updateData.unitOwner = { connect: { id: data.unitOwnerId } };
+    }
+    if (data.categoryId) {
+      updateData.category = { connect: { id: data.categoryId } };
+    }
+    if (data.typeId) {
+      updateData.type = { connect: { id: data.typeId } };
+    }
+
     const dataset = await prisma.dataset.update({
       where: { id },
-      data: {
-        ...data,
-        updatedBy: userId,
-      },
+      data: updateData,
       include: {
         unitOwner: true,
         category: true,

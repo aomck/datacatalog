@@ -89,6 +89,23 @@ export async function uploadDatasetMetadata(file: File): Promise<UploadFileResul
 }
 
 /**
+ * Upload dataset datadict file
+ */
+export async function uploadDatasetDatadict(file: File): Promise<UploadFileResult> {
+  try {
+    if (!file) {
+      return { success: false, error: 'No file provided' };
+    }
+
+    const result = await uploadFile(file, 'services');
+    return result;
+  } catch (error: any) {
+    console.error('Upload dataset datadict error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Upload request file (evidence)
  */
 export async function uploadRequestFile(formData: FormData) {

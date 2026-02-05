@@ -12,7 +12,7 @@ import {
   getCategories, createCategory, updateCategory, deleteCategory,
   getDatasetTypes
 } from '@/lib/actions/admin-actions';
-import { uploadUnitOwnerIcon, uploadCategoryIcon, uploadServiceHowTo, uploadDatasetMetadata, deleteUploadedFile } from '@/lib/actions/file-actions';
+import { uploadUnitOwnerIcon, uploadCategoryIcon, uploadServiceHowTo, uploadDatasetMetadata, uploadDatasetDatadict, deleteUploadedFile } from '@/lib/actions/file-actions';
 import { DataTable } from '@/components/ui/DataTable';
 import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { RefreshButton } from '@/components/ui/RefreshButton';
@@ -44,6 +44,7 @@ export default function AdminPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [formData, setFormData] = useState<any>({});
   const [files, setFiles] = useState<File[]>([]);
+  const [datadictFiles, setDatadictFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [isServiceDialog, setIsServiceDialog] = useState(false);
   const [apiTestOpen, setApiTestOpen] = useState(false);
@@ -175,6 +176,7 @@ export default function AdminPage() {
       }
     }
     setFiles([]);
+    setDatadictFiles([]);
     setDialogOpen(true);
   };
 
@@ -186,9 +188,11 @@ export default function AdminPage() {
       let iconPath = formData.icon;
       let howTo = formData.howTo;
       let metadata = formData.metadata;
+      let datadict = formData.datadict;
 
       console.log('=== SAVE DEBUG ===');
       console.log('Files:', files);
+      console.log('DatadictFiles:', datadictFiles);
       console.log('ActiveTab:', activeTab);
       console.log('FormData before:', formData);
 
@@ -225,9 +229,19 @@ export default function AdminPage() {
         }
       }
 
+      // Handle datadict file upload (dataset only)
+      if (datadictFiles.length > 0 && activeTab === 0 && !isServiceDialog) {
+        const file = datadictFiles[0];
+        console.log('Uploading Dataset datadict:', file.name, 'Size:', file.size);
+        const result = await uploadDatasetDatadict(file);
+        console.log('Upload datadict result:', result);
+        if (result.success && result.filePath) datadict = result.filePath;
+      }
+
       console.log('IconPath after upload:', iconPath);
       console.log('HowTo after upload:', howTo);
       console.log('Metadata after upload:', metadata);
+      console.log('Datadict after upload:', datadict);
 
       let result;
       // Check if this is a service dialog
@@ -257,6 +271,7 @@ export default function AdminPage() {
           typeId: formData.typeId,
           securityLevel: formData.securityLevel,
           metadata,
+          datadict,
         };
         console.log('Saving Dataset:', data);
         result = editingItem
@@ -293,6 +308,7 @@ export default function AdminPage() {
         alert(editingItem ? 'แก้ไขเรียบร้อยแล้ว' : 'เพิ่มเรียบร้อยแล้ว');
         setDialogOpen(false);
         setFiles([]);
+        setDatadictFiles([]);
         setIsServiceDialog(false);
         loadData();
       } else {
@@ -315,10 +331,13 @@ export default function AdminPage() {
       let itemToDelete;
 
       if (activeTab === 0) {
-        // Dataset - delete metadata file if exists
+        // Dataset - delete metadata and datadict files if exists
         itemToDelete = filteredDatasets.find((d) => d.id === id);
         if (itemToDelete?.metadata) {
           await deleteUploadedFile(itemToDelete.metadata);
+        }
+        if (itemToDelete?.datadict) {
+          await deleteUploadedFile(itemToDelete.datadict);
         }
         result = await deleteDataset(id, user.id);
       } else if (activeTab === 1) {
@@ -437,6 +456,18 @@ export default function AdminPage() {
                 <Tooltip title="ดู Metadata">
                   <IconButton size="small" onClick={() => window.open(getFileUrl(row.metadata) || row.metadata, '_blank')}>
                     <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                  </IconButton>
+                </Tooltip>
+              ) : '-'
+            },
+            {
+              id: 'datadict',
+              label: 'Data Dict',
+              align: 'center',
+              format: (row: any) => row.datadict ? (
+                <Tooltip title="ดู Data Dictionary">
+                  <IconButton size="small" onClick={() => window.open(getFileUrl(row.datadict) || row.datadict, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-green-600" />
                   </IconButton>
                 </Tooltip>
               ) : '-'
@@ -844,6 +875,43 @@ export default function AdminPage() {
                       alert('ลบไฟล์สำเร็จ');
                       setEditingItem({ ...editingItem, metadata: null });
                       setFormData({ ...formData, metadata: '' });
+                      loadData();
+                    } else {
+                      throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');
+                    }
+                  } catch (error: any) {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              />
+              <FileUpload
+                files={datadictFiles}
+                onChange={setDatadictFiles}
+                maxFiles={1}
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                label="อัปโหลด Data Dictionary"
+                existingFileUrl={editingItem?.datadict}
+                existingFileName={editingItem?.datadict ? 'Data Dictionary' : undefined}
+                onDeleteExisting={async () => {
+                  if (!editingItem?.datadict || !editingItem?.id) return;
+                  setLoading(true);
+                  try {
+                    await deleteUploadedFile(editingItem.datadict);
+                    const result = await updateDataset(editingItem.id, {
+                      name: editingItem.name,
+                      detail: editingItem.detail,
+                      unitOwnerId: editingItem.unitOwnerId,
+                      categoryId: editingItem.categoryId,
+                      typeId: editingItem.typeId,
+                      securityLevel: editingItem.securityLevel,
+                      datadict: null
+                    }, user!.id);
+                    if (result?.success) {
+                      alert('ลบไฟล์สำเร็จ');
+                      setEditingItem({ ...editingItem, datadict: null });
+                      setFormData({ ...formData, datadict: '' });
                       loadData();
                     } else {
                       throw new Error(result?.error || 'ไม่สามารถลบไฟล์ได้');

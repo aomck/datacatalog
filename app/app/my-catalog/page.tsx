@@ -395,6 +395,18 @@ export default function MyCatalogPage() {
                 </Tooltip>
               ) : '-'
             },
+            {
+              id: 'datadict',
+              label: 'Data Dict',
+              align: 'center',
+              format: (row: any) => row.dataset?.datadict ? (
+                <Tooltip title="ดู Data Dictionary">
+                  <IconButton size="small" onClick={() => window.open(getFileUrl(row.dataset.datadict) || row.dataset.datadict, '_blank')}>
+                    <Icon icon="mdi:file-document" className="w-5 h-5 text-green-600" />
+                  </IconButton>
+                </Tooltip>
+              ) : '-'
+            },
             { id: 'status', label: 'สถานะ', align: 'center' },
             { id: 'actions', label: 'รายละเอียดคำขอ', align: 'center' },
           ]}

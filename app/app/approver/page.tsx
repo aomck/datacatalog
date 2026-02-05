@@ -395,6 +395,13 @@ export default function ApproverPage() {
                               </IconButton>
                             </Tooltip>
                           )}
+                          {rd.dataset?.datadict && (
+                            <Tooltip title="ดู Data Dictionary">
+                              <IconButton size="small" onClick={() => window.open(getFileUrl(rd.dataset.datadict) || rd.dataset.datadict, '_blank')}>
+                                <Icon icon="mdi:file-document" className="w-5 h-5 text-green-600" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                           <Tooltip title="ดูประวัติการอนุมัติ">
                             <IconButton size="small" onClick={() => handleViewHistory(rd)}>
                               <Icon icon="mdi:history" className="w-5 h-5" />

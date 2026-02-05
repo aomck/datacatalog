@@ -406,6 +406,7 @@ export default function CatalogPage() {
             level2NameField="name"
             level2DetailField="detail"
             level2MetadataField="metadata"
+            level2DatadictField="datadict"
             level2SecurityLevelField="securityLevel"
             level2ChildrenField="services"
             level2Actions={(dataset) => {

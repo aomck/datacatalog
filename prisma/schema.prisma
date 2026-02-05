@@ -109,6 +109,7 @@ model Dataset {
   typeId        String  @map("type_id")
   securityLevel String? @map("security_level") // ทั่วไป | ลับ | ลับมาก | ลับที่สุด
   metadata      String? // File path to metadata document
+  datadict      String? // File path to data dictionary document
 
   // Audit fields
   createdBy  String?

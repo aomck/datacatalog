@@ -33,6 +33,7 @@ interface NestedCollapsibleTableProps {
   level2DetailField?: string;
   level2SecurityLevelField?: string;
   level2MetadataField?: string;
+  level2DatadictField?: string;
   level2ChildrenField: string;
   level2Actions?: (row: any) => React.ReactNode;
   // Level 3: Service
@@ -55,6 +56,7 @@ export function NestedCollapsibleTable({
   level2DetailField,
   level2SecurityLevelField,
   level2MetadataField,
+  level2DatadictField,
   level2ChildrenField,
   level2Actions,
   level3NameField,
@@ -307,6 +309,31 @@ export function NestedCollapsibleTable({
                                                   <Icon
                                                     icon="mdi:file-document"
                                                     className="w-5 h-5 text-blue-600"
+                                                  />
+                                                </IconButton>
+                                              </span>
+                                            </Tooltip>
+                                          ) : (
+                                            '-'
+                                          )}
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          sx={{ py: 1.5, px: 2, width: 100 }}
+                                        >
+                                          {level2DatadictField && level2Row[level2DatadictField] ? (
+                                            <Tooltip title="ดู Data Dictionary">
+                                              <span>
+                                                <IconButton
+                                                  size="small"
+                                                  disabled={level2Row._accessLevel === 'disabled'}
+                                                  onClick={() =>
+                                                    window.open(getFileUrl(level2Row[level2DatadictField]) || level2Row[level2DatadictField], '_blank')
+                                                  }
+                                                >
+                                                  <Icon
+                                                    icon="mdi:file-document"
+                                                    className="w-5 h-5 text-green-600"
                                                   />
                                                 </IconButton>
                                               </span>
