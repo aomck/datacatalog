@@ -441,6 +441,7 @@ export default function AdminPage() {
         <CollapsibleTable
           columns={[
             { id: 'name', label: 'ชื่อ' },
+            { id: 'code', label: 'รหัสชุดข้อมูล' },
             { id: 'unitOwner', label: 'หน่วยงาน', format: (row: any) => row.unitOwner?.name || '-' },
             { id: 'category', label: 'นโยบาย', format: (row: any) => row.category?.name || '-' },
             {

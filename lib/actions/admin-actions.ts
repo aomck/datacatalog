@@ -276,6 +276,7 @@ export async function getDatasets(
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search, mode: 'insensitive' } },
+        { code: { contains: filters.search, mode: 'insensitive' } },
         {
           services: {
             some: {
