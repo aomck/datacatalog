@@ -103,6 +103,7 @@ model DatasetType {
 model Dataset {
   id            String  @id @default(uuid())
   name          String
+  code          String
   detail        String? @db.Text
   unitOwnerId   String  @map("unit_owner_id")
   categoryId    String  @map("category_id")
