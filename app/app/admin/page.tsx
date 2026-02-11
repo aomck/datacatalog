@@ -168,7 +168,7 @@ export default function AdminPage() {
     } else {
       // Reset form for new item
       if (activeTab === 0) {
-        setFormData({ name: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '', securityLevel: '' });
+        setFormData({ name: '', code: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '', securityLevel: '' });
       } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
       } else if (activeTab === 2) {
@@ -265,6 +265,7 @@ export default function AdminPage() {
         // Dataset - only send necessary fields
         const data = {
           name: formData.name,
+          code: formData.code,
           detail: formData.detail,
           unitOwnerId: formData.unitOwnerId,
           categoryId: formData.categoryId,
@@ -789,6 +790,13 @@ export default function AdminPage() {
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 sx={{ mt: 2, mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="รหัสชุดข้อมูล"
+                value={formData.code || ''}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth

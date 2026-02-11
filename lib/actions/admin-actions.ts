@@ -335,13 +335,14 @@ export async function getDatasets(
 }
 
 export async function createDataset(
-  data: { name: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string; datadict?: string },
+  data: { name: string; code: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string; datadict?: string },
   userId: string
 ) {
   try {
     const dataset = await prisma.dataset.create({
       data: {
         name: data.name,
+        code: data.code,
         detail: data.detail,
         unitOwnerId: data.unitOwnerId,
         categoryId: data.categoryId,
@@ -368,7 +369,7 @@ export async function createDataset(
 
 export async function updateDataset(
   id: string,
-  data: { name?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string; datadict?: string },
+  data: { name?: string; code?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string; datadict?: string },
   userId: string
 ) {
   try {
@@ -378,6 +379,7 @@ export async function updateDataset(
 
     // Only include fields that are provided and valid for Prisma update
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.code !== undefined) updateData.code = data.code;
     if (data.detail !== undefined) updateData.detail = data.detail;
     if (data.securityLevel !== undefined) updateData.securityLevel = data.securityLevel;
     if (data.metadata !== undefined) updateData.metadata = data.metadata;
