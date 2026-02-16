@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Tooltip, IconButton } from '@mui/material';
+import { Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Tooltip, IconButton, Checkbox } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
 import { checkAdminPermission } from '@/lib/permission-utils';
@@ -164,11 +164,17 @@ export default function AdminPage() {
     setEditingItem(item);
     setIsServiceDialog(false); // Reset service dialog state
     if (item) {
-      setFormData(item);
+      // For datasets, extract categoryIds from categories array
+      if (activeTab === 0 && item.categories) {
+        const categoryIds = item.categories.map((dc: any) => dc.categoryId);
+        setFormData({ ...item, categoryIds });
+      } else {
+        setFormData(item);
+      }
     } else {
       // Reset form for new item
       if (activeTab === 0) {
-        setFormData({ name: '', code: '', detail: '', unitOwnerId: '', categoryId: '', typeId: '', securityLevel: '' });
+        setFormData({ name: '', code: '', detail: '', unitOwnerId: '', categoryId: '', categoryIds: [], typeId: '', securityLevel: '' });
       } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
       } else if (activeTab === 2) {
@@ -263,12 +269,14 @@ export default function AdminPage() {
           : await createService(data, user.id);
       } else if (activeTab === 0) {
         // Dataset - only send necessary fields
+        const categoryIds = formData.categoryIds && formData.categoryIds.length > 0 ? formData.categoryIds : [formData.categoryId];
         const data = {
           name: formData.name,
           code: formData.code,
           detail: formData.detail,
           unitOwnerId: formData.unitOwnerId,
-          categoryId: formData.categoryId,
+          categoryId: categoryIds[0], // Use first category for backward compatibility
+          categoryIds: categoryIds, // New m:m categories
           typeId: formData.typeId,
           securityLevel: formData.securityLevel,
           metadata,
@@ -443,7 +451,25 @@ export default function AdminPage() {
             { id: 'name', label: 'ชื่อ' },
             { id: 'code', label: 'รหัสชุดข้อมูล' },
             { id: 'unitOwner', label: 'หน่วยงาน', format: (row: any) => row.unitOwner?.name || '-' },
-            { id: 'category', label: 'นโยบาย', format: (row: any) => row.category?.name || '-' },
+            {
+              id: 'categories',
+              label: 'นโยบาย',
+              format: (row: any) => {
+                const cats = row.categories?.map((dc: any) => dc.category) || [];
+                if (cats.length === 0) return '-';
+                return (
+                  <div className="flex flex-wrap gap-1">
+                    {cats.map((cat: any) => (
+                      <Tooltip key={cat.id} title={`${cat.name} (นยม.${cat.order || 0})`}>
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                          {cat.shortName || `นยม.${cat.order || 0}`}
+                        </span>
+                      </Tooltip>
+                    ))}
+                  </div>
+                );
+              }
+            },
             {
               id: 'securityLevel',
               label: 'ชั้นความลับ',
@@ -824,12 +850,22 @@ export default function AdminPage() {
                 fullWidth
                 select
                 label="นโยบาย"
-                value={formData.categoryId || ''}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                value={formData.categoryIds || []}
+                onChange={(e) => setFormData({ ...formData, categoryIds: e.target.value, categoryId: Array.isArray(e.target.value) && e.target.value.length > 0 ? e.target.value[0] : '' })}
+                SelectProps={{
+                  multiple: true,
+                  renderValue: (selected: any) => {
+                    const selectedCategories = categories.filter((c) => selected.includes(c.id));
+                    return selectedCategories.map((c) => c.shortName || `นยม.${c.order || 0}`).join(', ');
+                  },
+                }}
                 sx={{ mb: 2 }}
               >
                 {categories.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+                  <MenuItem key={c.id} value={c.id}>
+                    <Checkbox checked={(formData.categoryIds || []).indexOf(c.id) > -1} size="small" />
+                    {c.name} (นยม.{c.order || 0})
+                  </MenuItem>
                 ))}
               </TextField>
               <TextField

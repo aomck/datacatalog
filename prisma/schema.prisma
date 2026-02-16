@@ -74,7 +74,8 @@ model Category {
   deletedAt  DateTime?
 
   // Relations
-  datasets Dataset[]
+  datasets         Dataset[]
+  datasetCategories DatasetCategory[]
 
   @@map("categories")
 }
@@ -106,7 +107,7 @@ model Dataset {
   code          String
   detail        String? @db.Text
   unitOwnerId   String  @map("unit_owner_id")
-  categoryId    String  @map("category_id")
+  categoryId    String  @map("category_id") // Keep for backward compatibility
   typeId        String  @map("type_id")
   securityLevel String? @map("security_level") // ทั่วไป | ลับ | ลับมาก | ลับที่สุด
   metadata      String? // File path to metadata document
@@ -121,11 +122,12 @@ model Dataset {
   deletedAt  DateTime?
 
   // Relations
-  unitOwner        UnitOwner        @relation(fields: [unitOwnerId], references: [id])
-  category         Category         @relation(fields: [categoryId], references: [id])
-  type             DatasetType      @relation(fields: [typeId], references: [id])
-  services         Service[]
-  requestDatasets  RequestDataset[]
+  unitOwner         UnitOwner         @relation(fields: [unitOwnerId], references: [id])
+  category          Category          @relation(fields: [categoryId], references: [id]) // Keep for backward compatibility
+  type              DatasetType       @relation(fields: [typeId], references: [id])
+  categories        DatasetCategory[] // New m:m relation
+  services          Service[]
+  requestDatasets   RequestDataset[]
 
   @@map("datasets")
 }
@@ -317,6 +319,27 @@ model UserServiceLog {
   @@index([serviceId])
   @@index([createdAt])
   @@map("user_service_logs")
+}
+
+// ============================================================================
+// Many-to-Many Junction Tables
+// ============================================================================
+
+// DatasetCategory - Junction table for Dataset and Category (m:m)
+model DatasetCategory {
+  id         String   @id @default(uuid())
+  datasetId  String   @map("dataset_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  dataset  Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, categoryId])
+  @@index([datasetId])
+  @@index([categoryId])
+  @@map("dataset_categories")
 }
 
 // ============================================================================

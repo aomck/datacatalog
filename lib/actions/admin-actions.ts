@@ -292,8 +292,13 @@ export async function getDatasets(
       where.unitOwnerId = filters.unitOwnerId;
     }
 
+    // Filter by category using m:m relation
     if (filters?.categoryId) {
-      where.categoryId = filters.categoryId;
+      where.categories = {
+        some: {
+          categoryId: filters.categoryId,
+        },
+      };
     }
 
     if (filters?.typeId) {
@@ -305,8 +310,13 @@ export async function getDatasets(
         where,
         include: {
           unitOwner: true,
-          category: true,
+          category: true, // Keep for backward compatibility
           type: true,
+          categories: {
+            include: {
+              category: true,
+            },
+          },
           services: {
             where: { deletedAt: null },
           },
@@ -336,31 +346,56 @@ export async function getDatasets(
 }
 
 export async function createDataset(
-  data: { name: string; code: string; detail?: string; unitOwnerId: string; categoryId: string; typeId: string; securityLevel?: string; metadata?: string; datadict?: string },
+  data: {
+    name: string;
+    code: string;
+    detail?: string;
+    unitOwnerId: string;
+    categoryId: string; // Keep for backward compatibility
+    categoryIds?: string[]; // New m:m categories
+    typeId: string;
+    securityLevel?: string;
+    metadata?: string;
+    datadict?: string;
+  },
   userId: string
 ) {
   try {
+    const categoryIds = data.categoryIds && data.categoryIds.length > 0 ? data.categoryIds : [data.categoryId];
+
     const dataset = await prisma.dataset.create({
       data: {
         name: data.name,
         code: data.code,
         detail: data.detail,
         unitOwnerId: data.unitOwnerId,
-        categoryId: data.categoryId,
+        categoryId: data.categoryId, // Keep for backward compatibility
         typeId: data.typeId,
         securityLevel: data.securityLevel,
         metadata: data.metadata,
         datadict: data.datadict,
         createdBy: userId,
         updatedBy: userId,
+        // Create m:m relations
+        categories: {
+          create: categoryIds.map((categoryId) => ({
+            categoryId: categoryId,
+          })),
+        },
       },
       include: {
         unitOwner: true,
         category: true,
+        categories: {
+          include: {
+            category: true,
+          },
+        },
       },
     });
 
     revalidatePath('/app/admin');
+    revalidatePath('/app/catalog');
     return { success: true, data: dataset };
   } catch (error: any) {
     console.error('Create dataset error:', error);
@@ -370,7 +405,18 @@ export async function createDataset(
 
 export async function updateDataset(
   id: string,
-  data: { name?: string; code?: string; detail?: string; unitOwnerId?: string; categoryId?: string; typeId?: string; securityLevel?: string; metadata?: string; datadict?: string },
+  data: {
+    name?: string;
+    code?: string;
+    detail?: string;
+    unitOwnerId?: string;
+    categoryId?: string;
+    categoryIds?: string[]; // New m:m categories
+    typeId?: string;
+    securityLevel?: string;
+    metadata?: string;
+    datadict?: string;
+  },
   userId: string
 ) {
   try {
@@ -397,6 +443,23 @@ export async function updateDataset(
       updateData.type = { connect: { id: data.typeId } };
     }
 
+    // Handle m:m categories update
+    if (data.categoryIds !== undefined) {
+      // Delete all existing category relations
+      await prisma.datasetCategory.deleteMany({
+        where: { datasetId: id },
+      });
+
+      // Create new category relations
+      if (data.categoryIds.length > 0) {
+        updateData.categories = {
+          create: data.categoryIds.map((categoryId) => ({
+            categoryId: categoryId,
+          })),
+        };
+      }
+    }
+
     const dataset = await prisma.dataset.update({
       where: { id },
       data: updateData,
@@ -404,10 +467,16 @@ export async function updateDataset(
         unitOwner: true,
         category: true,
         type: true,
+        categories: {
+          include: {
+            category: true,
+          },
+        },
       },
     });
 
     revalidatePath('/app/admin');
+    revalidatePath('/app/catalog');
     return { success: true, data: dataset };
   } catch (error: any) {
     console.error('Update dataset error:', error);

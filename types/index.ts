@@ -138,12 +138,14 @@ export interface Category {
 export interface Dataset {
   id: string;
   name: string;
+  code: string;
   detail?: string | null;
   unitOwnerId: string;
-  categoryId: string;
+  categoryId: string; // Keep for backward compatibility
   typeId?: string | null;
   securityLevel?: SecurityLevel | null;
   metadata?: string | null;
+  datadict?: string | null;
   createdBy?: string | null;
   createdAt: Date;
   updatedBy?: string | null;
@@ -152,8 +154,20 @@ export interface Dataset {
   deletedAt?: Date | null;
   // Relations
   unitOwner?: UnitOwner;
-  category?: Category;
+  category?: Category; // Keep for backward compatibility
+  categories?: DatasetCategory[]; // New m:m relation
   services?: Service[];
+}
+
+// DatasetCategory - Junction table for Dataset-Category m:m relation
+export interface DatasetCategory {
+  id: string;
+  datasetId: string;
+  categoryId: string;
+  createdAt: Date;
+  // Relations
+  dataset?: Dataset;
+  category?: Category;
 }
 
 // Service

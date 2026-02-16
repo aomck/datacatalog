@@ -393,6 +393,7 @@ export async function getUserRequestStatus(userId: string) {
 
 /**
  * Get categories grouped by unit owner (for tab หน่วยงาน)
+ * Updated to support m:m relation
  */
 export async function getCategoriesByUnitOwner(
   unitOwnerId: string,
@@ -402,30 +403,42 @@ export async function getCategoriesByUnitOwner(
   try {
     const skip = (page - 1) * limit;
 
-    // Get all categories that have datasets from this unit owner
+    // Get all categories that have datasets from this unit owner (via m:m relation)
     const categories = await prisma.category.findMany({
       where: {
         deletedAt: null,
-        datasets: {
+        datasetCategories: {
           some: {
-            unitOwnerId,
-            deletedAt: null,
+            dataset: {
+              unitOwnerId,
+              deletedAt: null,
+            },
           },
         },
       },
       include: {
-        datasets: {
+        datasetCategories: {
           where: {
-            unitOwnerId,
-            deletedAt: null,
-          },
-          include: {
-            services: {
-              where: { deletedAt: null },
-              orderBy: { name: "asc" },
+            dataset: {
+              unitOwnerId,
+              deletedAt: null,
             },
           },
-          orderBy: { name: "asc" },
+          include: {
+            dataset: {
+              include: {
+                categories: {
+                  include: {
+                    category: true,
+                  },
+                },
+                services: {
+                  where: { deletedAt: null },
+                  orderBy: { name: "asc" },
+                },
+              },
+            },
+          },
         },
       },
       orderBy: { order: "asc" },
@@ -433,20 +446,28 @@ export async function getCategoriesByUnitOwner(
       take: limit,
     });
 
+    // Transform to match expected structure
+    const transformedCategories = categories.map((cat: any) => ({
+      ...cat,
+      datasets: cat.datasetCategories.map((dc: any) => dc.dataset),
+    }));
+
     const total = await prisma.category.count({
       where: {
         deletedAt: null,
-        datasets: {
+        datasetCategories: {
           some: {
-            unitOwnerId,
-            deletedAt: null,
+            dataset: {
+              unitOwnerId,
+              deletedAt: null,
+            },
           },
         },
       },
     });
 
     return {
-      data: categories,
+      data: transformedCategories,
       pagination: {
         page,
         limit,
@@ -462,6 +483,7 @@ export async function getCategoriesByUnitOwner(
 
 /**
  * Get unit owners grouped by category (for tab นโยบายและแผนความมั่นคง)
+ * Updated to support m:m relation
  */
 export async function getUnitOwnersByCategory(
   categoryId: string,
@@ -471,24 +493,37 @@ export async function getUnitOwnersByCategory(
   try {
     const skip = (page - 1) * limit;
 
-    // Get all unit owners that have datasets in this category
+    // Get all unit owners that have datasets in this category (via m:m relation)
     const unitOwners = await prisma.unitOwner.findMany({
       where: {
         deletedAt: null,
         datasets: {
           some: {
-            categoryId,
             deletedAt: null,
+            categories: {
+              some: {
+                categoryId,
+              },
+            },
           },
         },
       },
       include: {
         datasets: {
           where: {
-            categoryId,
             deletedAt: null,
+            categories: {
+              some: {
+                categoryId,
+              },
+            },
           },
           include: {
+            categories: {
+              include: {
+                category: true,
+              },
+            },
             services: {
               where: { deletedAt: null },
               orderBy: { name: "asc" },
@@ -507,8 +542,12 @@ export async function getUnitOwnersByCategory(
         deletedAt: null,
         datasets: {
           some: {
-            categoryId,
             deletedAt: null,
+            categories: {
+              some: {
+                categoryId,
+              },
+            },
           },
         },
       },

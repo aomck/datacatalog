@@ -78,7 +78,14 @@ export async function GET(request: NextRequest) {
     };
 
     if (unitOwnerId) where.unitOwnerId = unitOwnerId;
-    if (categoryId) where.categoryId = categoryId;
+    // Filter by category using m:m relation
+    if (categoryId) {
+      where.categories = {
+        some: {
+          categoryId: categoryId,
+        },
+      };
+    }
     if (typeId) where.typeId = typeId;
     if (securityLevel !== undefined) where.securityLevel = securityLevel;
 
@@ -90,8 +97,14 @@ export async function GET(request: NextRequest) {
         take: limit,
         include: {
           unitOwner: true,
-          category: true,
+          category: true, // Keep for backward compatibility
           type: true,
+          categories: {
+            // New m:m relation
+            include: {
+              category: true,
+            },
+          },
           services: {
             where: {
               deletedAt: null,
