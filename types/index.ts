@@ -126,6 +126,7 @@ export interface Category {
   name: string;
   shortName: string;
   icon?: string | null;
+  order?: number;
   createdBy?: string | null;
   createdAt: Date;
   updatedBy?: string | null;
