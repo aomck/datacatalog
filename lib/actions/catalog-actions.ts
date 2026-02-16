@@ -64,7 +64,11 @@ export async function getCatalogCategories(
         where: { deletedAt: null },
         include: {
           _count: {
-            select: { datasets: { where: { deletedAt: null } } },
+            select: {
+              datasetCategories: {
+                where: { dataset: { deletedAt: null } }
+              }
+            },
           },
         },
         orderBy: { order: "asc" },

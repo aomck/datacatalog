@@ -361,7 +361,7 @@ export default function CatalogPage() {
 
                     {/* Dataset Count Section - 10% */}
                     <div className="flex items-center justify-center" style={{ height: '10%' }}>
-                      <p className="text-xs text-gray-500">{(item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                      <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p>
                     </div>
                   </CardContent>
                 </Card>
