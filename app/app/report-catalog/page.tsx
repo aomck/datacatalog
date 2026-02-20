@@ -211,8 +211,8 @@ export default function ReportCatalogPage() {
       <div className="grid grid-cols-12 gap-6">
         {/* Left Panel - List */}
         <div className="col-span-4">
-          <Card>
-            <CardContent>
+          <Card sx={{ height: 'calc(100vh - 280px)', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
               <div className="space-y-2">
                 {loading && !selectedId ? (
                   <div className="text-center py-8">
