@@ -11,6 +11,7 @@ import { CollapsibleTable } from '@/components/ui/CollapsibleTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RefreshButton } from '@/components/ui/RefreshButton';
 import { ApprovalModal } from '@/components/modals/ApprovalModal';
+import { NewReportApprovalModal } from '@/components/modals/NewReportApprovalModal';
 import { FilterPanel, type FilterState } from '@/components/ui/FilterPanel';
 import { RequestDetailModal } from '@/components/modals/RequestDetailModal';
 import { ApprovalHistoryModal } from '@/components/modals/ApprovalHistoryModal';
@@ -32,6 +33,7 @@ export default function ApproverPage() {
   const [stats, setStats] = useState({ requested: 0, pending: 0, approved: 0, disapproved: 0 });
   const [selected, setSelected] = useState<{ datasetIds: string[]; serviceIds: string[]; reportIds: string[] }>({ datasetIds: [], serviceIds: [], reportIds: [] });
   const [approvalOpen, setApprovalOpen] = useState(false);
+  const [newReportApprovalOpen, setNewReportApprovalOpen] = useState(false);
   const [requestDetailOpen, setRequestDetailOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [approvalDetailOpen, setApprovalDetailOpen] = useState(false);
@@ -41,6 +43,7 @@ export default function ApproverPage() {
   const [selectedApprovalItem, setSelectedApprovalItem] = useState<any>(null);
   const [selectedApprovalType, setSelectedApprovalType] = useState<'dataset' | 'service'>('dataset');
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedReportRequest, setSelectedReportRequest] = useState<any>(null);
   const [adminToken, setAdminToken] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -170,7 +173,8 @@ export default function ApproverPage() {
   const handleSelectRequest = (request: Request, checked: boolean) => {
     const datasetIds = request.requestDatasets?.map((rd) => rd.id) || [];
     const serviceIds = request.requestServices?.map((rs) => rs.id) || [];
-    const reportIds = request.requestReports?.map((rr) => rr.id) || [];
+    // Only select existing reports (not new report requests)
+    const reportIds = request.requestReports?.filter((rr: any) => rr.report).map((rr: any) => rr.id) || [];
 
     if (checked) {
       setSelected((prev) => ({
@@ -312,9 +316,9 @@ export default function ApproverPage() {
                     const allIds = [
                       ...(r.requestDatasets?.map((rd) => rd.id) || []),
                       ...(r.requestServices?.map((rs) => rs.id) || []),
-                      ...(r.requestReports?.map((rr) => rr.id) || []),
+                      ...(r.requestReports?.filter((rr: any) => rr.report).map((rr: any) => rr.id) || []),
                     ];
-                    return allIds.every((id) =>
+                    return allIds.length === 0 || allIds.every((id) =>
                       [...selected.datasetIds, ...selected.serviceIds, ...selected.reportIds].includes(id)
                     );
                   })}
@@ -331,6 +335,7 @@ export default function ApproverPage() {
             { id: 'createdAt', label: 'วันที่' },
             { id: 'name', label: 'ชื่อผู้ขอ' },
             { id: 'unit', label: 'หน่วยงาน' },
+            { id: 'type', label: 'ประเภท', align: 'center' },
             { id: 'requestedBy', label: 'ผู้ขอ', align: 'center' },
             { id: 'actions', label: '', align: 'right' },
           ]}
@@ -338,23 +343,65 @@ export default function ApproverPage() {
             const allIds = [
               ...(r.requestDatasets?.map((rd) => rd.id) || []),
               ...(r.requestServices?.map((rs) => rs.id) || []),
-              ...(r.requestReports?.map((rr) => rr.id) || []),
+              ...(r.requestReports?.filter((rr: any) => rr.report && !rr.isNewReport).map((rr: any) => rr.id) || []),
             ];
             const isSelected = allIds.length > 0 && allIds.every((id) =>
               [...selected.datasetIds, ...selected.serviceIds, ...selected.reportIds].includes(id)
             );
 
+            // Check if request has selectable items (not only new reports)
+            const hasSelectableItems = allIds.length > 0;
+
+            // Check if this request has ONLY new reports (and nothing else)
+            const hasOnlyNewReports = !hasSelectableItems &&
+              r.requestReports &&
+              r.requestReports.length > 0 &&
+              r.requestReports.every((rr: any) => rr.isNewReport);
+
+            // Get the first new report if this is a new report request
+            const firstNewReport = hasOnlyNewReports ? r.requestReports[0] : null;
+
+            // New report: show button for all status EXCEPT REQUESTED (PENDING, INPROGRESS, APPROVED, DISAPPROVED can edit)
+            const canEditNewReport = firstNewReport && firstNewReport.approveStatus !== 'REQUESTED';
+
             return {
               ...r,
               createdAt: <Timestamp date={r.createdAt} type="date-time" />,
+              type: (
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {r.requestDatasets && r.requestDatasets.length > 0 && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                      ชุดข้อมูล ({r.requestDatasets.length})
+                    </span>
+                  )}
+                  {r.requestReports && r.requestReports.filter((rr: any) =>
+                    rr.report && !rr.isNewReport
+                  ).length > 0 && (
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                      รายงาน ({r.requestReports.filter((rr: any) =>
+                        rr.report && !rr.isNewReport
+                      ).length})
+                    </span>
+                  )}
+                  {r.requestReports && r.requestReports.filter((rr: any) =>
+                    rr.isNewReport
+                  ).length > 0 && (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
+                      รายงานใหม่ ({r.requestReports.filter((rr: any) =>
+                        rr.isNewReport
+                      ).length})
+                    </span>
+                  )}
+                </div>
+              ),
               requestedBy: r.requestedBy && <User userId={r.requestedBy} displayName={r.name} type="avatar" size="small" />,
-              select: (
+              select: hasSelectableItems ? (
                 <Checkbox
                   size="small"
                   checked={isSelected}
                   onChange={(e) => handleSelectRequest(r, e.target.checked)}
                 />
-              ),
+              ) : null,
               actions: (
                 <div className="flex gap-1">
                   <Tooltip title="ดูรายละเอียดคำขอ">
@@ -362,24 +409,69 @@ export default function ApproverPage() {
                       <Icon icon="mdi:text-box-search" className="w-5 h-5 text-blue-600" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="ดำเนินการ">
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => {
-                        handleSelectRequest(r, true);
-                        setApprovalOpen(true);
-                      }}
-                    >
-                      <Icon icon="mdi:cog" className="w-5 h-5" />
-                    </Button>
-                  </Tooltip>
+                  {/* Show button for selectable items (datasets/services/existing reports) */}
+                  {hasSelectableItems && (
+                    <Tooltip title="ดำเนินการ">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => {
+                          handleSelectRequest(r, true);
+                          setApprovalOpen(true);
+                        }}
+                      >
+                        <Icon icon="mdi:cog" className="w-5 h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
+                  {/* Show button for new report (when no other items) - all status except REQUESTED */}
+                  {hasOnlyNewReports && canEditNewReport && (
+                    <Tooltip title="แก้ไขรายงาน">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => {
+                          setSelectedReportRequest(firstNewReport);
+                          setNewReportApprovalOpen(true);
+                        }}
+                      >
+                        <Icon icon="mdi:pencil" className="w-5 h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
+                  {/* Show button for new report with REQUESTED status */}
+                  {hasOnlyNewReports && firstNewReport && firstNewReport.approveStatus === 'REQUESTED' && (
+                    <Tooltip title="อนุมัติและสร้างรายงาน">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => {
+                          setSelectedReportRequest(firstNewReport);
+                          setNewReportApprovalOpen(true);
+                        }}
+                      >
+                        <Icon icon="mdi:plus-circle" className="w-5 h-5" />
+                      </Button>
+                    </Tooltip>
+                  )}
                 </div>
               ),
             };
           })}
           getRowId={(row) => row.id}
-          renderCollapse={(row) => (
+          renderCollapse={(row) => {
+            // Check if this request has ONLY new reports
+            const hasOnlyNewReports = (
+              (!row.requestDatasets || row.requestDatasets.length === 0) &&
+              (!row.requestServices || row.requestServices.length === 0) &&
+              row.requestReports &&
+              row.requestReports.length > 0 &&
+              row.requestReports.every((rr: any) => rr.isNewReport)
+            );
+
+            return (
             <div className="space-y-3 p-4">
               {/* Datasets */}
               {row.requestDatasets && row.requestDatasets.length > 0 && (
@@ -479,18 +571,45 @@ export default function ApproverPage() {
                     <div key={rr.id} className="bg-purple-50 rounded-lg overflow-hidden">
                       <div className="flex items-center justify-between p-3 bg-purple-100">
                         <div className="flex items-center gap-3 flex-1">
-                          <Checkbox
-                            size="small"
-                            checked={selected.reportIds.includes(rr.id)}
-                            onChange={(e) => handleSelectReport(rr.id, e.target.checked)}
-                          />
-                          <Icon icon="mdi:file-chart" className="w-5 h-5 text-purple-700" />
-                          <span className="font-semibold text-purple-900">{rr.report?.name}</span>
-                          {rr.report?.securityLevel && (
-                            <SecurityLevelBadge level={rr.report.securityLevel} size="sm" />
+                          {rr.report && (
+                            <Checkbox
+                              size="small"
+                              checked={selected.reportIds.includes(rr.id)}
+                              onChange={(e) => handleSelectReport(rr.id, e.target.checked)}
+                            />
                           )}
+                          <Icon icon="mdi:file-chart" className="w-5 h-5 text-purple-700" />
+                          <div className="flex-1">
+                            <span className="font-semibold text-purple-900">
+                              {rr.report?.name || rr.title || 'รายงานใหม่'}
+                            </span>
+                            {!rr.report && (
+                              <span className="ml-2 text-xs bg-orange-200 text-orange-800 px-2 py-0.5 rounded">
+                                รอสร้าง
+                              </span>
+                            )}
+                            {rr.report?.securityLevel && (
+                              <SecurityLevelBadge level={rr.report.securityLevel} size="sm" />
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Hide green button if this is a "new report only" request (button is at request level) */}
+                          {!hasOnlyNewReports && rr.isNewReport && ['REQUESTED', 'PENDING', 'INPROGRESS'].includes(rr.approveStatus) && (
+                            <Tooltip title={rr.approveStatus === 'REQUESTED' ? 'อนุมัติและสร้างรายงาน' : 'แก้ไขรายงาน'}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                onClick={() => {
+                                  setSelectedReportRequest(rr);
+                                  setNewReportApprovalOpen(true);
+                                }}
+                              >
+                                <Icon icon={rr.approveStatus === 'REQUESTED' ? 'mdi:plus-circle' : 'mdi:pencil'} className="w-5 h-5" />
+                              </Button>
+                            </Tooltip>
+                          )}
                           <Tooltip title="ดูประวัติการอนุมัติ">
                             <IconButton size="small" onClick={() => handleViewHistory(rr)}>
                               <Icon icon="mdi:history" className="w-5 h-5" />
@@ -503,12 +622,72 @@ export default function ApproverPage() {
                           />
                         </div>
                       </div>
+
+                      {/* Show new report request details */}
+                      {!rr.report && (
+                        <div className="p-3 bg-purple-25 space-y-2">
+                          {rr.detail && (
+                            <p className="text-sm text-gray-700">{rr.detail}</p>
+                          )}
+                          {rr.selectedDatasets && rr.selectedDatasets.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-600">ชุดข้อมูลที่เลือก:</p>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {rr.selectedDatasets.map((ds: any) => (
+                                  <span key={ds.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                    {ds.dataset?.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {rr.designFiles && rr.designFiles.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-600">Design Files:</p>
+                              <div className="space-y-1 mt-1">
+                                {rr.designFiles.map((file: any) => (
+                                  <a
+                                    key={file.id}
+                                    href={getFileUrl(file.filePath) || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                                  >
+                                    <Icon icon="mdi:file-design" className="w-3.5 h-3.5" />
+                                    {file.fileName}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {row.request?.requestFiles && row.request.requestFiles.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-600">หลักฐานประกอบ:</p>
+                              <div className="space-y-1 mt-1">
+                                {row.request.requestFiles.map((file: any) => (
+                                  <a
+                                    key={file.id}
+                                    href={getFileUrl(file.filePath) || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                                  >
+                                    <Icon icon="mdi:file-document" className="w-3.5 h-3.5" />
+                                    {file.fileName}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
+            );
+          }}
         />
       )}
 
@@ -549,6 +728,16 @@ export default function ApproverPage() {
         onClose={() => setApiTestOpen(false)}
         service={selectedService}
         token={adminToken}
+      />
+
+      <NewReportApprovalModal
+        open={newReportApprovalOpen}
+        onClose={() => {
+          setNewReportApprovalOpen(false);
+          setSelectedReportRequest(null);
+        }}
+        requestReport={selectedReportRequest}
+        userId={user?.id || ''}
       />
     </div>
   );

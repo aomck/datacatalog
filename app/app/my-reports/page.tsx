@@ -223,6 +223,66 @@ export default function MyReportsPage() {
                   {row.detail && (
                     <p className="text-sm text-gray-500 mt-1">{row.detail}</p>
                   )}
+
+                  {/* Selected Datasets */}
+                  {row.selectedDatasets && row.selectedDatasets.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium text-gray-700">ชุดข้อมูลที่เลือก:</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {row.selectedDatasets.map((ds: any) => (
+                          <span key={ds.id} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {ds.dataset?.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Design Files */}
+                  {row.designFiles && row.designFiles.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium text-gray-700 mb-1">
+                        ไฟล์ Design ({row.designFiles.length}):
+                      </p>
+                      <div className="space-y-1">
+                        {row.designFiles.map((file: any) => (
+                          <a
+                            key={file.id}
+                            href={getFileUrl(file.filePath) || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm text-blue-600 hover:underline cursor-pointer"
+                          >
+                            <Icon icon="mdi:file-design" />
+                            {file.fileName}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Evidence Files from Request */}
+              {!row.report && row.request?.requestFiles && row.request.requestFiles.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    หลักฐานประกอบ ({row.request.requestFiles.length}):
+                  </p>
+                  <div className="space-y-1">
+                    {row.request.requestFiles.map((file: any) => (
+                      <a
+                        key={file.id}
+                        href={getFileUrl(file.filePath) || '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline cursor-pointer"
+                      >
+                        <Icon icon="mdi:file-document" />
+                        {file.fileName}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
 

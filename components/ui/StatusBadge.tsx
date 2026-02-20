@@ -20,6 +20,11 @@ const statusConfig: Record<
     bg: 'bg-orange-100',
     text: 'text-orange-800',
   },
+  INPROGRESS: {
+    label: 'กำลังดำเนินการ',
+    bg: 'bg-yellow-100',
+    text: 'text-yellow-800',
+  },
   APPROVED: {
     label: 'อนุมัติแล้ว',
     bg: 'bg-green-100',

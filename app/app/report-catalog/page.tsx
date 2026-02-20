@@ -11,6 +11,7 @@ import {
   getReportsByCategory,
 } from '@/lib/actions/report-catalog-actions';
 import { ReportRequestModal } from '@/components/modals/ReportRequestModal';
+import { NewReportRequestModal } from '@/components/modals/NewReportRequestModal';
 import { getReportTypes } from '@/lib/actions/report-actions';
 import { getUserRequestedReports } from '@/lib/actions/request-actions';
 import { RefreshButton } from '@/components/ui/RefreshButton';
@@ -33,6 +34,7 @@ export default function ReportCatalogPage() {
   const [cart, setCart, clearCart] = useLocalStorage<CartItem[]>('reportcatalog_cart', []);
   const [cartOpen, setCartOpen] = useState(false);
   const [requestedReportIds, setRequestedReportIds] = useState<string[]>([]);
+  const [newReportModalOpen, setNewReportModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -166,6 +168,14 @@ export default function ReportCatalogPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<Icon icon="mdi:plus-circle" />}
+            onClick={() => setNewReportModalOpen(true)}
+          >
+            ร้องขอรายงานใหม่
+          </Button>
           <RefreshButton onRefresh={loadData} />
           <Tooltip title="รายการคำร้องขอ">
             <div className="relative">
@@ -490,6 +500,17 @@ export default function ReportCatalogPage() {
         items={cart}
         onRemoveItem={(id) => setCart(cart.filter((i) => i.id !== id))}
         onClearCart={clearCart}
+        user={user}
+      />
+
+      {/* New Report Request Modal */}
+      <NewReportRequestModal
+        open={newReportModalOpen}
+        onClose={() => {
+          setNewReportModalOpen(false);
+          loadData();
+          loadRequestedReports();
+        }}
         user={user}
       />
     </div>

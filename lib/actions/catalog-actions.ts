@@ -448,10 +448,29 @@ export async function getUserApprovedItems(userId: string) {
               },
             },
           },
-          request: true,
+          request: {
+            include: {
+              requestFiles: {
+                orderBy: { createdAt: "desc" },
+              },
+            },
+          },
+          selectedDatasets: {
+            include: {
+              dataset: true,
+            },
+          },
+          designFiles: {
+            orderBy: { createdAt: "desc" },
+          },
           approver: true,
           approvalFiles: {
             orderBy: { createdAt: "desc" },
+          },
+        },
+        orderBy: {
+          request: {
+            createdAt: "desc",
           },
         },
       }),

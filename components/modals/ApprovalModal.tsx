@@ -100,6 +100,7 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
           <FormLabel component="legend">สถานะ</FormLabel>
           <RadioGroup value={status} onChange={(e) => setStatus(e.target.value as ApproveStatus)}>
             <FormControlLabel value="PENDING" control={<Radio />} label="กำลังพิจารณา" />
+            <FormControlLabel value="INPROGRESS" control={<Radio />} label="กำลังดำเนินการ" />
             <FormControlLabel value="APPROVED" control={<Radio />} label="อนุมัติ" />
             <FormControlLabel value="DISAPPROVED" control={<Radio />} label="ไม่อนุมัติ" />
           </RadioGroup>

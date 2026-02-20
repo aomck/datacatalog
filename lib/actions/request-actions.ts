@@ -218,6 +218,16 @@ export async function getAllRequests(page = 1, limit = 30): Promise<PaginatedRes
                     },
                   },
                   category: true,
+                  categories: {
+                    include: {
+                      category: true,
+                    },
+                  },
+                  datasets: {
+                    include: {
+                      dataset: true,
+                    },
+                  },
                   files: true,
                 },
               },
@@ -590,6 +600,79 @@ export async function createReportRequest(data: {
 }
 
 /**
+ * Create a new report request (user requesting a brand new report)
+ */
+export async function createNewReportRequest(data: {
+  userId: string;
+  title: string;
+  detail: string;
+  reportTypeId: string;
+  name: string;
+  unit: string;
+  email: string;
+  tel: string;
+  datasetIds: string[];
+  designFiles: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
+  evidenceFiles: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
+}) {
+  try {
+    const request = await prisma.request.create({
+      data: {
+        requestedBy: data.userId,
+        name: data.name,
+        unit: data.unit,
+        email: data.email,
+        tel: data.tel,
+        detail: data.detail,
+        createdBy: data.userId,
+        requestReports: {
+          create: {
+            reportId: null, // null means new report request
+            isNewReport: true, // Flag to indicate this is a new report request
+            title: data.title,
+            detail: data.detail,
+            reportTypeId: data.reportTypeId,
+            approveStatus: 'REQUESTED',
+            selectedDatasets: {
+              create: data.datasetIds.map((datasetId) => ({
+                datasetId,
+              })),
+            },
+            designFiles: {
+              create: data.designFiles.map((file) => ({
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: file.fileType,
+                fileSize: file.fileSize,
+                createdBy: data.userId,
+              })),
+            },
+          },
+        },
+        requestFiles: {
+          create: data.evidenceFiles.map((file) => ({
+            filePath: file.filePath,
+            fileName: file.fileName,
+            fileType: file.fileType,
+            fileSize: file.fileSize,
+            createdBy: data.userId,
+          })),
+        },
+      },
+    });
+
+    revalidatePath('/app/my-reports');
+    revalidatePath('/app/approver');
+    revalidatePath('/app/report-catalog');
+
+    return { success: true, data: request };
+  } catch (error: any) {
+    console.error('Create new report request error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Update request report status
  */
 export async function updateRequestReportStatus(
@@ -638,56 +721,119 @@ export async function approveNewReportRequest(
     securityLevel?: string;
     files: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
   },
+  approvalStatus: 'PENDING' | 'INPROGRESS' | 'APPROVED' | 'DISAPPROVED',
   comment: string,
   userId: string,
   approvalFiles?: { filePath: string; fileName: string; fileSize: number }[]
 ) {
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Create the report
-      const report = await tx.report.create({
-        data: {
-          name: reportData.name,
-          detail: reportData.detail,
-          typeId: reportData.typeId,
-          url: reportData.url,
-          categoryId: reportData.categoryId,
-          securityLevel: reportData.securityLevel,
-          createdBy: userId,
-          updatedBy: userId,
-          unitOwners: {
-            create: reportData.unitOwnerIds.map((unitOwnerId) => ({
-              unitOwnerId,
-            })),
-          },
-          categories: {
-            create: reportData.categoryIds.map((categoryId) => ({
-              categoryId,
-            })),
-          },
-          datasets: {
-            create: reportData.datasetIds.map((datasetId) => ({
-              datasetId,
-            })),
-          },
-          files: {
-            create: reportData.files.map((file) => ({
-              filePath: file.filePath,
-              fileName: file.fileName,
-              fileType: file.fileType,
-              fileSize: file.fileSize,
-              createdBy: userId,
-            })),
-          },
-        },
+      // Get current request report to check if report already exists
+      const requestReport = await tx.requestReport.findUnique({
+        where: { id: requestReportId },
       });
+
+      if (!requestReport) {
+        throw new Error('Request report not found');
+      }
+
+      let report = null;
+
+      // Determine is_active based on approval status
+      const isActive = approvalStatus === 'APPROVED';
+
+      // Always create/update report (regardless of status)
+      if (requestReport.reportId) {
+        // UPDATE existing report
+        report = await tx.report.update({
+          where: { id: requestReport.reportId },
+          data: {
+            name: reportData.name,
+            detail: reportData.detail,
+            typeId: reportData.typeId,
+            url: reportData.url,
+            categoryId: reportData.categoryId,
+            securityLevel: reportData.securityLevel,
+            isActive, // Update is_active based on approval status
+            updatedBy: userId,
+            // Delete and recreate relations
+            unitOwners: {
+              deleteMany: {},
+              create: reportData.unitOwnerIds.map((unitOwnerId) => ({
+                unitOwnerId,
+              })),
+            },
+            categories: {
+              deleteMany: {},
+              create: reportData.categoryIds.map((categoryId) => ({
+                categoryId,
+              })),
+            },
+            datasets: {
+              deleteMany: {},
+              create: reportData.datasetIds.map((datasetId) => ({
+                datasetId,
+              })),
+            },
+            // Add new files (don't delete existing ones)
+            files: {
+              create: reportData.files.map((file) => ({
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: file.fileType,
+                fileSize: file.fileSize,
+                createdBy: userId,
+              })),
+            },
+          },
+        });
+      } else {
+        // CREATE new report
+        report = await tx.report.create({
+          data: {
+            name: reportData.name,
+            detail: reportData.detail,
+            typeId: reportData.typeId,
+            url: reportData.url,
+            categoryId: reportData.categoryId,
+            securityLevel: reportData.securityLevel,
+            isActive, // Set is_active based on approval status
+            createdBy: userId,
+            updatedBy: userId,
+            unitOwners: {
+              create: reportData.unitOwnerIds.map((unitOwnerId) => ({
+                unitOwnerId,
+              })),
+            },
+            categories: {
+              create: reportData.categoryIds.map((categoryId) => ({
+                categoryId,
+              })),
+            },
+            datasets: {
+              create: reportData.datasetIds.map((datasetId) => ({
+                datasetId,
+              })),
+            },
+            files: {
+              create: reportData.files.map((file) => ({
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: file.fileType,
+                fileSize: file.fileSize,
+                createdBy: userId,
+              })),
+            },
+          },
+        });
+      }
 
       // Update request report status
       await tx.requestReport.update({
         where: { id: requestReportId },
         data: {
-          reportId: report.id,
-          approveStatus: 'APPROVED',
+          reportId: report?.id || requestReport.reportId,
+          approveStatus: approvalStatus,
           approvedBy: userId,
           approvedAt: new Date(),
           comment,

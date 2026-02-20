@@ -102,7 +102,7 @@ export interface LoginResponse {
 // Data Catalog Types
 // ============================================================================
 
-export type ApproveStatus = 'REQUESTED' | 'PENDING' | 'APPROVED' | 'DISAPPROVED';
+export type ApproveStatus = 'REQUESTED' | 'PENDING' | 'INPROGRESS' | 'APPROVED' | 'DISAPPROVED';
 export type ServiceMethod = 'GET' | 'POST' | 'PATCH';
 export type SecurityLevel = '0' | '1' | '2' | '3' | '4' | null;
 
@@ -403,6 +403,8 @@ export interface RequestReport {
   designFiles?: RequestReportDesignFile[];
   selectedDatasets?: RequestReportDataset[];
   approvalFiles?: RequestReportApprovalFile[];
+  // Helper properties
+  requestedDatasetIds?: string[]; // computed from selectedDatasets
 }
 
 // RequestReportDesignFile

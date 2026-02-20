@@ -11,7 +11,7 @@ interface ApprovalDetailModalProps {
   open: boolean;
   onClose: () => void;
   item: any;
-  type: 'dataset' | 'service';
+  type: 'dataset' | 'service' | 'report';
 }
 
 export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetailModalProps) {
@@ -24,8 +24,8 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon
-              icon={type === 'dataset' ? 'mdi:database' : 'mdi:api'}
-              className={`w-6 h-6 ${type === 'dataset' ? 'text-blue-600' : 'text-green-600'}`}
+              icon={type === 'dataset' ? 'mdi:database' : type === 'service' ? 'mdi:api' : 'mdi:file-chart'}
+              className={`w-6 h-6 ${type === 'dataset' ? 'text-blue-600' : type === 'service' ? 'text-green-600' : 'text-purple-600'}`}
             />
             <span>รายละเอียดการอนุมัติ</span>
           </div>

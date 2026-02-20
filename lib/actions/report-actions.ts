@@ -45,7 +45,10 @@ export async function getReports(
   try {
     const skip = (page - 1) * limit;
 
-    const where: any = { deletedAt: null };
+    const where: any = {
+      deletedAt: null,
+      isActive: true, // Only show active/approved reports in catalog
+    };
 
     if (filters?.search) {
       where.OR = [

@@ -36,6 +36,7 @@ interface NestedCollapsibleTableProps {
   level2DatadictField?: string;
   level2ChildrenField: string;
   level2Actions?: (row: any) => React.ReactNode;
+  level2Collapsible?: boolean; // If false, hide collapse button for level 2
   // Level 3: Service
   level3NameField: string;
   level3DetailField?: string;
@@ -59,6 +60,7 @@ export function NestedCollapsibleTable({
   level2DatadictField,
   level2ChildrenField,
   level2Actions,
+  level2Collapsible = true,
   level3NameField,
   level3DetailField,
   level3MethodField,
@@ -169,7 +171,7 @@ export function NestedCollapsibleTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.length === 0 ? (
+          {!rows || rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} align="center" sx={{ py: 8, border: 'none' }}>
                 <div className="text-gray-400 text-sm">ไม่มีข้อมูล</div>
@@ -348,24 +350,26 @@ export function NestedCollapsibleTable({
                                         }}
                                       >
                                         <TableCell sx={{ py: 1.5, px: 2, width: 50 }}>
-                                          <IconButton
-                                            size="small"
-                                            onClick={() => toggleLevel2(level2Id)}
-                                            disabled={level2Row._accessLevel === 'disabled'}
-                                            sx={{
-                                              color: 'grey.600',
-                                              '&:hover': { backgroundColor: 'grey.100' },
-                                            }}
-                                          >
-                                            <Icon
-                                              icon={
-                                                isLevel2Open
-                                                  ? 'mdi:chevron-up'
-                                                  : 'mdi:chevron-down'
-                                              }
-                                              className="w-4 h-4"
-                                            />
-                                          </IconButton>
+                                          {level2Collapsible && (
+                                            <IconButton
+                                              size="small"
+                                              onClick={() => toggleLevel2(level2Id)}
+                                              disabled={level2Row._accessLevel === 'disabled'}
+                                              sx={{
+                                                color: 'grey.600',
+                                                '&:hover': { backgroundColor: 'grey.100' },
+                                              }}
+                                            >
+                                              <Icon
+                                                icon={
+                                                  isLevel2Open
+                                                    ? 'mdi:chevron-up'
+                                                    : 'mdi:chevron-down'
+                                                }
+                                                className="w-4 h-4"
+                                              />
+                                            </IconButton>
+                                          )}
                                         </TableCell>
                                         <TableCell
                                           sx={{
@@ -458,62 +462,64 @@ export function NestedCollapsibleTable({
                                           {level2Actions && level2Actions(level2Row)}
                                         </TableCell>
                                       </TableRow>
-                                      <TableRow>
-                                        <TableCell
-                                          sx={{ paddingBottom: 0, paddingTop: 0, border: 'none' }}
-                                          colSpan={6}
-                                        >
-                                          <Collapse in={isLevel2Open} timeout="auto" unmountOnExit>
-                                            <Box sx={{ py: 2, px: 2, backgroundColor: 'grey.50' }}>
-                                              <h4 className="font-semibold text-sm mb-2">
-                                                บริการข้อมูล
-                                              </h4>
-                                              {level3Rows.length === 0 ? (
-                                                <p className="text-sm text-gray-600">
-                                                  ไม่มีบริการข้อมูล
-                                                </p>
-                                              ) : (
-                                                <div className="space-y-2">
-                                                  {level3Rows.map((level3Row: any) => (
-                                                    <div
-                                                      key={level3Row.id}
-                                                      className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200"
-                                                      style={{
-                                                        opacity: level2Row._accessLevel === 'disabled' ? 0.5 : 1,
-                                                      }}
-                                                    >
-                                                      <div className="flex-1">
-                                                        <p
-                                                          className="font-medium text-sm"
-                                                          style={{
-                                                            color: level2Row._accessLevel === 'disabled' ? '#9ca3af' : 'inherit',
-                                                          }}
-                                                        >
-                                                          {level3Row[level3NameField]}
-                                                        </p>
-                                                        {level3DetailField &&
-                                                          level3Row[level3DetailField] && (
-                                                            <p className="text-xs text-gray-600 mt-0.5">
-                                                              {level3Row[level3DetailField]}
-                                                            </p>
-                                                          )}
-                                                        {level3MethodField &&
-                                                          level3ApiField && (
-                                                            <p className="text-xs text-gray-600 mt-0.5">
-                                                              {level3Row[level3MethodField]}{' '}
-                                                              {level3Row[level3ApiField]}
-                                                            </p>
-                                                          )}
+                                      {level2Collapsible && (
+                                        <TableRow>
+                                          <TableCell
+                                            sx={{ paddingBottom: 0, paddingTop: 0, border: 'none' }}
+                                            colSpan={6}
+                                          >
+                                            <Collapse in={isLevel2Open} timeout="auto" unmountOnExit>
+                                              <Box sx={{ py: 2, px: 2, backgroundColor: 'grey.50' }}>
+                                                <h4 className="font-semibold text-sm mb-2">
+                                                  บริการข้อมูล
+                                                </h4>
+                                                {level3Rows.length === 0 ? (
+                                                  <p className="text-sm text-gray-600">
+                                                    ไม่มีบริการข้อมูล
+                                                  </p>
+                                                ) : (
+                                                  <div className="space-y-2">
+                                                    {level3Rows.map((level3Row: any) => (
+                                                      <div
+                                                        key={level3Row.id}
+                                                        className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200"
+                                                        style={{
+                                                          opacity: level2Row._accessLevel === 'disabled' ? 0.5 : 1,
+                                                        }}
+                                                      >
+                                                        <div className="flex-1">
+                                                          <p
+                                                            className="font-medium text-sm"
+                                                            style={{
+                                                              color: level2Row._accessLevel === 'disabled' ? '#9ca3af' : 'inherit',
+                                                            }}
+                                                          >
+                                                            {level3Row[level3NameField]}
+                                                          </p>
+                                                          {level3DetailField &&
+                                                            level3Row[level3DetailField] && (
+                                                              <p className="text-xs text-gray-600 mt-0.5">
+                                                                {level3Row[level3DetailField]}
+                                                              </p>
+                                                            )}
+                                                          {level3MethodField &&
+                                                            level3ApiField && (
+                                                              <p className="text-xs text-gray-600 mt-0.5">
+                                                                {level3Row[level3MethodField]}{' '}
+                                                                {level3Row[level3ApiField]}
+                                                              </p>
+                                                            )}
+                                                        </div>
+                                                        {level3Actions && level3Actions(level3Row, level2Row)}
                                                       </div>
-                                                      {level3Actions && level3Actions(level3Row, level2Row)}
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              )}
-                                            </Box>
-                                          </Collapse>
-                                        </TableCell>
-                                      </TableRow>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </Box>
+                                            </Collapse>
+                                          </TableCell>
+                                        </TableRow>
+                                      )}
                                     </React.Fragment>
                                   );
                                 })}

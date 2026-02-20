@@ -404,6 +404,7 @@ model Report {
   url           String?
   categoryId    String  @map("category_id") // Keep for backward compatibility
   securityLevel String? @map("security_level") // เปิด | ลับ | ลับมาก | ลับที่สุด
+  isActive      Boolean @default(false) @map("is_active") // true = active/approved, false = inactive/pending
 
   // Audit fields
   createdBy  String?   @map("created_by")
@@ -510,8 +511,10 @@ model RequestReport {
   comment       String?   @db.Text
 
   // Fields for new report request (when reportId is null)
-  title  String? // ชื่อรายงานที่ต้องการ
-  detail String? @db.Text // รายละเอียดเพิ่มเติม
+  isNewReport   Boolean @default(false) @map("is_new_report") // true = ร้องขอรายงานใหม่, false = ร้องขอรายงานที่มีอยู่แล้ว
+  title         String? // ชื่อรายงานที่ต้องการ
+  detail        String? @db.Text // รายละเอียดเพิ่มเติม
+  reportTypeId  String? @map("report_type_id") // ประเภทรายงานที่ต้องการ (document, infographic, dashboard)
 
   // Relations
   request           Request                     @relation(fields: [requestId], references: [id])
