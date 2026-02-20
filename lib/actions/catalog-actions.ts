@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import type { UnitOwner, Category, Dataset, PaginatedResult } from "@/types";
 
 // ============================================================================
@@ -34,8 +35,53 @@ export async function getCatalogUnitOwners(
       }),
     ]);
 
+    // Count security levels efficiently using raw query
+    // Only run if there are unit owners to query
+    let securityCounts: Array<{
+      unit_owner_id: string;
+      security_level: string;
+      count: bigint;
+    }> = [];
+
+    if (data.length > 0) {
+      const unitOwnerIds = data.map(u => u.id);
+      securityCounts = await prisma.$queryRaw`
+        SELECT
+          unit_owner_id,
+          CASE
+            WHEN security_level IN ('0', '1') THEN '0'
+            ELSE security_level
+          END as security_level,
+          COUNT(*)::bigint as count
+        FROM datasets
+        WHERE "deletedAt" IS NULL
+          AND unit_owner_id IN (${Prisma.join(unitOwnerIds)})
+        GROUP BY unit_owner_id,
+          CASE
+            WHEN security_level IN ('0', '1') THEN '0'
+            ELSE security_level
+          END
+      `;
+    }
+
+    // Map counts to unit owners
+    const dataWithCounts = data.map((unitOwner: any) => {
+      const counts = { open: 0, secret: 0, verySecret: 0, topSecret: 0 };
+      const unitCounts = securityCounts.filter(sc => sc.unit_owner_id === unitOwner.id);
+
+      unitCounts.forEach(sc => {
+        const count = Number(sc.count);
+        if (sc.security_level === '0') counts.open = count;
+        else if (sc.security_level === '2') counts.secret = count;
+        else if (sc.security_level === '3') counts.verySecret = count;
+        else if (sc.security_level === '4') counts.topSecret = count;
+      });
+
+      return { ...unitOwner, _securityCounts: counts };
+    });
+
     return {
-      data: data as UnitOwner[],
+      data: dataWithCounts as UnitOwner[],
       pagination: {
         page,
         limit,
@@ -80,8 +126,54 @@ export async function getCatalogCategories(
       }),
     ]);
 
+    // Count security levels efficiently using raw query
+    // Only run if there are categories to query
+    let securityCounts: Array<{
+      category_id: string;
+      security_level: string;
+      count: bigint;
+    }> = [];
+
+    if (data.length > 0) {
+      const categoryIds = data.map(c => c.id);
+      securityCounts = await prisma.$queryRaw`
+        SELECT
+          dc.category_id,
+          CASE
+            WHEN d.security_level IN ('0', '1') THEN '0'
+            ELSE d.security_level
+          END as security_level,
+          COUNT(*)::bigint as count
+        FROM dataset_categories dc
+        INNER JOIN datasets d ON dc.dataset_id = d.id
+        WHERE d."deletedAt" IS NULL
+          AND dc.category_id IN (${Prisma.join(categoryIds)})
+        GROUP BY dc.category_id,
+          CASE
+            WHEN d.security_level IN ('0', '1') THEN '0'
+            ELSE d.security_level
+          END
+      `;
+    }
+
+    // Map counts to categories
+    const dataWithCounts = data.map((category: any) => {
+      const counts = { open: 0, secret: 0, verySecret: 0, topSecret: 0 };
+      const catCounts = securityCounts.filter(sc => sc.category_id === category.id);
+
+      catCounts.forEach(sc => {
+        const count = Number(sc.count);
+        if (sc.security_level === '0') counts.open = count;
+        else if (sc.security_level === '2') counts.secret = count;
+        else if (sc.security_level === '3') counts.verySecret = count;
+        else if (sc.security_level === '4') counts.topSecret = count;
+      });
+
+      return { ...category, _securityCounts: counts };
+    });
+
     return {
-      data: data as Category[],
+      data: dataWithCounts as Category[],
       pagination: {
         page,
         limit,
@@ -280,7 +372,7 @@ export async function hasApprovedService(
  */
 export async function getUserApprovedItems(userId: string) {
   try {
-    const [datasets, services] = await Promise.all([
+    const [datasets, services, reports] = await Promise.all([
       prisma.requestDataset.findMany({
         where: {
           request: {
@@ -332,9 +424,40 @@ export async function getUserApprovedItems(userId: string) {
           },
         },
       }),
+      prisma.requestReport.findMany({
+        where: {
+          request: {
+            requestedBy: userId,
+            deletedAt: null,
+          },
+        },
+        include: {
+          report: {
+            include: {
+              type: true,
+              files: true,
+              unitOwners: {
+                include: {
+                  unitOwner: true,
+                },
+              },
+              categories: {
+                include: {
+                  category: true,
+                },
+              },
+            },
+          },
+          request: true,
+          approver: true,
+          approvalFiles: {
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      }),
     ]);
 
-    return { datasets, services };
+    return { datasets, services, reports };
   } catch (error: any) {
     console.error("Get user requested items error:", error);
     throw error;

@@ -208,6 +208,7 @@ export interface Request {
   // Relations
   requestDatasets?: RequestDataset[];
   requestServices?: RequestService[];
+  requestReports?: RequestReport[];
   requestFiles?: RequestFile[];
 }
 
@@ -273,9 +274,164 @@ export interface PaginatedResult<T> {
 
 // Cart Item (for localStorage)
 export interface CartItem {
-  type: 'dataset' | 'service';
+  type: 'dataset' | 'service' | 'report';
   id: string;
   name: string;
   datasetId?: string; // For services
   datasetName?: string; // For services
+}
+
+// ============================================================================
+// Report Types
+// ============================================================================
+
+export type ReportTypeName = 'document' | 'infographic' | 'dashboard';
+
+// ReportType
+export interface ReportType {
+  id: string;
+  name: ReportTypeName;
+  shortName: string;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedBy?: string | null;
+  updatedAt: Date;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
+}
+
+// Report
+export interface Report {
+  id: string;
+  name: string;
+  detail?: string | null;
+  typeId: string;
+  url?: string | null;
+  categoryId: string; // Keep for backward compatibility
+  securityLevel?: SecurityLevel | null;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedBy?: string | null;
+  updatedAt: Date;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
+  // Relations
+  type?: ReportType;
+  unitOwners?: ReportUnitOwner[]; // m:m with UnitOwner (involved units)
+  category?: Category; // Keep for backward compatibility
+  categories?: ReportCategory[]; // m:m with Category
+  datasets?: ReportDataset[]; // m:m with Dataset
+  files?: ReportFile[];
+}
+
+// ReportCategory - Junction table for Report-Category m:m relation
+export interface ReportCategory {
+  id: string;
+  reportId: string;
+  categoryId: string;
+  createdAt: Date;
+  // Relations
+  report?: Report;
+  category?: Category;
+}
+
+// ReportDataset - Junction table for Report-Dataset m:m relation
+export interface ReportDataset {
+  id: string;
+  reportId: string;
+  datasetId: string;
+  createdAt: Date;
+  // Relations
+  report?: Report;
+  dataset?: Dataset;
+}
+
+// ReportUnitOwner - Junction table for Report-UnitOwner m:m relation (involved units)
+export interface ReportUnitOwner {
+  id: string;
+  reportId: string;
+  unitOwnerId: string;
+  createdAt: Date;
+  // Relations
+  report?: Report;
+  unitOwner?: UnitOwner;
+}
+
+// ReportFile
+export interface ReportFile {
+  id: string;
+  reportId: string;
+  filePath: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedBy?: string | null;
+  updatedAt: Date;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
+}
+
+// RequestReport
+export interface RequestReport {
+  id: string;
+  requestId: string;
+  reportId?: string | null; // null = ร้องขอรายงานใหม่
+  approveStatus: ApproveStatus;
+  approvedBy?: string | null;
+  approvedAt?: Date | null;
+  comment?: string | null;
+  // Fields for new report request
+  title?: string | null;
+  detail?: string | null;
+  // Relations
+  request?: Request;
+  report?: Report;
+  designFiles?: RequestReportDesignFile[];
+  selectedDatasets?: RequestReportDataset[];
+  approvalFiles?: RequestReportApprovalFile[];
+}
+
+// RequestReportDesignFile
+export interface RequestReportDesignFile {
+  id: string;
+  requestReportId: string;
+  filePath: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedBy?: string | null;
+  updatedAt: Date;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
+}
+
+// RequestReportDataset
+export interface RequestReportDataset {
+  id: string;
+  requestReportId: string;
+  datasetId: string;
+  createdAt: Date;
+  // Relations
+  requestReport?: RequestReport;
+  dataset?: Dataset;
+}
+
+// RequestReportApprovalFile
+export interface RequestReportApprovalFile {
+  id: string;
+  requestReportId: string;
+  filePath: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  createdBy?: string | null;
+  createdAt: Date;
+  updatedBy?: string | null;
+  updatedAt: Date;
+  deletedBy?: string | null;
+  deletedAt?: Date | null;
 }

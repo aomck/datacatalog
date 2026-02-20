@@ -1,0 +1,5 @@
+
+      {/* Report Tab */}
+      {activeTab === 3 && user && (
+        <ReportAdminTab userId={user.id} />
+      )}

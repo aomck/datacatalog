@@ -87,6 +87,7 @@ export function RequestDetailModal({ open, onClose, request }: RequestDetailModa
           <div>
             <h4 className="font-semibold mb-3">รายการที่ขอใช้งาน</h4>
             <div className="space-y-3">
+              {/* Datasets */}
               {request.requestDatasets?.map((rd: any) => {
                 const relatedServices = request.requestServices?.filter((rs: any) =>
                   rs.service?.datasetId === rd.dataset?.id
@@ -137,6 +138,34 @@ export function RequestDetailModal({ open, onClose, request }: RequestDetailModa
                   </div>
                 );
               })}
+
+              {/* Reports */}
+              {request.requestReports?.map((rr: any) => (
+                <div key={rr.id} className="bg-purple-50 rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between p-3 bg-purple-100">
+                    <div className="flex items-center gap-2">
+                      <Icon icon="mdi:file-chart" className="w-5 h-5 text-purple-700" />
+                      <span className="font-semibold text-purple-900">
+                        {rr.report?.name || rr.title || 'รายงานใหม่'}
+                      </span>
+                    </div>
+                    <div>
+                      {rr.approveStatus === 'APPROVED' ? (
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">อนุมัติแล้ว</span>
+                      ) : rr.approveStatus === 'DISAPPROVED' ? (
+                        <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">ไม่อนุมัติ</span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">รออนุมัติ</span>
+                      )}
+                    </div>
+                  </div>
+                  {rr.detail && (
+                    <div className="p-3 bg-white text-sm text-gray-600">
+                      {rr.detail}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

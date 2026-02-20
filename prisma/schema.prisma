@@ -27,6 +27,7 @@ model User {
   requestsCreated         Request[]          @relation("RequestCreatedBy")
   requestDatasetsApproved RequestDataset[]   @relation("DatasetApprovedBy")
   requestServicesApproved RequestService[]   @relation("ServiceApprovedBy")
+  requestReportsApproved  RequestReport[]    @relation("ReportApprovedBy")
   serviceLogs             UserServiceLog[]
 
   @@map("users")
@@ -52,7 +53,8 @@ model UnitOwner {
   deletedAt  DateTime?
 
   // Relations
-  datasets Dataset[]
+  datasets    Dataset[]
+  reportUnits ReportUnitOwner[]
 
   @@map("unit_owners")
 }
@@ -74,8 +76,10 @@ model Category {
   deletedAt  DateTime?
 
   // Relations
-  datasets         Dataset[]
+  datasets          Dataset[]
   datasetCategories DatasetCategory[]
+  reports           Report[]
+  reportCategories  ReportCategory[]
 
   @@map("categories")
 }
@@ -109,7 +113,7 @@ model Dataset {
   unitOwnerId   String  @map("unit_owner_id")
   categoryId    String  @map("category_id") // Keep for backward compatibility
   typeId        String  @map("type_id")
-  securityLevel String? @map("security_level") // ทั่วไป | ลับ | ลับมาก | ลับที่สุด
+  securityLevel String? @map("security_level") // เปิด | ลับ | ลับมาก | ลับที่สุด
   metadata      String? // File path to metadata document
   datadict      String? // File path to data dictionary document
 
@@ -122,12 +126,14 @@ model Dataset {
   deletedAt  DateTime?
 
   // Relations
-  unitOwner         UnitOwner         @relation(fields: [unitOwnerId], references: [id])
-  category          Category          @relation(fields: [categoryId], references: [id]) // Keep for backward compatibility
-  type              DatasetType       @relation(fields: [typeId], references: [id])
-  categories        DatasetCategory[] // New m:m relation
-  services          Service[]
-  requestDatasets   RequestDataset[]
+  unitOwner           UnitOwner               @relation(fields: [unitOwnerId], references: [id])
+  category            Category                @relation(fields: [categoryId], references: [id]) // Keep for backward compatibility
+  type                DatasetType             @relation(fields: [typeId], references: [id])
+  categories          DatasetCategory[]       // New m:m relation
+  services            Service[]
+  requestDatasets     RequestDataset[]
+  reportDatasets      ReportDataset[]
+  requestReportDatasets RequestReportDataset[]
 
   @@map("datasets")
 }
@@ -184,6 +190,7 @@ model Request {
   requester       User             @relation("RequestCreatedBy", fields: [requestedBy], references: [id])
   requestDatasets RequestDataset[]
   requestServices RequestService[]
+  requestReports  RequestReport[]
   requestFiles    RequestFile[]
 
   @@map("requests")
@@ -362,4 +369,218 @@ model UserNotificationRead {
   @@unique([userId, requestServiceId])
   @@index([userId])
   @@map("user_notification_reads")
+}
+
+// ============================================================================
+// Report Management  
+// ============================================================================
+
+// ReportType - ประเภทรายงาน (document, infographic, dashboard)
+model ReportType {
+  id        String  @id @default(uuid())
+  name      String
+  shortName String  @map("short_name")
+
+  // Audit fields
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updated_by")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedBy  String?   @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  reports Report[]
+
+  @@map("report_types")
+}
+
+// Report - รายงาน
+model Report {
+  id            String  @id @default(uuid())
+  name          String
+  detail        String? @db.Text
+  typeId        String  @map("type_id")
+  url           String?
+  categoryId    String  @map("category_id") // Keep for backward compatibility
+  securityLevel String? @map("security_level") // เปิด | ลับ | ลับมาก | ลับที่สุด
+
+  // Audit fields
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updated_by")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedBy  String?   @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  type            ReportType         @relation(fields: [typeId], references: [id])
+  category        Category           @relation(fields: [categoryId], references: [id]) // Keep for backward compatibility
+  categories      ReportCategory[]   // m:m with Category
+  datasets        ReportDataset[]    // m:m with Dataset
+  unitOwners      ReportUnitOwner[]  // m:m with UnitOwner (involved units)
+  files           ReportFile[]
+  requestReports  RequestReport[]
+
+  @@map("reports")
+}
+
+// ReportCategory - Junction table Report-Category (m:m)
+model ReportCategory {
+  id         String   @id @default(uuid())
+  reportId   String   @map("report_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  report   Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, categoryId])
+  @@index([reportId])
+  @@index([categoryId])
+  @@map("report_categories")
+}
+
+// ReportDataset - Junction table Report-Dataset (m:m)
+model ReportDataset {
+  id        String   @id @default(uuid())
+  reportId  String   @map("report_id")
+  datasetId String   @map("dataset_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  report  Report  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, datasetId])
+  @@index([reportId])
+  @@index([datasetId])
+  @@map("report_datasets")
+}
+
+// ReportUnitOwner - Junction table Report-UnitOwner (m:m for involved units)
+model ReportUnitOwner {
+  id          String   @id @default(uuid())
+  reportId    String   @map("report_id")
+  unitOwnerId String   @map("unit_owner_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  report    Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  unitOwner UnitOwner @relation(fields: [unitOwnerId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, unitOwnerId])
+  @@index([reportId])
+  @@index([unitOwnerId])
+  @@map("report_unit_owners")
+}
+
+// ReportFile - ไฟล์รายงาน (multiple files support)
+model ReportFile {
+  id       String @id @default(uuid())
+  reportId String @map("report_id")
+  filePath String @map("file_path")
+  fileName String @map("file_name")
+  fileType String @map("file_type")
+  fileSize Int    @map("file_size")
+
+  // Audit fields
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updated_by")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedBy  String?   @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("report_files")
+}
+
+// RequestReport - คำร้องขอรายงาน (ทั้งรายงานที่มีอยู่และรายงานใหม่)
+model RequestReport {
+  id            String    @id @default(uuid())
+  requestId     String    @map("request_id")
+  reportId      String?   @map("report_id") // null = ร้องขอรายงานใหม่ที่ยังไม่มีในระบบ
+  approveStatus String    @default("REQUESTED") @map("approve_status") // REQUESTED | PENDING | APPROVED | DISAPPROVED
+  approvedBy    String?   @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  comment       String?   @db.Text
+
+  // Fields for new report request (when reportId is null)
+  title  String? // ชื่อรายงานที่ต้องการ
+  detail String? @db.Text // รายละเอียดเพิ่มเติม
+
+  // Relations
+  request           Request                     @relation(fields: [requestId], references: [id])
+  report            Report?                     @relation(fields: [reportId], references: [id])
+  approver          User?                       @relation("ReportApprovedBy", fields: [approvedBy], references: [id])
+  designFiles       RequestReportDesignFile[]   // ไฟล์ design ที่แนบมา
+  selectedDatasets  RequestReportDataset[]      // datasets ที่ใช้ในรายงาน
+  approvalFiles     RequestReportApprovalFile[] // ไฟล์การอนุมัติ
+
+  @@map("request_reports")
+}
+
+// RequestReportDesignFile - ไฟล์ design สำหรับรายงานใหม่
+model RequestReportDesignFile {
+  id              String   @id @default(uuid())
+  requestReportId String   @map("request_report_id")
+  filePath        String   @map("file_path")
+  fileName        String   @map("file_name")
+  fileType        String   @map("file_type")
+  fileSize        Int      @map("file_size")
+
+  // Audit fields
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updated_by")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedBy  String?   @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  requestReport RequestReport @relation(fields: [requestReportId], references: [id])
+
+  @@map("request_report_design_files")
+}
+
+// RequestReportDataset - Junction table สำหรับ datasets ที่ใช้ในรายงาน
+model RequestReportDataset {
+  id              String   @id @default(uuid())
+  requestReportId String   @map("request_report_id")
+  datasetId       String   @map("dataset_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  requestReport RequestReport @relation(fields: [requestReportId], references: [id])
+  dataset       Dataset       @relation(fields: [datasetId], references: [id])
+
+  @@unique([requestReportId, datasetId])
+  @@map("request_report_datasets")
+}
+
+// RequestReportApprovalFile - ไฟล์แนบการอนุมัติรายงาน
+model RequestReportApprovalFile {
+  id              String   @id @default(uuid())
+  requestReportId String   @map("request_report_id")
+  filePath        String   @map("file_path")
+  fileName        String   @map("file_name")
+  fileType        String   @map("file_type")
+  fileSize        Int      @map("file_size")
+
+  // Audit fields
+  createdBy  String?   @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedBy  String?   @map("updated_by")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedBy  String?   @map("deleted_by")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  requestReport RequestReport @relation(fields: [requestReportId], references: [id])
+
+  @@map("request_report_approval_files")
 }

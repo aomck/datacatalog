@@ -236,6 +236,101 @@ export function NestedCollapsibleTable({
                             <div className="text-sm text-gray-500 py-4">ไม่มีชุดข้อมูล</div>
                           ) : (
                             <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell
+                                    sx={{
+                                      width: 50,
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                    }}
+                                  />
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                    }}
+                                  >
+                                    ชื่อชุดข้อมูล
+                                  </TableCell>
+                                  <TableCell
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                    }}
+                                  >
+                                    รายละเอียด
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                      width: 100,
+                                    }}
+                                  >
+                                    Metadata
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                      width: 100,
+                                    }}
+                                  >
+                                    Data Dictionary
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                      width: 120,
+                                    }}
+                                  >
+                                    ชั้นความลับ
+                                  </TableCell>
+                                  <TableCell
+                                    align="right"
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontSize: '0.8rem',
+                                      color: 'grey.700',
+                                      backgroundColor: 'grey.100',
+                                      py: 1.5,
+                                      px: 2,
+                                      width: 150,
+                                    }}
+                                  >
+                                    การดำเนินการ
+                                  </TableCell>
+                                </TableRow>
+                              </TableHead>
                               <TableBody>
                                 {level2Rows.map((level2Row: any) => {
                                   const level2Id = getRowId(level2Row);

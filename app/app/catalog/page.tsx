@@ -127,7 +127,7 @@ export default function CatalogPage() {
   // Map security level number to text
   const securityLevelMap: { [key: number]: string | null } = {
     0: null, // ไม่มีชั้นความลับ
-    1: null, // ทั่วไป
+    1: null, // เปิด
     2: "ลับ",
     3: "ลับมาก",
     4: "ลับที่สุด"
@@ -247,12 +247,12 @@ export default function CatalogPage() {
     }
   };
 
-  const removeFromCart = (id: string, type: 'dataset' | 'service') => {
+  const removeFromCart = (id: string, type: 'dataset' | 'service' | 'report') => {
     if (type === 'dataset') {
       // Remove dataset and all its services
       setCart(cart.filter((i) => !(i.id === id && i.type === 'dataset') && !(i.datasetId === id && i.type === 'service')));
     } else {
-      // Remove only the service
+      // Remove only the service or report
       setCart(cart.filter((i) => !(i.id === id && i.type === type)));
     }
   };
@@ -288,7 +288,26 @@ export default function CatalogPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">บัญชีข้อมูลด้านความมั่นคง (Data Catalog)</h1>
           <p className="text-gray-600">ค้นหาและขอใช้งานชุดข้อมูลและบริการข้อมูล</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {/* Security Level Legend */}
+          <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:eye" className="w-5 h-5 text-blue-600" />
+              <span className="text-sm text-gray-700">เปิด</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:lock" className="w-5 h-5 text-green-600" />
+              <span className="text-sm text-gray-700">ลับ</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:shield-lock" className="w-5 h-5 text-orange-600" />
+              <span className="text-sm text-gray-700">ลับมาก</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:shield-key" className="w-5 h-5 text-red-600" />
+              <span className="text-sm text-gray-700">ลับที่สุด</span>
+            </div>
+          </div>
           <RefreshButton onRefresh={loadData} />
           <Tooltip title="รายการคำร้องขอ">
             <div className="relative">
@@ -327,7 +346,15 @@ export default function CatalogPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center gap-3">
+                <Icon icon="mdi:loading" className="w-12 h-12 text-blue-600 animate-spin" />
+                <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {(activeTab === 0 ? categories : unitOwners)
               .filter((item) => {
                 // Check dataservice_access - hide if access level is 2
@@ -360,13 +387,43 @@ export default function CatalogPage() {
                     </div>
 
                     {/* Dataset Count Section - 10% */}
-                    <div className="flex items-center justify-center" style={{ height: '10%' }}>
+                    <div className="flex flex-col items-center justify-center gap-1" style={{ height: '10%' }}>
                       <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                      {/* Security Level Breakdown */}
+                      {(item as any)._securityCounts && (
+                        <div className="flex items-center gap-2.5 text-sm">
+                          {(item as any)._securityCounts.open > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Icon icon="mdi:eye" className="w-4 h-4 text-blue-600" />
+                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.open}</span>
+                            </div>
+                          )}
+                          {(item as any)._securityCounts.secret > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Icon icon="mdi:lock" className="w-4 h-4 text-green-600" />
+                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.secret}</span>
+                            </div>
+                          )}
+                          {(item as any)._securityCounts.verySecret > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Icon icon="mdi:shield-lock" className="w-4 h-4 text-orange-600" />
+                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.verySecret}</span>
+                            </div>
+                          )}
+                          {(item as any)._securityCounts.topSecret > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Icon icon="mdi:shield-key" className="w-4 h-4 text-red-600" />
+                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.topSecret}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               ))}
-          </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="mt-6">

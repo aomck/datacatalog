@@ -9,6 +9,7 @@ import {
   TableRow,
   TablePagination,
   Paper,
+  CircularProgress,
 } from '@mui/material';
 
 interface Column {
@@ -27,6 +28,7 @@ interface DataTableProps {
   totalRows: number;
   onPageChange: (page: number) => void;
   onRowsPerPageChange?: (rowsPerPage: number) => void;
+  loading?: boolean;
 }
 
 export function DataTable({
@@ -37,6 +39,7 @@ export function DataTable({
   totalRows,
   onPageChange,
   onRowsPerPageChange,
+  loading = false,
 }: DataTableProps) {
   // Convert from 1-based page (from parent) to 0-based (for MUI)
   const muiPage = page - 1;
@@ -88,7 +91,13 @@ export function DataTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, border: 'none' }}>
+                  <CircularProgress size={40} />
+                </TableCell>
+              </TableRow>
+            ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 8, border: 'none' }}>
                   <div className="text-gray-400 text-sm">ไม่มีข้อมูล</div>

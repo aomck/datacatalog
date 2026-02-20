@@ -1,6 +1,7 @@
 # Public API Documentation
 
 ## Base URL
+
 ```
 https://isoc360.isoc.go.th/datacatalog/api/public
 ```
@@ -12,18 +13,19 @@ https://isoc360.isoc.go.th/datacatalog/api/public
 ดึงข้อมูลหน่วยงานพร้อมชุดข้อมูล (datasets) และบริการ (services) แบบ hierarchy
 
 ### Endpoint
+
 ```
 GET /api/public/unitowners
 ```
 
 ### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `search` | string | No | ค้นหาจาก name, short_name ของหน่วยงาน, dataset.name, dataset.detail, service.name, service.detail |
-| `unitOwnerId` | string | No | Filter ตาม unit owner id |
-| `categoryId` | string | No | Filter ตาม category id |
-| `securityLevel` | string | No | Filter ตาม security level (ทั่วไป, ลับ, ลับมาก, ลับที่สุด) |
+| Parameter       | Type   | Required | Description                                                                                       |
+| --------------- | ------ | -------- | ------------------------------------------------------------------------------------------------- |
+| `search`        | string | No       | ค้นหาจาก name, short_name ของหน่วยงาน, dataset.name, dataset.detail, service.name, service.detail |
+| `unitOwnerId`   | string | No       | Filter ตาม unit owner id                                                                          |
+| `categoryId`    | string | No       | Filter ตาม category id                                                                            |
+| `securityLevel` | string | No       | Filter ตาม security level (เปิด, ลับ, ลับมาก, ลับที่สุด)                                          |
 
 **หมายเหตุสำคัญ:** API นี้จะแสดงเฉพาะ dataset ที่มี type เป็น "OPEN" เท่านั้น และไม่สามารถเปลี่ยนแปลงได้
 
@@ -51,12 +53,12 @@ GET /api/public/unitowners
           id: string,
           name: string,
           shortName: string,
-          icon: string | null
+          icon: string | null,
         },
         type: {
           id: string,
           name: string,
-          shortName: string
+          shortName: string,
         },
         services: [
           {
@@ -67,40 +69,45 @@ GET /api/public/unitowners
             api: string,
             howTo: string | null,
             createdAt: string,
-            updatedAt: string
-          }
-        ]
-      }
-    ]
-  }
-]
+            updatedAt: string,
+          },
+        ],
+      },
+    ],
+  },
+];
 ```
 
 ### Examples
 
 #### 1. ดึงข้อมูลหน่วยงานทั้งหมด
+
 ```bash
 # curl https://isoc360.isoc.go.th/datacatalog/api/public/unitowners
 ```
 
 #### 2. ค้นหาด้วยคำค้นหา
+
 ```bash
 curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=data"
 ```
 
 #### 3. Filter ตาม category
+
 ```bash
 curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?categoryId=123e4567-e89b-12d3-a456-426614174000"
 ```
 
 #### 4. ค้นหาและ filter พร้อมกัน
+
 ```bash
 curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=education&categoryId=123e4567-e89b-12d3-a456-426614174000"
 ```
 
 #### 5. Filter ตาม security level
+
 ```bash
-curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel=ทั่วไป"
+curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel=เปิด"
 ```
 
 ### Response Example
@@ -119,7 +126,7 @@ curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel
         "id": "660e8400-e29b-41d4-a716-446655440001",
         "name": "ข้อมูลนักเรียน",
         "detail": "ข้อมูลนักเรียนในระดับการศึกษาขั้นพื้นฐาน",
-        "securityLevel": "ทั่วไป",
+        "securityLevel": "เปิด",
         "metadata": "/metadata/students.pdf",
         "createdAt": "2024-01-02T00:00:00.000Z",
         "updatedAt": "2024-01-15T00:00:00.000Z",
@@ -153,6 +160,7 @@ curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel
 ```
 
 ### Notes
+
 - API นี้จะแสดงเฉพาะข้อมูลที่ไม่ถูกลบ (deletedAt = null)
 - **API นี้จะแสดงเฉพาะ dataset ที่มี type เป็น "OPEN" เท่านั้น (ไม่สามารถเปลี่ยนแปลงได้)**
 - ผลลัพธ์จะเรียงตามชื่อหน่วยงาน (A-Z)
@@ -167,11 +175,13 @@ curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?securityLevel
 ดึงข้อมูลสถิติจำนวนหน่วยงานและชุดข้อมูลที่เปิดให้ใช้งาน
 
 ### Endpoint
+
 ```
 GET /api/public/stats
 ```
 
 ### Query Parameters
+
 ไม่มี
 
 ### Response Format
@@ -186,6 +196,7 @@ GET /api/public/stats
 ### Examples
 
 #### ดึงข้อมูลสถิติ
+
 ```bash
 curl https://isoc360.isoc.go.th/datacatalog/api/public/stats
 ```
@@ -200,6 +211,7 @@ curl https://isoc360.isoc.go.th/datacatalog/api/public/stats
 ```
 
 ### Notes
+
 - `unitOwnerCount`: จำนวนหน่วยงานทั้งหมดที่ไม่ถูกลบ
 - `openDatasetCount`: จำนวนชุดข้อมูลที่มี type เป็น "OPEN" และไม่ถูกลบ
 
@@ -208,6 +220,7 @@ curl https://isoc360.isoc.go.th/datacatalog/api/public/stats
 ## Error Responses
 
 ### 500 Internal Server Error
+
 ```json
 {
   "error": "Internal server error",
@@ -228,16 +241,21 @@ UnitOwner (หน่วยงาน)
 ```
 
 ### UnitOwner
+
 หน่วยงานเจ้าของข้อมูล
 
 ### Dataset
+
 ชุดข้อมูลที่หน่วยงานมี โดยแต่ละชุดข้อมูลจะมี:
+
 - Category (หมวดหมู่)
 - Type (ประเภท) - **เฉพาะ OPEN เท่านั้น**
 - Security Level (ระดับความปลอดภัย)
 
 ### Service
+
 บริการที่เกี่ยวข้องกับชุดข้อมูล แต่ละบริการจะระบุ:
+
 - Method (GET, POST, PATCH)
 - API endpoint
 - วิธีการใช้งาน (How-to document)
@@ -251,6 +269,7 @@ UnitOwner (หน่วยงาน)
 3. **URL Encoding**: อย่าลืม encode URL parameters เช่น เว้นวรรคใช้ `%20`
 
 ### Example with URL Encoding
+
 ```bash
 curl "https://isoc360.isoc.go.th/datacatalog/api/public/unitowners?search=%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%97%E0%B8%A3%E0%B8%A7%E0%B8%87"
 ```

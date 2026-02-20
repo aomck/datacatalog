@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import axios from 'axios';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import axios from "axios";
 
-const CORE_API_URL = process.env.CORE_API_URL || 'https://isoc360-core.isoc.go.th/user-api';
+const CORE_API_URL =
+  process.env.CORE_API_URL || "https://isoc360-core.isoc.go.th/user-api";
 
 /**
  * GET /api/statistics
@@ -17,15 +18,15 @@ const CORE_API_URL = process.env.CORE_API_URL || 'https://isoc360-core.isoc.go.t
 export async function GET(request: NextRequest) {
   try {
     // Get token from headers
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Missing or invalid Authorization header',
+          message: "Missing or invalid Authorization header",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -43,25 +44,25 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: 'Unauthorized',
+            message: "Unauthorized",
           },
-          { status: 401 }
+          { status: 401 },
         );
       }
     } catch (error: any) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Invalid or expired token',
+          message: "Invalid or expired token",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     // Get query parameters for date filtering
     const { searchParams } = request.nextUrl;
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     // Build date filter for access logs
     const dateFilter: any = {};
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       where: {
         deletedAt: null,
       },
-      distinct: ['name'],
+      distinct: ["name"],
       select: {
         id: true,
         name: true,
@@ -90,10 +91,7 @@ export async function GET(request: NextRequest) {
     const distinctDatasetIds = distinctDatasets.map((d) => d.id);
 
     // Parallel queries for statistics
-    const [
-      totalServices,
-      accessLogs,
-    ] = await Promise.all([
+    const [totalServices, accessLogs] = await Promise.all([
       // Total active services
       prisma.service.count({
         where: {
@@ -102,9 +100,10 @@ export async function GET(request: NextRequest) {
       }),
       // Access logs count (with optional date filter)
       prisma.userServiceLog.count({
-        where: Object.keys(dateFilter).length > 0
-          ? { createdAt: dateFilter }
-          : undefined,
+        where:
+          Object.keys(dateFilter).length > 0
+            ? { createdAt: dateFilter }
+            : undefined,
       }),
     ]);
 
@@ -114,10 +113,12 @@ export async function GET(request: NextRequest) {
       const count = datasetsByTypeMap.get(dataset.typeId) || 0;
       datasetsByTypeMap.set(dataset.typeId, count + 1);
     });
-    const datasetsByType = Array.from(datasetsByTypeMap.entries()).map(([typeId, count]) => ({
-      typeId,
-      _count: { id: count },
-    }));
+    const datasetsByType = Array.from(datasetsByTypeMap.entries()).map(
+      ([typeId, count]) => ({
+        typeId,
+        _count: { id: count },
+      }),
+    );
 
     // Count datasets by security level from distinct datasets
     const datasetsBySecurityLevelMap = new Map<string | null, number>();
@@ -126,7 +127,9 @@ export async function GET(request: NextRequest) {
       const count = datasetsBySecurityLevelMap.get(level) || 0;
       datasetsBySecurityLevelMap.set(level, count + 1);
     });
-    const datasetsBySecurityLevel = Array.from(datasetsBySecurityLevelMap.entries()).map(([securityLevel, count]) => ({
+    const datasetsBySecurityLevel = Array.from(
+      datasetsBySecurityLevelMap.entries(),
+    ).map(([securityLevel, count]) => ({
       securityLevel,
       _count: { id: count },
     }));
@@ -151,25 +154,29 @@ export async function GET(request: NextRequest) {
     const typeMap = new Map(types.map((t) => [t.id, t]));
     const catalogsByType = datasetsByType.map((item) => ({
       typeId: item.typeId,
-      typeName: typeMap.get(item.typeId)?.name || 'Unknown',
-      typeShortName: typeMap.get(item.typeId)?.shortName || 'Unknown',
+      typeName: typeMap.get(item.typeId)?.name || "Unknown",
+      typeShortName: typeMap.get(item.typeId)?.shortName || "Unknown",
       count: item._count.id,
     }));
 
     // Map security levels
     const securityLevelMap: { [key: string]: string } = {
-      '0': 'ไม่มีชั้นความลับ',
-      '1': 'ทั่วไป',
-      '2': 'ลับ',
-      '3': 'ลับมาก',
-      '4': 'ลับที่สุด',
+      "0": "ไม่มีชั้นความลับ",
+      "1": "เปิด",
+      "2": "ลับ",
+      "3": "ลับมาก",
+      "4": "ลับที่สุด",
     };
 
-    const datasetsBySecurityLevelMapped = datasetsBySecurityLevel.map((item) => ({
-      securityLevel: item.securityLevel || 'null',
-      securityLevelName: item.securityLevel ? securityLevelMap[item.securityLevel] || 'Unknown' : 'ไม่ระบุ',
-      count: item._count.id,
-    }));
+    const datasetsBySecurityLevelMapped = datasetsBySecurityLevel.map(
+      (item) => ({
+        securityLevel: item.securityLevel || "null",
+        securityLevelName: item.securityLevel
+          ? securityLevelMap[item.securityLevel] || "Unknown"
+          : "ไม่ระบุ",
+        count: item._count.id,
+      }),
+    );
 
     const response = NextResponse.json({
       success: true,
@@ -186,25 +193,31 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
 
     return response;
   } catch (error: any) {
-    console.error('Statistics API error:', error);
+    console.error("Statistics API error:", error);
     const errorResponse = NextResponse.json(
       {
         success: false,
-        message: 'Internal server error',
+        message: "Internal server error",
         error: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
 
-    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
-    errorResponse.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    errorResponse.headers.set("Access-Control-Allow-Origin", "*");
+    errorResponse.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+    errorResponse.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
 
     return errorResponse;
   }
@@ -212,8 +225,11 @@ export async function GET(request: NextRequest) {
 
 export async function OPTIONS() {
   const response = new NextResponse(null, { status: 200 });
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
   return response;
 }

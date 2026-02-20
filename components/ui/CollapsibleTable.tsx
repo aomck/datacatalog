@@ -13,6 +13,7 @@ import {
   IconButton,
   Collapse,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import { Icon } from '@iconify/react';
 
@@ -27,6 +28,7 @@ interface CollapsibleTableProps {
   page?: number;
   rowsPerPage?: number;
   onPageChange?: (newPage: number) => void;
+  loading?: boolean;
 }
 
 export function CollapsibleTable({
@@ -40,6 +42,7 @@ export function CollapsibleTable({
   page,
   rowsPerPage,
   onPageChange,
+  loading = false,
 }: CollapsibleTableProps) {
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
 
@@ -119,7 +122,13 @@ export function CollapsibleTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {rows.length === 0 ? (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 8, border: 'none' }}>
+                <CircularProgress size={40} />
+              </TableCell>
+            </TableRow>
+          ) : rows.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 8, border: 'none' }}>
                 <div className="text-gray-400 text-sm">ไม่มีข้อมูล</div>

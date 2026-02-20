@@ -11,7 +11,7 @@ import type { ApproveStatus } from '@/types';
 interface ApprovalModalProps {
   open: boolean;
   onClose: () => void;
-  selectedItems: { datasetIds: string[]; serviceIds: string[] };
+  selectedItems: { datasetIds: string[]; serviceIds: string[]; reportIds: string[] };
   requests: any[];
   onSuccess: () => void;
   userId: string;
@@ -23,7 +23,7 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const totalItems = selectedItems.datasetIds.length + selectedItems.serviceIds.length;
+  const totalItems = selectedItems.datasetIds.length + selectedItems.serviceIds.length + selectedItems.reportIds.length;
 
   // Build hierarchy of selected items
   const selectedHierarchy = requests.flatMap((request) => {
@@ -42,6 +42,11 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
       };
     });
   }).filter((item) => item.dataset);
+
+  // Get selected reports
+  const selectedReports = requests.flatMap((request) =>
+    request.requestReports?.filter((rr: any) => selectedItems.reportIds.includes(rr.id)) || []
+  );
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -63,6 +68,7 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
       const result = await bulkUpdateRequestStatus(
         selectedItems.datasetIds,
         selectedItems.serviceIds,
+        selectedItems.reportIds,
         status,
         comment,
         userId,
@@ -143,6 +149,14 @@ export function ApprovalModal({ open, onClose, selectedItems, requests, onSucces
                     ))}
                   </div>
                 )}
+              </div>
+            ))}
+            {selectedReports.map((rr: any) => (
+              <div key={rr.id} className="bg-purple-50 rounded-lg overflow-hidden">
+                <div className="flex items-center gap-2 p-2 bg-purple-100">
+                  <Icon icon="mdi:file-chart" className="w-4 h-4 text-purple-700" />
+                  <span className="text-sm font-semibold text-purple-900">{rr.report?.name}</span>
+                </div>
               </div>
             ))}
           </div>

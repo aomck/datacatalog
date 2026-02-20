@@ -30,7 +30,7 @@ export default function ApproverPage() {
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [datasetTypes, setDatasetTypes] = useState<Array<{ id: string; name: string }>>([]);
   const [stats, setStats] = useState({ requested: 0, pending: 0, approved: 0, disapproved: 0 });
-  const [selected, setSelected] = useState<{ datasetIds: string[]; serviceIds: string[] }>({ datasetIds: [], serviceIds: [] });
+  const [selected, setSelected] = useState<{ datasetIds: string[]; serviceIds: string[]; reportIds: string[] }>({ datasetIds: [], serviceIds: [], reportIds: [] });
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [requestDetailOpen, setRequestDetailOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -160,19 +160,29 @@ export default function ApproverPage() {
     }));
   };
 
+  const handleSelectReport = (id: string, checked: boolean) => {
+    setSelected((prev) => ({
+      ...prev,
+      reportIds: checked ? [...prev.reportIds, id] : prev.reportIds.filter((x) => x !== id),
+    }));
+  };
+
   const handleSelectRequest = (request: Request, checked: boolean) => {
     const datasetIds = request.requestDatasets?.map((rd) => rd.id) || [];
     const serviceIds = request.requestServices?.map((rs) => rs.id) || [];
+    const reportIds = request.requestReports?.map((rr) => rr.id) || [];
 
     if (checked) {
       setSelected((prev) => ({
         datasetIds: [...prev.datasetIds, ...datasetIds],
         serviceIds: [...prev.serviceIds, ...serviceIds],
+        reportIds: [...prev.reportIds, ...reportIds],
       }));
     } else {
       setSelected((prev) => ({
         datasetIds: prev.datasetIds.filter((id) => !datasetIds.includes(id)),
         serviceIds: prev.serviceIds.filter((id) => !serviceIds.includes(id)),
+        reportIds: prev.reportIds.filter((id) => !reportIds.includes(id)),
       }));
     }
   };
@@ -198,7 +208,7 @@ export default function ApproverPage() {
     setApiTestOpen(true);
   };
 
-  const totalSelected = selected.datasetIds.length + selected.serviceIds.length;
+  const totalSelected = selected.datasetIds.length + selected.serviceIds.length + selected.reportIds.length;
 
   return (
     <div>
@@ -302,16 +312,17 @@ export default function ApproverPage() {
                     const allIds = [
                       ...(r.requestDatasets?.map((rd) => rd.id) || []),
                       ...(r.requestServices?.map((rs) => rs.id) || []),
+                      ...(r.requestReports?.map((rr) => rr.id) || []),
                     ];
                     return allIds.every((id) =>
-                      [...selected.datasetIds, ...selected.serviceIds].includes(id)
+                      [...selected.datasetIds, ...selected.serviceIds, ...selected.reportIds].includes(id)
                     );
                   })}
                   onChange={(e) => {
                     if (e.target.checked) {
                       filteredRequests.forEach((r) => handleSelectRequest(r, true));
                     } else {
-                      setSelected({ datasetIds: [], serviceIds: [] });
+                      setSelected({ datasetIds: [], serviceIds: [], reportIds: [] });
                     }
                   }}
                 />
@@ -327,9 +338,10 @@ export default function ApproverPage() {
             const allIds = [
               ...(r.requestDatasets?.map((rd) => rd.id) || []),
               ...(r.requestServices?.map((rs) => rs.id) || []),
+              ...(r.requestReports?.map((rr) => rr.id) || []),
             ];
             const isSelected = allIds.length > 0 && allIds.every((id) =>
-              [...selected.datasetIds, ...selected.serviceIds].includes(id)
+              [...selected.datasetIds, ...selected.serviceIds, ...selected.reportIds].includes(id)
             );
 
             return {
@@ -459,6 +471,42 @@ export default function ApproverPage() {
                   ))}
                 </div>
               )}
+
+              {/* Reports */}
+              {row.requestReports && row.requestReports.length > 0 && (
+                <div className="space-y-2">
+                  {row.requestReports.map((rr: any) => (
+                    <div key={rr.id} className="bg-purple-50 rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-3 bg-purple-100">
+                        <div className="flex items-center gap-3 flex-1">
+                          <Checkbox
+                            size="small"
+                            checked={selected.reportIds.includes(rr.id)}
+                            onChange={(e) => handleSelectReport(rr.id, e.target.checked)}
+                          />
+                          <Icon icon="mdi:file-chart" className="w-5 h-5 text-purple-700" />
+                          <span className="font-semibold text-purple-900">{rr.report?.name}</span>
+                          {rr.report?.securityLevel && (
+                            <SecurityLevelBadge level={rr.report.securityLevel} size="sm" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Tooltip title="ดูประวัติการอนุมัติ">
+                            <IconButton size="small" onClick={() => handleViewHistory(rr)}>
+                              <Icon icon="mdi:history" className="w-5 h-5" />
+                            </IconButton>
+                          </Tooltip>
+                          <StatusBadge
+                            status={rr.approveStatus}
+                            onClick={() => handleViewApprovalDetail(rr, 'report' as any)}
+                            clickable={rr.approveStatus !== 'REQUESTED'}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         />
@@ -472,7 +520,7 @@ export default function ApproverPage() {
         requests={requests}
         onSuccess={() => {
           loadData();
-          setSelected({ datasetIds: [], serviceIds: [] });
+          setSelected({ datasetIds: [], serviceIds: [], reportIds: [] });
         }}
         userId={user?.id || ''}
       />

@@ -20,6 +20,7 @@ export async function createRequest(data: {
   detail?: string;
   datasetIds: string[];
   serviceIds: string[];
+  reportIds?: string[]; // existing reports
   files: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
 }) {
   try {
@@ -44,6 +45,12 @@ export async function createRequest(data: {
             approveStatus: 'REQUESTED',
           })),
         },
+        requestReports: {
+          create: (data.reportIds || []).map((reportId: string) => ({
+            reportId,
+            approveStatus: 'REQUESTED',
+          })),
+        },
         requestFiles: {
           create: data.files.map((file: { filePath: string; fileName: string; fileType: string; fileSize: number }) => ({
             filePath: file.filePath,
@@ -61,11 +68,15 @@ export async function createRequest(data: {
         requestServices: {
           include: { service: true },
         },
+        requestReports: {
+          include: { report: true },
+        },
         requestFiles: true,
       },
     });
 
     revalidatePath('/app/my-catalog');
+    revalidatePath('/app/my-reports');
     revalidatePath('/app/approver');
 
     return { success: true, data: request };
@@ -108,6 +119,16 @@ export async function getUserRequests(
               service: {
                 include: {
                   dataset: true,
+                },
+              },
+            },
+          },
+          requestReports: {
+            include: {
+              report: {
+                include: {
+                  type: true,
+                  files: true,
                 },
               },
             },
@@ -181,6 +202,32 @@ export async function getAllRequests(page = 1, limit = 30): Promise<PaginatedRes
                 },
               },
               approver: true,
+              approvalFiles: {
+                orderBy: { createdAt: 'desc' },
+              },
+            },
+          },
+          requestReports: {
+            include: {
+              report: {
+                include: {
+                  type: true,
+                  unitOwners: {
+                    include: {
+                      unitOwner: true,
+                    },
+                  },
+                  category: true,
+                  files: true,
+                },
+              },
+              approver: true,
+              designFiles: true,
+              selectedDatasets: {
+                include: {
+                  dataset: true,
+                },
+              },
               approvalFiles: {
                 orderBy: { createdAt: 'desc' },
               },
@@ -284,6 +331,7 @@ export async function updateRequestServiceStatus(
 export async function bulkUpdateRequestStatus(
   datasetIds: string[],
   serviceIds: string[],
+  reportIds: string[],
   status: ApproveStatus,
   comment: string,
   userId: string,
@@ -353,15 +401,76 @@ export async function bulkUpdateRequestStatus(
           }
         }
       }
+
+      // Update reports
+      if (reportIds.length > 0) {
+        await tx.requestReport.updateMany({
+          where: {
+            id: { in: reportIds },
+          },
+          data: {
+            approveStatus: status,
+            approvedBy: userId,
+            approvedAt: new Date(),
+            comment,
+          },
+        });
+
+        // Create approval files for each report
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          for (const reportId of reportIds) {
+            await tx.requestReportApprovalFile.createMany({
+              data: uploadedFiles.map((file: { filePath: string; fileName: string; fileSize: number }) => ({
+                requestReportId: reportId,
+                filePath: file.filePath,
+                fileName: file.fileName,
+                fileType: '', // Will be determined from file extension
+                fileSize: file.fileSize,
+                createdBy: userId,
+              })),
+            });
+          }
+        }
+      }
     });
 
     revalidatePath('/app/approver');
     revalidatePath('/app/my-catalog');
+    revalidatePath('/app/my-reports');
 
     return { success: true };
   } catch (error: any) {
     console.error('Bulk update request status error:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get user's requested report IDs and their statuses
+ */
+export async function getUserRequestedReports(userId: string) {
+  try {
+    const reports = await prisma.requestReport.findMany({
+      where: {
+        request: {
+          requestedBy: userId,
+          deletedAt: null,
+        },
+      },
+      select: {
+        reportId: true,
+        approveStatus: true,
+      },
+    });
+
+    return {
+      requestedIds: reports.map(r => r.reportId).filter((id): id is string => id !== null),
+      approvedIds: reports.filter(r => r.approveStatus === 'APPROVED').map(r => r.reportId).filter((id): id is string => id !== null),
+      pendingIds: reports.filter(r => r.approveStatus === 'PENDING' || r.approveStatus === 'REQUESTED').map(r => r.reportId).filter((id): id is string => id !== null),
+    };
+  } catch (error) {
+    console.error('Get user requested reports error:', error);
+    return { requestedIds: [], approvedIds: [], pendingIds: [] };
   }
 }
 
@@ -413,5 +522,203 @@ export async function getRequestStatistics() {
       disapproved: 0,
       total: 0,
     };
+  }
+}
+
+// ============================================================================
+// Report Request Actions
+// ============================================================================
+
+/**
+ * Create a new report request (for existing or new report)
+ */
+export async function createReportRequest(data: {
+  userId: string;
+  name: string;
+  unit: string;
+  email: string;
+  tel: string;
+  detail?: string;
+  reportIds: string[]; // existing reports in cart
+  files: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
+}) {
+  try {
+    const request = await prisma.request.create({
+      data: {
+        requestedBy: data.userId,
+        name: data.name,
+        unit: data.unit,
+        email: data.email,
+        tel: data.tel,
+        detail: data.detail,
+        createdBy: data.userId,
+        requestReports: {
+          create: data.reportIds.map((reportId) => ({
+            reportId,
+            approveStatus: 'REQUESTED',
+          })),
+        },
+        requestFiles: {
+          create: data.files.map((file) => ({
+            filePath: file.filePath,
+            fileName: file.fileName,
+            fileType: file.fileType,
+            fileSize: file.fileSize,
+            createdBy: data.userId,
+          })),
+        },
+      },
+      include: {
+        requestReports: {
+          include: {
+            report: true,
+          },
+        },
+        requestFiles: true,
+      },
+    });
+
+    revalidatePath('/app/my-reports');
+    revalidatePath('/app/approver');
+    revalidatePath('/app/report-catalog');
+
+    return { success: true, data: request };
+  } catch (error: any) {
+    console.error('Create report request error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Update request report status
+ */
+export async function updateRequestReportStatus(
+  requestReportIds: string[],
+  status: ApproveStatus,
+  comment: string,
+  userId: string
+) {
+  try {
+    await prisma.requestReport.updateMany({
+      where: {
+        id: { in: requestReportIds },
+      },
+      data: {
+        approveStatus: status,
+        approvedBy: userId,
+        approvedAt: new Date(),
+        comment,
+      },
+    });
+
+    revalidatePath('/app/approver');
+    revalidatePath('/app/my-reports');
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Update request report status error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Approve new report request and create report
+ */
+export async function approveNewReportRequest(
+  requestReportId: string,
+  reportData: {
+    name: string;
+    detail?: string;
+    typeId: string;
+    url?: string;
+    unitOwnerIds: string[]; // m:m unit owners (involved units)
+    categoryId: string;
+    categoryIds: string[];
+    datasetIds: string[];
+    securityLevel?: string;
+    files: { filePath: string; fileName: string; fileType: string; fileSize: number }[];
+  },
+  comment: string,
+  userId: string,
+  approvalFiles?: { filePath: string; fileName: string; fileSize: number }[]
+) {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the report
+      const report = await tx.report.create({
+        data: {
+          name: reportData.name,
+          detail: reportData.detail,
+          typeId: reportData.typeId,
+          url: reportData.url,
+          categoryId: reportData.categoryId,
+          securityLevel: reportData.securityLevel,
+          createdBy: userId,
+          updatedBy: userId,
+          unitOwners: {
+            create: reportData.unitOwnerIds.map((unitOwnerId) => ({
+              unitOwnerId,
+            })),
+          },
+          categories: {
+            create: reportData.categoryIds.map((categoryId) => ({
+              categoryId,
+            })),
+          },
+          datasets: {
+            create: reportData.datasetIds.map((datasetId) => ({
+              datasetId,
+            })),
+          },
+          files: {
+            create: reportData.files.map((file) => ({
+              filePath: file.filePath,
+              fileName: file.fileName,
+              fileType: file.fileType,
+              fileSize: file.fileSize,
+              createdBy: userId,
+            })),
+          },
+        },
+      });
+
+      // Update request report status
+      await tx.requestReport.update({
+        where: { id: requestReportId },
+        data: {
+          reportId: report.id,
+          approveStatus: 'APPROVED',
+          approvedBy: userId,
+          approvedAt: new Date(),
+          comment,
+        },
+      });
+
+      // Add approval files if any
+      if (approvalFiles && approvalFiles.length > 0) {
+        await tx.requestReportApprovalFile.createMany({
+          data: approvalFiles.map((file) => ({
+            requestReportId,
+            filePath: file.filePath,
+            fileName: file.fileName,
+            fileType: '',
+            fileSize: file.fileSize,
+            createdBy: userId,
+          })),
+        });
+      }
+
+      return report;
+    });
+
+    revalidatePath('/app/approver');
+    revalidatePath('/app/my-reports');
+    revalidatePath('/app/report-catalog');
+    revalidatePath('/app/admin');
+
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error('Approve new report request error:', error);
+    return { success: false, error: error.message };
   }
 }

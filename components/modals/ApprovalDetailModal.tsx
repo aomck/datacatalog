@@ -135,7 +135,7 @@ export function ApprovalDetailModal({ open, onClose, item, type }: ApprovalDetai
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">ชั้นความลับ</p>
-                    <p className="text-sm font-medium">{item.dataset.securityLevel || 'ทั่วไป'}</p>
+                    <p className="text-sm font-medium">{item.dataset.securityLevel || 'เปิด'}</p>
                   </div>
                 </div>
                 {item.dataset.detail && (

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Tooltip, IconButton, Checkbox } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { usePermission } from '@/components/providers/permission-provider';
@@ -26,13 +25,9 @@ import { User } from '@/components/ui/User';
 import { Timestamp } from '@/components/ui/Timestamp';
 import { getFileUrl } from '@/lib/file-url';
 import type { Dataset, Service, UnitOwner, Category } from '@/types';
-import { ReportAdminTab } from '@/components/admin/ReportAdminTab';
 
 export default function AdminPage() {
   const { user, permissions } = usePermission();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(0);
   // Data for current page/tab (filtered and paginated)
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
@@ -51,10 +46,6 @@ export default function AdminPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [datadictFiles, setDatadictFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Handlers สำหรับ Report Tab
-  const [reportOpenDialog, setReportOpenDialog] = useState<(() => void) | null>(null);
-  const [reportRefresh, setReportRefresh] = useState<(() => void) | null>(null);
   const [isServiceDialog, setIsServiceDialog] = useState(false);
   const [apiTestOpen, setApiTestOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
@@ -80,17 +71,6 @@ export default function AdminPage() {
     window.location.href = '/app/catalog';
     return null;
   }
-
-  // อ่าน tab จาก URL เมื่อ mount
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam) {
-      const tabIndex = parseInt(tabParam);
-      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex <= 3) {
-        setActiveTab(tabIndex);
-      }
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     // Reset page and filters when switching tabs
@@ -142,12 +122,6 @@ export default function AdminPage() {
   };
 
   const loadData = async () => {
-    // ถ้าเป็น Tab รายงาน ให้เรียก refresh ของ ReportAdminTab
-    if (activeTab === 1 && reportRefresh) {
-      reportRefresh();
-      return;
-    }
-
     setLoading(true);
     try {
       if (activeTab === 0) {
@@ -160,12 +134,12 @@ export default function AdminPage() {
         });
         setFilteredDatasets(result.data);
         setTotalRows(result.pagination.total);
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         // Unit Owner tab with search
         const result = await getUnitOwners(page, rowsPerPage, filters.search || undefined);
         setFilteredUnitOwners(result.data);
         setTotalRows(result.pagination.total);
-      } else if (activeTab === 3) {
+      } else if (activeTab === 2) {
         // Category tab with search
         const result = await getCategories(page, rowsPerPage, filters.search || undefined);
         setFilteredCategories(result.data);
@@ -187,12 +161,6 @@ export default function AdminPage() {
   };
 
   const handleOpenDialog = (item?: any) => {
-    // ถ้าเป็น Tab รายงาน ให้เรียก dialog ของ ReportAdminTab
-    if (activeTab === 1 && reportOpenDialog) {
-      reportOpenDialog();
-      return;
-    }
-
     setEditingItem(item);
     setIsServiceDialog(false); // Reset service dialog state
     if (item) {
@@ -207,9 +175,9 @@ export default function AdminPage() {
       // Reset form for new item
       if (activeTab === 0) {
         setFormData({ name: '', code: '', detail: '', unitOwnerId: '', categoryId: '', categoryIds: [], typeId: '', securityLevel: '' });
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         setFormData({ name: '', shortName: '' });
-      } else if (activeTab === 3) {
+      } else if (activeTab === 2) {
         setFormData({ name: '', shortName: '', order: 0 });
       }
     }
@@ -252,13 +220,13 @@ export default function AdminPage() {
           const result = await uploadDatasetMetadata(file);
           console.log('Upload result:', result);
           if (result.success && result.filePath) metadata = result.filePath;
-        } else if (activeTab === 2) {
+        } else if (activeTab === 1) {
           // Unit Owner icon
           console.log('Uploading Unit Owner icon...');
           const result = await uploadUnitOwnerIcon(file);
           console.log('Upload result:', result);
           if (result.success && result.filePath) iconPath = result.filePath;
-        } else if (activeTab === 3) {
+        } else if (activeTab === 2) {
           // Category icon
           console.log('Uploading Category icon...');
           const result = await uploadCategoryIcon(file);
@@ -319,10 +287,6 @@ export default function AdminPage() {
           ? await updateDataset(editingItem.id, data, user.id)
           : await createDataset(data, user.id);
       } else if (activeTab === 1) {
-        // Report - handled by ReportAdminTab, should not reach here
-        console.error('Report save should be handled by ReportAdminTab');
-        return;
-      } else if (activeTab === 2) {
         // Unit Owner - only send necessary fields
         const data = {
           name: formData.name,
@@ -333,7 +297,7 @@ export default function AdminPage() {
         result = editingItem
           ? await updateUnitOwner(editingItem.id, data, user.id)
           : await createUnitOwner(data, user.id);
-      } else if (activeTab === 3) {
+      } else if (activeTab === 2) {
         // Category - only send necessary fields
         const data = {
           name: formData.name,
@@ -385,14 +349,14 @@ export default function AdminPage() {
           await deleteUploadedFile(itemToDelete.datadict);
         }
         result = await deleteDataset(id, user.id);
-      } else if (activeTab === 2) {
+      } else if (activeTab === 1) {
         // Unit Owner - delete icon file if exists
         itemToDelete = filteredUnitOwners.find((u) => u.id === id);
         if (itemToDelete?.icon) {
           await deleteUploadedFile(itemToDelete.icon);
         }
         result = await deleteUnitOwner(id, user.id);
-      } else if (activeTab === 3) {
+      } else if (activeTab === 2) {
         // Category - delete icon file if exists
         itemToDelete = filteredCategories.find((c) => c.id === id);
         if (itemToDelete?.icon) {
@@ -419,7 +383,7 @@ export default function AdminPage() {
     if (isServiceDialog) {
       return (editingItem ? 'แก้ไข' : 'เพิ่ม') + 'บริการข้อมูล';
     }
-    const labels = ['ชุดข้อมูล', 'รายงาน', 'หน่วยงาน', 'นโยบายและแผนความมั่นคง'];
+    const labels = ['ชุดข้อมูล', 'หน่วยงาน', 'นโยบายและแผนความมั่นคง'];
     return (editingItem ? 'แก้ไข' : 'เพิ่ม') + labels[activeTab];
   };
 
@@ -428,33 +392,18 @@ export default function AdminPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">จัดการข้อมูล</h1>
-          <p className="text-gray-600">จัดการชุดข้อมูล บริการ หน่วยงาน นโยบาย และรายงาน</p>
+          <p className="text-gray-600">จัดการชุดข้อมูล บริการ หน่วยงาน และนโยบาย</p>
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton onRefresh={loadData} />
-          <Button
-            variant="contained"
-            onClick={() => handleOpenDialog()}
-            startIcon={<Icon icon="mdi:plus" />}
-            id="admin-add-button"
-          >
+          <Button variant="contained" onClick={() => handleOpenDialog()} startIcon={<Icon icon="mdi:plus" />}>
             เพิ่มรายการ
           </Button>
         </div>
       </div>
 
-      <Tabs
-        value={activeTab}
-        onChange={(_, v) => {
-          setActiveTab(v);
-          // Update URL with tab parameter immediately
-          const newUrl = `/datacatalog/app/admin?tab=${v}`;
-          window.history.replaceState({}, '', newUrl);
-        }}
-        className="mb-6"
-      >
+      <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} className="mb-6">
         <Tab label="ชุดข้อมูล" />
-        <Tab label="รายงาน" />
         <Tab label="หน่วยงาน" />
         <Tab label="นโยบายและแผนความมั่นคง" />
       </Tabs>
@@ -474,7 +423,7 @@ export default function AdminPage() {
       )}
 
       {/* Filter Panel - Unit Owner Tab */}
-      {activeTab === 2 && (
+      {activeTab === 1 && (
         <FilterPanel
           onFilterChange={handleFilterChange}
           showSearch
@@ -485,7 +434,7 @@ export default function AdminPage() {
       )}
 
       {/* Filter Panel - Category Tab */}
-      {activeTab === 3 && (
+      {activeTab === 2 && (
         <FilterPanel
           onFilterChange={handleFilterChange}
           showSearch
@@ -585,7 +534,6 @@ export default function AdminPage() {
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={handlePageChange}
-          loading={loading}
           renderCollapse={(row) => (
             <div className="bg-gray-50 p-4 rounded">
               <div className="flex items-center justify-between mb-3">
@@ -701,7 +649,7 @@ export default function AdminPage() {
       )}
 
       {/* Unit Owner Tab */}
-      {activeTab === 2 && (
+      {activeTab === 1 && (
         <DataTable
           columns={[
             { id: 'icon', label: 'ไอคอน', format: (value: any) => value ? <img src={getFileUrl(value) || ''} alt="" className="w-8 h-8 rounded" /> : '-' },
@@ -740,12 +688,11 @@ export default function AdminPage() {
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={handlePageChange}
-          loading={loading}
         />
       )}
 
       {/* Category Tab */}
-      {activeTab === 3 && (
+      {activeTab === 2 && (
         <DataTable
           columns={[
             { id: 'order', label: 'ลำดับ', align: 'center' },
@@ -785,7 +732,6 @@ export default function AdminPage() {
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={handlePageChange}
-          loading={loading}
         />
       )}
 
@@ -1026,7 +972,7 @@ export default function AdminPage() {
           )}
 
           {/* Unit Owner Form */}
-          {activeTab === 2 && !isServiceDialog && (
+          {activeTab === 1 && !isServiceDialog && (
             <>
               <TextField
                 fullWidth
@@ -1079,7 +1025,7 @@ export default function AdminPage() {
           )}
 
           {/* Category Form */}
-          {activeTab === 3 && !isServiceDialog && (
+          {activeTab === 2 && !isServiceDialog && (
             <>
               <TextField
                 fullWidth
@@ -1148,17 +1094,6 @@ export default function AdminPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Report Tab */}
-      {activeTab === 1 && user && (
-        <ReportAdminTab
-          userId={user.id}
-          onReady={(openDialog, refresh) => {
-            setReportOpenDialog(() => openDialog);
-            setReportRefresh(() => refresh);
-          }}
-        />
-      )}
 
       {/* API Test Modal */}
       <ApiTestModal

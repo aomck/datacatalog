@@ -3,13 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Icon } from '@iconify/react';
-import { Avatar } from '@mui/material';
 import { usePermission } from '@/components/providers/permission-provider';
 import { hasAnyAction } from '@/lib/permission-utils';
-import { logoutAction } from '@/lib/auth-actions';
 import { getUnreadNotificationCount } from '@/lib/actions/notification-actions';
-import { getFileUrl } from '@/lib/file-url';
 
 interface MenuItem {
   name: string;
@@ -34,6 +30,18 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    name: 'Report Catalog',
+    nameTh: 'บัญชีรายงานด้านความมั่นคง',
+    href: '/app/report-catalog',
+    service: '', // No permission required, everyone can access
+    route: '',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
     name: 'My Datasets',
     nameTh: 'ชุดข้อมูลของฉัน',
     href: '/app/my-catalog',
@@ -42,6 +50,19 @@ const menuItems: MenuItem[] = [
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+
+  {
+    name: 'My Reports',
+    nameTh: 'รายงานของฉัน',
+    href: '/app/my-reports',
+    service: '', // No permission required, everyone can access their own data
+    route: '',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     ),
   },
@@ -121,10 +142,6 @@ export function Sidebar() {
     };
   }, [user?.id, pathname]); // Re-fetch when pathname changes (user navigates)
 
-  const handleLogout = async () => {
-    await logoutAction();
-  };
-
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) => {
     // If service and route are empty, show to everyone
@@ -177,31 +194,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* User Profile */}
-      {user && (
-        <div className="p-4 border-b border-gray-200">
-          <div className={`flex items-center ${isExpanded ? 'space-x-3' : 'justify-center'}`}>
-            <Avatar
-              src={user.avatarUrl ? (getFileUrl(user.avatarUrl) || user.avatarUrl) : undefined}
-              alt={`${user.firstname} ${user.lastname}`}
-              sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}
-            >
-              {user.firstname?.charAt(0)}
-            </Avatar>
-            {isExpanded && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.firstname} {user.lastname}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {user.position || user.activeUnit?.nameTh || user.email}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Navigation Menu */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {visibleMenuItems.map((item) => {
@@ -235,19 +227,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      {/* Logout Button */}
-      <div className="p-4 border-t border-gray-200">
-        <button
-          onClick={handleLogout}
-          className={`w-full flex items-center ${isExpanded ? 'space-x-3 px-4' : 'justify-center px-2'
-            } py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all`}
-          title={!isExpanded ? 'ออกจากระบบ' : undefined}
-        >
-          <Icon icon="mdi:logout" className="w-6 h-6 flex-shrink-0" />
-          {isExpanded && <span>ออกจากระบบ</span>}
-        </button>
-      </div>
     </aside>
   );
 }

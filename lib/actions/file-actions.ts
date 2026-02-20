@@ -222,3 +222,107 @@ export async function deleteUploadedFile(filePath: string) {
 export async function getUploadedFileUrl(filePath: string | null | undefined) {
   return getFileUrl(filePath);
 }
+
+/**
+ * Upload report files (multiple)
+ */
+export async function uploadReportFiles(formData: FormData) {
+  try {
+    const files = formData.getAll('files') as File[];
+    if (!files || files.length === 0) {
+      return { success: false, error: 'No files provided' };
+    }
+
+    // Check total size (max 100MB)
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (totalSize > maxSize) {
+      return { success: false, error: 'Total file size exceeds 100MB' };
+    }
+
+    // Check file count (max 5 files)
+    if (files.length > 5) {
+      return { success: false, error: 'Maximum 5 files allowed' };
+    }
+
+    const results = await Promise.all(
+      files.map((file: File) => uploadFile(file, 'reports'))
+    );
+
+    const successful = results.filter((r: UploadFileResult) => r.success);
+    const failed = results.filter((r: UploadFileResult) => !r.success);
+
+    if (failed.length > 0) {
+      return {
+        success: false,
+        error: `Failed to upload ${failed.length} file(s)`,
+        partial: successful.length > 0,
+        uploaded: successful,
+      };
+    }
+
+    return {
+      success: true,
+      files: successful.map((r: UploadFileResult) => ({
+        filePath: r.filePath!,
+        fileName: r.fileName!,
+        fileSize: r.fileSize!,
+      })),
+    };
+  } catch (error: any) {
+    console.error('Upload report files error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Upload report design files (for new report requests)
+ */
+export async function uploadReportDesignFiles(formData: FormData) {
+  try {
+    const files = formData.getAll('files') as File[];
+    if (!files || files.length === 0) {
+      return { success: false, error: 'No files provided' };
+    }
+
+    // Check total size (max 100MB)
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (totalSize > maxSize) {
+      return { success: false, error: 'Total file size exceeds 100MB' };
+    }
+
+    // Check file count (max 5 files)
+    if (files.length > 5) {
+      return { success: false, error: 'Maximum 5 files allowed' };
+    }
+
+    const results = await Promise.all(
+      files.map((file: File) => uploadFile(file, 'report-designs'))
+    );
+
+    const successful = results.filter((r: UploadFileResult) => r.success);
+    const failed = results.filter((r: UploadFileResult) => !r.success);
+
+    if (failed.length > 0) {
+      return {
+        success: false,
+        error: `Failed to upload ${failed.length} file(s)`,
+        partial: successful.length > 0,
+        uploaded: successful,
+      };
+    }
+
+    return {
+      success: true,
+      files: successful.map((r: UploadFileResult) => ({
+        filePath: r.filePath!,
+        fileName: r.fileName!,
+        fileSize: r.fileSize!,
+      })),
+    };
+  } catch (error: any) {
+    console.error('Upload report design files error:', error);
+    return { success: false, error: error.message };
+  }
+}
