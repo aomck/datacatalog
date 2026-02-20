@@ -199,6 +199,7 @@ export async function createReport(
         url: data.url,
         categoryId: data.categoryId,
         securityLevel: data.securityLevel,
+        isActive: true,
         createdBy: userId,
         updatedBy: userId,
         unitOwners: {
