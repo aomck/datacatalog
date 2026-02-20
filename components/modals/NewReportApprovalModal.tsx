@@ -110,7 +110,7 @@ export function NewReportApprovalModal({
       setFormData({
         name: report.name || requestReport.title || '',
         detail: report.detail || requestReport.detail || '',
-        typeId: report.typeId || requestReport.reportTypeId || '',
+        typeId: report.typeId || '',
         url: report.url || '',
         unitOwnerIds: report.unitOwners?.map((u: any) => u.unitOwnerId) || [],
         categoryId: report.categoryId || '',
@@ -124,7 +124,7 @@ export function NewReportApprovalModal({
       setFormData({
         name: requestReport.title || '',
         detail: requestReport.detail || '',
-        typeId: requestReport.reportTypeId || '',
+        typeId: '',
         url: '',
         unitOwnerIds: [],
         categoryId: '',
