@@ -125,6 +125,19 @@ export default function ReportCatalogPage() {
     }
   };
 
+  const getReportTypeLabel = (type: string) => {
+    switch (type) {
+      case 'document':
+        return 'เอกสาร';
+      case 'infographic':
+        return 'อินโฟกราฟิก';
+      case 'dashboard':
+        return 'แดชบอร์ด';
+      default:
+        return type;
+    }
+  };
+
   const toggleCart = (item: CartItem) => {
     const inCart = cart.find((i) => i.id === item.id && i.type === item.type);
     if (inCart) {
@@ -179,7 +192,7 @@ export default function ReportCatalogPage() {
             label={
               <div className="flex items-center gap-2">
                 <Icon icon="mdi:tag-multiple" className="w-5 h-5" />
-                <span>นโยบาย</span>
+                <span>นโยบายและแผนความมั่นคง</span>
               </div>
             }
           />
@@ -231,11 +244,42 @@ export default function ReportCatalogPage() {
                               )}
                               <div className="flex-1">
                                 <p className="font-semibold text-gray-900">
-                                  {cat.name}
+                                  {cat.name} (นยม.{cat.order})
                                 </p>
-                                <p className="text-sm text-gray-500">
-                                  {cat.shortName}
-                                </p>
+                                {cat.reportCounts && (
+                                  <div className="flex gap-2 mt-1">
+                                    {cat.reportCounts.document > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('document')}: ${cat.reportCounts.document}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('document')} />}
+                                          label={cat.reportCounts.document}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                    {cat.reportCounts.infographic > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('infographic')}: ${cat.reportCounts.infographic}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('infographic')} />}
+                                          label={cat.reportCounts.infographic}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                    {cat.reportCounts.dashboard > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('dashboard')}: ${cat.reportCounts.dashboard}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('dashboard')} />}
+                                          label={cat.reportCounts.dashboard}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </button>
@@ -265,6 +309,40 @@ export default function ReportCatalogPage() {
                                 <p className="text-sm text-gray-500">
                                   {unit.shortName}
                                 </p>
+                                {unit.reportCounts && (
+                                  <div className="flex gap-2 mt-1">
+                                    {unit.reportCounts.document > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('document')}: ${unit.reportCounts.document}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('document')} />}
+                                          label={unit.reportCounts.document}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                    {unit.reportCounts.infographic > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('infographic')}: ${unit.reportCounts.infographic}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('infographic')} />}
+                                          label={unit.reportCounts.infographic}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                    {unit.reportCounts.dashboard > 0 && (
+                                      <Tooltip title={`${getReportTypeLabel('dashboard')}: ${unit.reportCounts.dashboard}`}>
+                                        <Chip
+                                          icon={<Icon icon={getReportIcon('dashboard')} />}
+                                          label={unit.reportCounts.dashboard}
+                                          size="small"
+                                          sx={{ height: 20, fontSize: '0.7rem' }}
+                                        />
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </button>

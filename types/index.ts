@@ -118,6 +118,12 @@ export interface UnitOwner {
   updatedAt: Date;
   deletedBy?: string | null;
   deletedAt?: Date | null;
+  // Report counts by type
+  reportCounts?: {
+    document: number;
+    infographic: number;
+    dashboard: number;
+  };
 }
 
 // Category
@@ -133,6 +139,12 @@ export interface Category {
   updatedAt: Date;
   deletedBy?: string | null;
   deletedAt?: Date | null;
+  // Report counts by type
+  reportCounts?: {
+    document: number;
+    infographic: number;
+    dashboard: number;
+  };
 }
 
 // Dataset

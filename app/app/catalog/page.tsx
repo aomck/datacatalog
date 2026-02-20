@@ -387,8 +387,8 @@ export default function CatalogPage() {
                     </div>
 
                     {/* Dataset Count Section - 10% */}
-                    <div className="flex flex-col items-center justify-center gap-1" style={{ height: '10%' }}>
-                      <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p>
+                    <div className="flex flex-col items-center justify-center gap-1 mt-3" style={{ height: '10%' }}>
+                      {/* <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p> */}
                       {/* Security Level Breakdown */}
                       {(item as any)._securityCounts && (
                         <div className="flex items-center gap-2.5 text-sm">

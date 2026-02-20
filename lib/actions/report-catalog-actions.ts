@@ -21,8 +21,15 @@ export async function getReportCatalogUnitOwners(
       prisma.unitOwner.findMany({
         where: { deletedAt: null },
         include: {
-          _count: {
-            select: { reportUnits: { where: { report: { deletedAt: null } } } },
+          reportUnits: {
+            where: { report: { deletedAt: null } },
+            include: {
+              report: {
+                include: {
+                  type: true,
+                },
+              },
+            },
           },
         },
         orderBy: { name: 'asc' },
@@ -34,8 +41,30 @@ export async function getReportCatalogUnitOwners(
       }),
     ]);
 
+    // Calculate report counts by type
+    const unitOwnersWithCounts = data.map((unitOwner: any) => {
+      const reportCounts = {
+        document: 0,
+        infographic: 0,
+        dashboard: 0,
+      };
+
+      unitOwner.reportUnits.forEach((ru: any) => {
+        const typeName = ru.report?.type?.name;
+        if (typeName === 'document') reportCounts.document++;
+        else if (typeName === 'infographic') reportCounts.infographic++;
+        else if (typeName === 'dashboard') reportCounts.dashboard++;
+      });
+
+      const { reportUnits, ...rest } = unitOwner;
+      return {
+        ...rest,
+        reportCounts,
+      };
+    });
+
     return {
-      data: data as UnitOwner[],
+      data: unitOwnersWithCounts as UnitOwner[],
       pagination: {
         page,
         limit,
@@ -63,10 +92,13 @@ export async function getReportCatalogCategories(
       prisma.category.findMany({
         where: { deletedAt: null },
         include: {
-          _count: {
-            select: {
-              reportCategories: {
-                where: { report: { deletedAt: null } },
+          reportCategories: {
+            where: { report: { deletedAt: null } },
+            include: {
+              report: {
+                include: {
+                  type: true,
+                },
               },
             },
           },
@@ -80,8 +112,30 @@ export async function getReportCatalogCategories(
       }),
     ]);
 
+    // Calculate report counts by type
+    const categoriesWithCounts = data.map((category: any) => {
+      const reportCounts = {
+        document: 0,
+        infographic: 0,
+        dashboard: 0,
+      };
+
+      category.reportCategories.forEach((rc: any) => {
+        const typeName = rc.report?.type?.name;
+        if (typeName === 'document') reportCounts.document++;
+        else if (typeName === 'infographic') reportCounts.infographic++;
+        else if (typeName === 'dashboard') reportCounts.dashboard++;
+      });
+
+      const { reportCategories, ...rest } = category;
+      return {
+        ...rest,
+        reportCounts,
+      };
+    });
+
     return {
-      data: data as Category[],
+      data: categoriesWithCounts as Category[],
       pagination: {
         page,
         limit,
