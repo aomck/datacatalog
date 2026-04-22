@@ -43,6 +43,7 @@ interface NestedCollapsibleTableProps {
   level3MethodField?: string;
   level3ApiField?: string;
   level3Actions?: (row: any, parentRow: any) => React.ReactNode;
+  flatMode?: boolean; // When true, rows are datasets directly (skip level 1 grouping)
 }
 
 export function NestedCollapsibleTable({
@@ -66,6 +67,7 @@ export function NestedCollapsibleTable({
   level3MethodField,
   level3ApiField,
   level3Actions,
+  flatMode = false,
 }: NestedCollapsibleTableProps) {
   const [openLevel1, setOpenLevel1] = useState<Set<string>>(new Set());
   const [openLevel2, setOpenLevel2] = useState<Set<string>>(new Set());
@@ -93,6 +95,137 @@ export function NestedCollapsibleTable({
       return newSet;
     });
   };
+
+  // Flat mode: render datasets directly without level 1 grouping
+  if (flatMode) {
+    const headerCellSx = { fontWeight: 600, fontSize: '0.875rem', color: 'grey.700', backgroundColor: 'grey.50', py: 2, px: 3 };
+    return (
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
+      >
+        <Table sx={{ '& .MuiTableCell-root': { borderColor: 'grey.100' } }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ ...headerCellSx, width: 50 }} />
+              <TableCell sx={headerCellSx}>ชื่อชุดข้อมูล</TableCell>
+              <TableCell sx={headerCellSx}>รายละเอียด</TableCell>
+              <TableCell align="center" sx={{ ...headerCellSx, width: 100 }}>Metadata</TableCell>
+              <TableCell align="center" sx={{ ...headerCellSx, width: 100 }}>Data Dictionary</TableCell>
+              <TableCell align="center" sx={{ ...headerCellSx, width: 120 }}>ชั้นความลับ</TableCell>
+              <TableCell align="right" sx={{ ...headerCellSx, width: 150 }}>การดำเนินการ</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {!rows || rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 8, border: 'none' }}>
+                  <div className="text-gray-400 text-sm">ไม่มีข้อมูล</div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((datasetRow) => {
+                const datasetId = getRowId(datasetRow);
+                const isOpen = openLevel1.has(datasetId);
+                const serviceRows = datasetRow[level2ChildrenField] || [];
+
+                return (
+                  <React.Fragment key={datasetId}>
+                    <TableRow hover sx={{ '&:hover': { backgroundColor: 'grey.50' }, opacity: datasetRow._accessLevel === 'disabled' ? 0.5 : 1 }}>
+                      <TableCell sx={{ py: 1.5, px: 3, width: 50 }}>
+                        {level2Collapsible && (
+                          <IconButton
+                            size="small"
+                            onClick={() => toggleLevel1(datasetId)}
+                            disabled={datasetRow._accessLevel === 'disabled'}
+                            sx={{ color: 'grey.600', '&:hover': { backgroundColor: 'grey.100' } }}
+                          >
+                            <Icon icon={isOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'} className="w-4 h-4" />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5, px: 3, fontSize: '0.875rem', color: datasetRow._accessLevel === 'disabled' ? 'grey.500' : 'inherit' }}>
+                        {datasetRow[level2NameField]}
+                      </TableCell>
+                      <TableCell sx={{ py: 1.5, px: 3, fontSize: '0.875rem', color: datasetRow._accessLevel === 'disabled' ? 'grey.500' : 'inherit' }}>
+                        {level2DetailField && datasetRow[level2DetailField]}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 1.5, px: 3, width: 100 }}>
+                        {level2MetadataField && datasetRow[level2MetadataField] ? (
+                          <Tooltip title="ดู Metadata">
+                            <span>
+                              <IconButton size="small" disabled={datasetRow._accessLevel === 'disabled'} onClick={() => window.open(getFileUrl(datasetRow[level2MetadataField]) || datasetRow[level2MetadataField], '_blank')}>
+                                <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 1.5, px: 3, width: 100 }}>
+                        {level2DatadictField && datasetRow[level2DatadictField] ? (
+                          <Tooltip title="ดู Data Dictionary">
+                            <span>
+                              <IconButton size="small" disabled={datasetRow._accessLevel === 'disabled'} onClick={() => window.open(getFileUrl(datasetRow[level2DatadictField]) || datasetRow[level2DatadictField], '_blank')}>
+                                <Icon icon="mdi:file-document" className="w-5 h-5 text-green-600" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell align="center" sx={{ py: 1.5, px: 3, width: 120 }}>
+                        {level2SecurityLevelField && datasetRow[level2SecurityLevelField] ? (
+                          <Tooltip title="ชั้นความลับ">
+                            <div><SecurityLevelBadge level={datasetRow[level2SecurityLevelField]} size="sm" /></div>
+                          </Tooltip>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell align="right" sx={{ py: 1.5, px: 3, width: 150 }}>
+                        {level2Actions && level2Actions(datasetRow)}
+                      </TableCell>
+                    </TableRow>
+                    {level2Collapsible && (
+                      <TableRow>
+                        <TableCell sx={{ paddingBottom: 0, paddingTop: 0, border: 'none' }} colSpan={7}>
+                          <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                            <Box sx={{ py: 2, px: 2, backgroundColor: 'grey.50' }}>
+                              <h4 className="font-semibold text-sm mb-2">บริการข้อมูล</h4>
+                              {serviceRows.length === 0 ? (
+                                <p className="text-sm text-gray-600">ไม่มีบริการข้อมูล</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {serviceRows.map((serviceRow: any) => (
+                                    <div key={serviceRow.id} className="flex items-center gap-3 bg-white p-3 rounded border border-gray-200" style={{ opacity: datasetRow._accessLevel === 'disabled' ? 0.5 : 1 }}>
+                                      <div className="flex-1">
+                                        <p className="font-medium text-sm" style={{ color: datasetRow._accessLevel === 'disabled' ? '#9ca3af' : 'inherit' }}>
+                                          {serviceRow[level3NameField]}
+                                        </p>
+                                        {level3DetailField && serviceRow[level3DetailField] && (
+                                          <p className="text-xs text-gray-600 mt-0.5">{serviceRow[level3DetailField]}</p>
+                                        )}
+                                        {level3MethodField && level3ApiField && (
+                                          <p className="text-xs text-gray-600 mt-0.5">{serviceRow[level3MethodField]} {serviceRow[level3ApiField]}</p>
+                                        )}
+                                      </div>
+                                      {level3Actions && level3Actions(serviceRow, datasetRow)}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  }
 
   return (
     <TableContainer

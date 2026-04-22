@@ -29,6 +29,8 @@ export default function CatalogPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'flat' | 'grouped'>('flat');
+  const [rawGroupedData, setRawGroupedData] = useState<any[]>([]);
 
   useEffect(() => {
     loadData();
@@ -69,6 +71,34 @@ export default function CatalogPage() {
       setRequestStatus(status);
     }
   };
+
+  const flattenGroupedData = (groupedData: any[]) => {
+    const allDatasets: any[] = [];
+    const seenIds = new Set<string>();
+    for (const group of groupedData) {
+      for (const dataset of (group.datasets || [])) {
+        if (!seenIds.has(dataset.id)) {
+          seenIds.add(dataset.id);
+          allDatasets.push(dataset);
+        }
+      }
+    }
+    return allDatasets;
+  };
+
+  // When viewMode changes, re-derive data from rawGroupedData
+  useEffect(() => {
+    if (rawGroupedData.length > 0 && activeTab === 1 && selectedId) {
+      if (viewMode === 'flat') {
+        const flat = flattenGroupedData(rawGroupedData);
+        setNestedData(flat);
+        setFilteredData(flat);
+      } else {
+        setNestedData(rawGroupedData);
+        setFilteredData(rawGroupedData);
+      }
+    }
+  }, [viewMode]);
 
   const loadNestedData = async (id: string, item: UnitOwner | Category) => {
     setSelectedId(id);
@@ -117,8 +147,16 @@ export default function CatalogPage() {
 
       console.log('Processed data after access control:', processedData);
 
-      setNestedData(processedData);
-      setFilteredData(processedData);
+      setRawGroupedData(processedData);
+
+      if (viewMode === 'flat' && activeTab === 1) {
+        const flatData = flattenGroupedData(processedData);
+        setNestedData(flatData);
+        setFilteredData(flatData);
+      } else {
+        setNestedData(processedData);
+        setFilteredData(processedData);
+      }
     } finally {
       setLoading(false);
     }
@@ -188,6 +226,38 @@ export default function CatalogPage() {
   };
 
   const handleFilterChange = (filters: FilterState) => {
+    // Flat mode: data is a flat array of datasets
+    if (viewMode === 'flat' && activeTab === 1) {
+      let filtered = [...nestedData];
+
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filtered = filtered.filter((d: any) => {
+          const nameMatch = d.name.toLowerCase().includes(searchLower);
+          const serviceMatch = d.services?.some((s: any) => s.name.toLowerCase().includes(searchLower));
+          return nameMatch || serviceMatch;
+        });
+      }
+
+      if (filters.typeId) {
+        filtered = filtered.filter((d: any) => d.typeId === filters.typeId);
+      }
+
+      if (filters.securityLevel) {
+        filtered = filtered.filter((d: any) => d.securityLevel === filters.securityLevel);
+      }
+
+      if (filters.categoryId) {
+        filtered = filtered.filter((d: any) =>
+          d.categories?.some((dc: any) => dc.categoryId === filters.categoryId || dc.category?.id === filters.categoryId)
+        );
+      }
+
+      setFilteredData(filtered);
+      return;
+    }
+
+    // Grouped mode: data is grouped by parent (category/unit owner)
     let filtered = nestedData;
 
     if (filters.search) {
@@ -293,7 +363,7 @@ export default function CatalogPage() {
           <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:eye" className="w-5 h-5 text-blue-600" />
-              <span className="text-sm text-gray-700">เปิด</span>
+              <span className="text-sm text-gray-700">เปิดเผย</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:lock" className="w-5 h-5 text-green-600" />
@@ -327,7 +397,7 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); setSearchTerm(''); }}>
+      <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setSelectedId(null); setSelectedItem(null); setNestedData([]); setRawGroupedData([]); setSearchTerm(''); }}>
         <Tab label="นโยบายและแผนความมั่นคง" />
         <Tab label="หน่วยงาน" />
       </Tabs>
@@ -428,16 +498,46 @@ export default function CatalogPage() {
       ) : (
         <div className="mt-6">
           {/* Breadcrumb */}
-          <div className="mb-6 flex items-center gap-2 text-sm">
-            <button
-              onClick={() => { setSelectedId(null); setSelectedItem(null); setNestedData([]); }}
-              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-            >
-              <Icon icon="mdi:home" className="w-4 h-4" />
-              {activeTab === 0 ? 'นโยบายและแผนความมั่นคง' : 'หน่วยงาน'}
-            </button>
-            <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-700 font-medium">{selectedItem?.name}</span>
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <button
+                onClick={() => { setSelectedId(null); setSelectedItem(null); setNestedData([]); setRawGroupedData([]); }}
+                className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+              >
+                <Icon icon="mdi:home" className="w-4 h-4" />
+                {activeTab === 0 ? 'นโยบายและแผนความมั่นคง' : 'หน่วยงาน'}
+              </button>
+              <Icon icon="mdi:chevron-right" className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-700 font-medium">{selectedItem?.name}</span>
+            </div>
+
+            {activeTab === 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">มุมมอง:</span>
+                <div className="flex bg-gray-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setViewMode('flat')}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      viewMode === 'flat'
+                        ? 'bg-white shadow-sm text-blue-600 font-medium'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    ชุดข้อมูล
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grouped')}
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                      viewMode === 'grouped'
+                        ? 'bg-white shadow-sm text-blue-600 font-medium'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    จัดกลุ่มตาม นยม.
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <FilterPanel
@@ -455,6 +555,7 @@ export default function CatalogPage() {
           <NestedCollapsibleTable
             rows={filteredData}
             getRowId={(row) => row.id}
+            flatMode={viewMode === 'flat' && activeTab === 1}
             level1Header={activeTab === 0 ? 'หน่วยงาน' : 'นโยบายและแผนความมั่นคง'}
             level1NameField="name"
             level1ShortNameField="shortName"

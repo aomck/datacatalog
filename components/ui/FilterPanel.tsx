@@ -165,7 +165,7 @@ export function FilterPanel({
           >
             <MenuItem value="">ทั้งหมด</MenuItem>
             <MenuItem value="0">ไม่มีชั้นความลับ</MenuItem>
-            <MenuItem value="1">เปิด</MenuItem>
+            <MenuItem value="1">เปิดเผย</MenuItem>
             <MenuItem value="2">ลับ</MenuItem>
             <MenuItem value="3">ลับมาก</MenuItem>
             <MenuItem value="4">ลับที่สุด</MenuItem>

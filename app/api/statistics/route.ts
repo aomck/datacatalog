@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       where: {
         deletedAt: null,
       },
-      distinct: ["name"],
+      // distinct: ["name"],
       select: {
         id: true,
         name: true,
