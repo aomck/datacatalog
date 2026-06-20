@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react';
 export interface FilterPanelProps {
   onFilterChange: (filters: FilterState) => void;
   unitOwners?: Array<{ id: string; name: string }>;
-  categories?: Array<{ id: string; name: string }>;
+  categories?: Array<{ id: string; name: string; order?: number }>;
   datasetTypes?: Array<{ id: string; name: string }>;
   showUnitOwner?: boolean;
   showCategory?: boolean;
@@ -111,9 +111,9 @@ export function FilterPanel({
             sx={{ minWidth: 200 }}
           >
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {categories.map((c) => (
+            {[...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((c) => (
               <MenuItem key={c.id} value={c.id}>
-                {c.name}
+                {c.order != null ? `${c.name} (นยม. ${c.order})` : c.name}
               </MenuItem>
             ))}
           </TextField>
@@ -164,8 +164,8 @@ export function FilterPanel({
             sx={{ minWidth: 180 }}
           >
             <MenuItem value="">ทั้งหมด</MenuItem>
-            <MenuItem value="0">ไม่มีชั้นความลับ</MenuItem>
-            <MenuItem value="1">เปิดเผย</MenuItem>
+            <MenuItem value="0">ทั่วไป</MenuItem>
+            <MenuItem value="1">ข้อมูลภายในองค์กร</MenuItem>
             <MenuItem value="2">ลับ</MenuItem>
             <MenuItem value="3">ลับมาก</MenuItem>
             <MenuItem value="4">ลับที่สุด</MenuItem>

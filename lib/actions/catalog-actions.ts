@@ -48,30 +48,24 @@ export async function getCatalogUnitOwners(
       securityCounts = await prisma.$queryRaw`
         SELECT
           unit_owner_id,
-          CASE
-            WHEN security_level IN ('0', '1') THEN '0'
-            ELSE security_level
-          END as security_level,
+          COALESCE(security_level, '0') as security_level,
           COUNT(*)::bigint as count
         FROM datasets
         WHERE "deletedAt" IS NULL
           AND unit_owner_id IN (${Prisma.join(unitOwnerIds)})
-        GROUP BY unit_owner_id,
-          CASE
-            WHEN security_level IN ('0', '1') THEN '0'
-            ELSE security_level
-          END
+        GROUP BY unit_owner_id, COALESCE(security_level, '0')
       `;
     }
 
     // Map counts to unit owners
     const dataWithCounts = data.map((unitOwner: any) => {
-      const counts = { open: 0, secret: 0, verySecret: 0, topSecret: 0 };
+      const counts = { general: 0, internal: 0, secret: 0, verySecret: 0, topSecret: 0 };
       const unitCounts = securityCounts.filter(sc => sc.unit_owner_id === unitOwner.id);
 
       unitCounts.forEach(sc => {
         const count = Number(sc.count);
-        if (sc.security_level === '0') counts.open = count;
+        if (sc.security_level === '0') counts.general = count;
+        else if (sc.security_level === '1') counts.internal = count;
         else if (sc.security_level === '2') counts.secret = count;
         else if (sc.security_level === '3') counts.verySecret = count;
         else if (sc.security_level === '4') counts.topSecret = count;
@@ -139,31 +133,25 @@ export async function getCatalogCategories(
       securityCounts = await prisma.$queryRaw`
         SELECT
           dc.category_id,
-          CASE
-            WHEN d.security_level IN ('0', '1') THEN '0'
-            ELSE d.security_level
-          END as security_level,
+          COALESCE(d.security_level, '0') as security_level,
           COUNT(*)::bigint as count
         FROM dataset_categories dc
         INNER JOIN datasets d ON dc.dataset_id = d.id
         WHERE d."deletedAt" IS NULL
           AND dc.category_id IN (${Prisma.join(categoryIds)})
-        GROUP BY dc.category_id,
-          CASE
-            WHEN d.security_level IN ('0', '1') THEN '0'
-            ELSE d.security_level
-          END
+        GROUP BY dc.category_id, COALESCE(d.security_level, '0')
       `;
     }
 
     // Map counts to categories
     const dataWithCounts = data.map((category: any) => {
-      const counts = { open: 0, secret: 0, verySecret: 0, topSecret: 0 };
+      const counts = { general: 0, internal: 0, secret: 0, verySecret: 0, topSecret: 0 };
       const catCounts = securityCounts.filter(sc => sc.category_id === category.id);
 
       catCounts.forEach(sc => {
         const count = Number(sc.count);
-        if (sc.security_level === '0') counts.open = count;
+        if (sc.security_level === '0') counts.general = count;
+        else if (sc.security_level === '1') counts.internal = count;
         else if (sc.security_level === '2') counts.secret = count;
         else if (sc.security_level === '3') counts.verySecret = count;
         else if (sc.security_level === '4') counts.topSecret = count;

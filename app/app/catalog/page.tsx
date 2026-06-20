@@ -164,8 +164,8 @@ export default function CatalogPage() {
 
   // Map security level number to text
   const securityLevelMap: { [key: number]: string | null } = {
-    0: null, // ไม่มีชั้นความลับ
-    1: null, // เปิด
+    0: null, // ทั่วไป
+    1: null, // ข้อมูลภายในองค์กร
     2: "ลับ",
     3: "ลับมาก",
     4: "ลับที่สุด"
@@ -362,8 +362,12 @@ export default function CatalogPage() {
           {/* Security Level Legend */}
           <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-1.5">
+              <Icon icon="mdi:file-document-outline" className="w-5 h-5 text-gray-600" />
+              <span className="text-sm text-gray-700">ทั่วไป</span>
+            </div>
+            <div className="flex items-center gap-1.5">
               <Icon icon="mdi:eye" className="w-5 h-5 text-blue-600" />
-              <span className="text-sm text-gray-700">เปิดเผย</span>
+              <span className="text-sm text-gray-700">ข้อมูลภายในองค์กร</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:lock" className="w-5 h-5 text-green-600" />
@@ -425,73 +429,79 @@ export default function CatalogPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {(activeTab === 0 ? categories : unitOwners)
-              .filter((item) => {
-                // Check dataservice_access - hide if access level is 2
-                const accessLevel = user?.access?.dataservice_access?.[item.id];
-                if (accessLevel === 2) return false;
+              {(activeTab === 0 ? categories : unitOwners)
+                .filter((item) => {
+                  // Check dataservice_access - hide if access level is 2
+                  const accessLevel = user?.access?.dataservice_access?.[item.id];
+                  if (accessLevel === 2) return false;
 
-                if (!searchTerm) return true;
-                const search = searchTerm.toLowerCase();
-                return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
-              })
-              .map((item) => (
-                <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow h-64" onClick={() => loadNestedData(item.id, item)}>
-                  <CardContent className="h-full flex flex-col justify-between p-4">
-                    {/* Logo Section - 40% */}
-                    <div className="flex items-center justify-center" style={{ height: '40%' }}>
-                      {item.icon ? (
-                        <img src={getFileUrl(item.icon) || ''} alt={item.name} className={`w-16 h-16 rounded object-contain ${activeTab === 0 ? 'opacity-60' : ''}`} />
-                      ) : (
-                        <Icon icon="mdi:folder" className="w-16 h-16 text-gray-400" />
-                      )}
-                    </div>
+                  if (!searchTerm) return true;
+                  const search = searchTerm.toLowerCase();
+                  return item.name.toLowerCase().includes(search) || item.shortName.toLowerCase().includes(search);
+                })
+                .map((item) => (
+                  <Card key={item.id} className="cursor-pointer hover:shadow-lg transition-shadow h-64" onClick={() => loadNestedData(item.id, item)}>
+                    <CardContent className="h-full flex flex-col justify-between p-4">
+                      {/* Logo Section - 40% */}
+                      <div className="flex items-center justify-center" style={{ height: '40%' }}>
+                        {item.icon ? (
+                          <img src={getFileUrl(item.icon) || ''} alt={item.name} className={`w-16 h-16 rounded object-contain ${activeTab === 0 ? 'opacity-60' : ''}`} />
+                        ) : (
+                          <Icon icon="mdi:folder" className="w-16 h-16 text-gray-400" />
+                        )}
+                      </div>
 
-                    {/* Name Section - 50% */}
-                    <div className="flex flex-col items-center justify-center gap-1" style={{ height: '50%' }}>
-                      {(item as any).order !== undefined && (
-                        <p className="text-sm text-gray-600">นยม.{(item as any).order}</p>
-                      )}
-                      <h3 className="font-semibold text-lg text-center">{item.name}</h3>
-                      <p className="text-sm text-gray-600 text-center">{item.shortName}</p>
-                    </div>
+                      {/* Name Section - 50% */}
+                      <div className="flex flex-col items-center justify-center gap-1" style={{ height: '50%' }}>
+                        {(item as any).order !== undefined && (
+                          <p className="text-sm text-gray-600">นยม.{(item as any).order}</p>
+                        )}
+                        <h3 className="font-semibold text-lg text-center">{item.name}</h3>
+                        <p className="text-sm text-gray-600 text-center">{item.shortName}</p>
+                      </div>
 
-                    {/* Dataset Count Section - 10% */}
-                    <div className="flex flex-col items-center justify-center gap-1 mt-3" style={{ height: '10%' }}>
-                      {/* <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p> */}
-                      {/* Security Level Breakdown */}
-                      {(item as any)._securityCounts && (
-                        <div className="flex items-center gap-2.5 text-sm">
-                          {(item as any)._securityCounts.open > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Icon icon="mdi:eye" className="w-4 h-4 text-blue-600" />
-                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.open}</span>
-                            </div>
-                          )}
-                          {(item as any)._securityCounts.secret > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Icon icon="mdi:lock" className="w-4 h-4 text-green-600" />
-                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.secret}</span>
-                            </div>
-                          )}
-                          {(item as any)._securityCounts.verySecret > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Icon icon="mdi:shield-lock" className="w-4 h-4 text-orange-600" />
-                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.verySecret}</span>
-                            </div>
-                          )}
-                          {(item as any)._securityCounts.topSecret > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Icon icon="mdi:shield-key" className="w-4 h-4 text-red-600" />
-                              <span className="text-gray-700 font-medium">{(item as any)._securityCounts.topSecret}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      {/* Dataset Count Section - 10% */}
+                      <div className="flex flex-col items-center justify-center gap-1 mt-3" style={{ height: '10%' }}>
+                        {/* <p className="text-xs text-gray-500">{activeTab === 0 ? (item as any)._count?.datasetCategories || 0 : (item as any)._count?.datasets || 0} ชุดข้อมูล</p> */}
+                        {/* Security Level Breakdown */}
+                        {(item as any)._securityCounts && (
+                          <div className="flex items-center gap-2.5 text-sm">
+                            {(item as any)._securityCounts.general > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon icon="mdi:file-document-outline" className="w-4 h-4 text-gray-600" />
+                                <span className="text-gray-700 font-medium">{(item as any)._securityCounts.general}</span>
+                              </div>
+                            )}
+                            {(item as any)._securityCounts.internal > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon icon="mdi:eye" className="w-4 h-4 text-blue-600" />
+                                <span className="text-gray-700 font-medium">{(item as any)._securityCounts.internal}</span>
+                              </div>
+                            )}
+                            {(item as any)._securityCounts.secret > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon icon="mdi:lock" className="w-4 h-4 text-green-600" />
+                                <span className="text-gray-700 font-medium">{(item as any)._securityCounts.secret}</span>
+                              </div>
+                            )}
+                            {(item as any)._securityCounts.verySecret > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon icon="mdi:shield-lock" className="w-4 h-4 text-orange-600" />
+                                <span className="text-gray-700 font-medium">{(item as any)._securityCounts.verySecret}</span>
+                              </div>
+                            )}
+                            {(item as any)._securityCounts.topSecret > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon icon="mdi:shield-key" className="w-4 h-4 text-red-600" />
+                                <span className="text-gray-700 font-medium">{(item as any)._securityCounts.topSecret}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </>
@@ -517,21 +527,19 @@ export default function CatalogPage() {
                 <div className="flex bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setViewMode('flat')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                      viewMode === 'flat'
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'flat'
                         ? 'bg-white shadow-sm text-blue-600 font-medium'
                         : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     ชุดข้อมูล
                   </button>
                   <button
                     onClick={() => setViewMode('grouped')}
-                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                      viewMode === 'grouped'
+                    className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'grouped'
                         ? 'bg-white shadow-sm text-blue-600 font-medium'
                         : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     จัดกลุ่มตาม นยม.
                   </button>

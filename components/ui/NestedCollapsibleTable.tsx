@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -17,6 +17,31 @@ import {
 import { Icon } from '@iconify/react';
 import { SecurityLevelBadge } from './SecurityLevelBadge';
 import { getFileUrl } from '@/lib/file-url';
+
+function ValidatedFileIcon({ filePath, tooltip, colorClass, disabled }: { filePath: string; tooltip: string; colorClass: string; disabled?: boolean }) {
+  const [exists, setExists] = useState<boolean | null>(null);
+  const url = getFileUrl(filePath) || filePath;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(url, { method: 'HEAD' })
+      .then((res) => { if (!cancelled) setExists(res.ok); })
+      .catch(() => { if (!cancelled) setExists(false); });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (exists === null || !exists) return <>-</>;
+
+  return (
+    <Tooltip title={tooltip}>
+      <span>
+        <IconButton size="small" disabled={disabled} onClick={() => window.open(url, '_blank')}>
+          <Icon icon="mdi:file-document" className={`w-5 h-5 ${colorClass}`} />
+        </IconButton>
+      </span>
+    </Tooltip>
+  );
+}
 
 interface NestedCollapsibleTableProps {
   rows: any[];
@@ -153,24 +178,12 @@ export function NestedCollapsibleTable({
                       </TableCell>
                       <TableCell align="center" sx={{ py: 1.5, px: 3, width: 100 }}>
                         {level2MetadataField && datasetRow[level2MetadataField] ? (
-                          <Tooltip title="ดู Metadata">
-                            <span>
-                              <IconButton size="small" disabled={datasetRow._accessLevel === 'disabled'} onClick={() => window.open(getFileUrl(datasetRow[level2MetadataField]) || datasetRow[level2MetadataField], '_blank')}>
-                                <Icon icon="mdi:file-document" className="w-5 h-5 text-blue-600" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          <ValidatedFileIcon filePath={datasetRow[level2MetadataField]} tooltip="ดู Metadata" colorClass="text-blue-600" disabled={datasetRow._accessLevel === 'disabled'} />
                         ) : '-'}
                       </TableCell>
                       <TableCell align="center" sx={{ py: 1.5, px: 3, width: 100 }}>
                         {level2DatadictField && datasetRow[level2DatadictField] ? (
-                          <Tooltip title="ดู Data Dictionary">
-                            <span>
-                              <IconButton size="small" disabled={datasetRow._accessLevel === 'disabled'} onClick={() => window.open(getFileUrl(datasetRow[level2DatadictField]) || datasetRow[level2DatadictField], '_blank')}>
-                                <Icon icon="mdi:file-document" className="w-5 h-5 text-green-600" />
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          <ValidatedFileIcon filePath={datasetRow[level2DatadictField]} tooltip="ดู Data Dictionary" colorClass="text-green-600" disabled={datasetRow._accessLevel === 'disabled'} />
                         ) : '-'}
                       </TableCell>
                       <TableCell align="center" sx={{ py: 1.5, px: 3, width: 120 }}>
@@ -529,22 +542,7 @@ export function NestedCollapsibleTable({
                                           sx={{ py: 1.5, px: 2, width: 100 }}
                                         >
                                           {level2MetadataField && level2Row[level2MetadataField] ? (
-                                            <Tooltip title="ดู Metadata">
-                                              <span>
-                                                <IconButton
-                                                  size="small"
-                                                  disabled={level2Row._accessLevel === 'disabled'}
-                                                  onClick={() =>
-                                                    window.open(getFileUrl(level2Row[level2MetadataField]) || level2Row[level2MetadataField], '_blank')
-                                                  }
-                                                >
-                                                  <Icon
-                                                    icon="mdi:file-document"
-                                                    className="w-5 h-5 text-blue-600"
-                                                  />
-                                                </IconButton>
-                                              </span>
-                                            </Tooltip>
+                                            <ValidatedFileIcon filePath={level2Row[level2MetadataField]} tooltip="ดู Metadata" colorClass="text-blue-600" disabled={level2Row._accessLevel === 'disabled'} />
                                           ) : (
                                             '-'
                                           )}
@@ -554,22 +552,7 @@ export function NestedCollapsibleTable({
                                           sx={{ py: 1.5, px: 2, width: 100 }}
                                         >
                                           {level2DatadictField && level2Row[level2DatadictField] ? (
-                                            <Tooltip title="ดู Data Dictionary">
-                                              <span>
-                                                <IconButton
-                                                  size="small"
-                                                  disabled={level2Row._accessLevel === 'disabled'}
-                                                  onClick={() =>
-                                                    window.open(getFileUrl(level2Row[level2DatadictField]) || level2Row[level2DatadictField], '_blank')
-                                                  }
-                                                >
-                                                  <Icon
-                                                    icon="mdi:file-document"
-                                                    className="w-5 h-5 text-green-600"
-                                                  />
-                                                </IconButton>
-                                              </span>
-                                            </Tooltip>
+                                            <ValidatedFileIcon filePath={level2Row[level2DatadictField]} tooltip="ดู Data Dictionary" colorClass="text-green-600" disabled={level2Row._accessLevel === 'disabled'} />
                                           ) : (
                                             '-'
                                           )}
