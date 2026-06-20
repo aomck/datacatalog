@@ -1,6 +1,6 @@
 'use server';
 
-import { uploadFile, deleteFile, getFileUrl, UploadFileResult } from '@/lib/file-utils';
+import { uploadFile, deleteFile, getFileUrl, UploadFileResult, validateFile } from '@/lib/file-utils';
 
 /**
  * Upload icon file
@@ -133,6 +133,18 @@ export async function uploadRequestFiles(formData: FormData) {
       return { success: false, error: 'No files provided' };
     }
 
+    // Validate all files upfront before uploading any
+    const validationErrors: string[] = [];
+    for (const file of files) {
+      const validation = validateFile(file, 'requests');
+      if (!validation.valid) {
+        validationErrors.push(validation.error!);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return { success: false, error: validationErrors.join(', ') };
+    }
+
     const results = await Promise.all(
       files.map((file: File) => uploadFile(file, 'requests'))
     );
@@ -171,6 +183,18 @@ export async function uploadApprovalFiles(formData: FormData) {
     const files = formData.getAll('files') as File[];
     if (!files || files.length === 0) {
       return { success: false, error: 'No files provided' };
+    }
+
+    // Validate all files upfront before uploading any
+    const validationErrors: string[] = [];
+    for (const file of files) {
+      const validation = validateFile(file, 'approvals');
+      if (!validation.valid) {
+        validationErrors.push(validation.error!);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return { success: false, error: validationErrors.join(', ') };
     }
 
     const results = await Promise.all(
@@ -245,6 +269,18 @@ export async function uploadReportFiles(formData: FormData) {
       return { success: false, error: 'Maximum 5 files allowed' };
     }
 
+    // Validate all files upfront before uploading any
+    const validationErrors: string[] = [];
+    for (const file of files) {
+      const validation = validateFile(file, 'reports');
+      if (!validation.valid) {
+        validationErrors.push(validation.error!);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return { success: false, error: validationErrors.join(', ') };
+    }
+
     const results = await Promise.all(
       files.map((file: File) => uploadFile(file, 'reports'))
     );
@@ -295,6 +331,18 @@ export async function uploadReportDesignFiles(formData: FormData) {
     // Check file count (max 5 files)
     if (files.length > 5) {
       return { success: false, error: 'Maximum 5 files allowed' };
+    }
+
+    // Validate all files upfront before uploading any
+    const validationErrors: string[] = [];
+    for (const file of files) {
+      const validation = validateFile(file, 'report-designs');
+      if (!validation.valid) {
+        validationErrors.push(validation.error!);
+      }
+    }
+    if (validationErrors.length > 0) {
+      return { success: false, error: validationErrors.join(', ') };
     }
 
     const results = await Promise.all(

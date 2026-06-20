@@ -70,14 +70,45 @@ export function FileUpload({
     setPreviewOpen(true);
   };
 
+  const getAcceptedExtensions = (): string[] => {
+    // Parse the accept prop to extract allowed extensions
+    const parts = accept.split(',').map(s => s.trim());
+    const extensions: string[] = [];
+    for (const part of parts) {
+      if (part.startsWith('.')) {
+        extensions.push(part.toLowerCase());
+      } else if (part === 'image/*') {
+        extensions.push('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg');
+      }
+    }
+    return extensions;
+  };
+
+  const isFileTypeAllowed = (file: File): boolean => {
+    const extensions = getAcceptedExtensions();
+    if (extensions.length === 0) return true;
+    const ext = '.' + (file.name.split('.').pop()?.toLowerCase() || '');
+    return extensions.includes(ext);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
+    // Filter by file type (extension-based validation)
+    const typeValidFiles = files.filter((file) => {
+      if (!isFileTypeAllowed(file)) {
+        const allowedExts = getAcceptedExtensions().join(', ');
+        alert(`ไฟล์ "${file.name}" มีประเภทที่ไม่รองรับ\nรองรับเฉพาะ: ${allowedExts}`);
+        return false;
+      }
+      return true;
+    });
+
     // Filter by size
-    const validFiles = files.filter((file) => {
+    const validFiles = typeValidFiles.filter((file) => {
       const sizeMB = file.size / (1024 * 1024);
       if (sizeMB > maxSize) {
-        alert(`ไฟล์ ${file.name} มีขนาดเกิน ${maxSize}MB`);
+        alert(`ไฟล์ "${file.name}" มีขนาดเกิน ${maxSize}MB`);
         return false;
       }
       return true;
@@ -89,6 +120,9 @@ export function FileUpload({
     if (maxFiles && validFiles.length > maxFiles) {
       alert(`สามารถเลือกได้สูงสุด ${maxFiles} ไฟล์`);
     }
+
+    // Reset input value so re-selecting the same file triggers onChange
+    e.target.value = '';
 
     setSelectedFiles(finalFiles);
     onFilesSelected?.(finalFiles);
