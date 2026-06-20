@@ -374,6 +374,11 @@ export async function getUserApprovedItems(userId: string) {
               unitOwner: true,
               category: true,
               type: true,
+              categories: {
+                include: {
+                  category: true,
+                },
+              },
               services: {
                 where: { deletedAt: null },
               },
@@ -401,6 +406,11 @@ export async function getUserApprovedItems(userId: string) {
                   unitOwner: true,
                   category: true,
                   type: true,
+                  categories: {
+                    include: {
+                      category: true,
+                    },
+                  },
                 },
               },
             },

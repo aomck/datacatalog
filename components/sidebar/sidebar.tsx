@@ -169,7 +169,7 @@ export function Sidebar() {
               />
             </div>
             {isExpanded && (
-              <span className="font-bold text-gray-900 text-lg">ศูนย์กลางข้อมูลด้านความมั่นคง</span>
+              <span className="font-bold text-gray-900 text-lg">ระบบบัญชีข้อมูล</span>
             )}
           </div>
           <button

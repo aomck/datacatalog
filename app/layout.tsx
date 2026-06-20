@@ -10,8 +10,8 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  title: "ศูนย์กลางข้อมูลด้านความมั่นคง",
-  description: "ศูนย์กลางข้อมูลด้านความมั่นคง",
+  title: "NSeDC | ระบบบัญชีข้อมูล",
+  description: "NSeDC | ระบบบัญชีข้อมูล",
 };
 
 export default function RootLayout({
