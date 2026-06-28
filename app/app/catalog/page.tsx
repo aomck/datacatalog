@@ -164,8 +164,8 @@ export default function CatalogPage() {
 
   // Map security level number to text
   const securityLevelMap: { [key: number]: string | null } = {
-    0: null, // ทั่วไป
-    1: null, // ข้อมูลภายในองค์กร
+    0: null, // เปิดเผย
+    1: null, // เผยแพร่ภายในองค์กร
     2: "ลับ",
     3: "ลับมาก",
     4: "ลับที่สุด"
@@ -363,11 +363,11 @@ export default function CatalogPage() {
           <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:file-document-outline" className="w-5 h-5 text-gray-600" />
-              <span className="text-sm text-gray-700">ทั่วไป</span>
+              <span className="text-sm text-gray-700">เปิดเผย</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:eye" className="w-5 h-5 text-blue-600" />
-              <span className="text-sm text-gray-700">ข้อมูลภายในองค์กร</span>
+              <span className="text-sm text-gray-700">เผยแพร่ภายในองค์กร</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Icon icon="mdi:lock" className="w-5 h-5 text-green-600" />

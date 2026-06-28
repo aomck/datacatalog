@@ -942,8 +942,8 @@ export default function AdminPage() {
                 onChange={(e) => setFormData({ ...formData, securityLevel: e.target.value })}
                 sx={{ mb: 2 }}
               >
-                <MenuItem value="0">ทั่วไป</MenuItem>
-                <MenuItem value="1">ข้อมูลภายในองค์กร</MenuItem>
+                <MenuItem value="0">เปิดเผย</MenuItem>
+                <MenuItem value="1">เผยแพร่ภายในองค์กร</MenuItem>
                 <MenuItem value="2">ลับ</MenuItem>
                 <MenuItem value="3">ลับมาก</MenuItem>
                 <MenuItem value="4">ลับที่สุด</MenuItem>

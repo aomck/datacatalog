@@ -16,8 +16,8 @@ export function SecurityLevelBadge({ level, size = 'md' }: SecurityLevelBadgePro
   const levelStr = level?.toString() || '0';
 
   const levelConfig: Record<string, { label: string; color: string }> = {
-    '0': { label: 'ทั่วไป', color: 'bg-gray-100 text-gray-800 border border-gray-200' },
-    '1': { label: 'ข้อมูลภายในองค์กร', color: 'bg-green-100 text-green-800 border border-green-200' },
+    '0': { label: 'เปิดเผย', color: 'bg-gray-100 text-gray-800 border border-gray-200' },
+    '1': { label: 'เผยแพร่ภายในองค์กร', color: 'bg-green-100 text-green-800 border border-green-200' },
     '2': { label: 'ลับ', color: 'bg-yellow-100 text-yellow-800 border border-yellow-200' },
     '3': { label: 'ลับมาก', color: 'bg-orange-100 text-orange-800 border border-orange-200' },
     '4': { label: 'ลับที่สุด', color: 'bg-red-100 text-red-800 border border-red-200' },
