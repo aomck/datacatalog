@@ -173,13 +173,12 @@ export default function ReportCatalogPage() {
             color="primary"
             startIcon={<Icon icon="mdi:plus-circle" />}
             onClick={() => setNewReportModalOpen(true)}
-            style={{ display: 'none' }}
           >
             ร้องขอรายงานใหม่
           </Button>
           <RefreshButton onRefresh={loadData} />
           <Tooltip title="รายการคำร้องขอ">
-            <div className="relative" style={{ display: 'none' }}>
+            <div className="relative">
               <IconButton onClick={() => setCartOpen(true)} color="primary">
                 <Icon icon="mdi:cart" className="w-6 h-6" />
               </IconButton>
@@ -459,7 +458,6 @@ export default function ReportCatalogPage() {
                                 size="small"
                                 onClick={() => toggleCart({ type: 'report', id: report.id, name: report.name })}
                                 disabled={isReportRequested(report.id)}
-                                style={{ display: 'none' }}
                               >
                                 {getButtonLabel(report.id)}
                               </Button>
