@@ -14,6 +14,7 @@ interface MenuItem {
   icon: React.ReactNode;
   service: string;
   route: string;
+  hidden?: boolean;
 }
 
 const menuItems: MenuItem[] = [
@@ -47,6 +48,7 @@ const menuItems: MenuItem[] = [
     href: '/app/my-catalog',
     service: '', // No permission required, everyone can access their own data
     route: '',
+    hidden: true,
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -144,6 +146,8 @@ export function Sidebar() {
 
   // Filter menu items based on permissions
   const visibleMenuItems = menuItems.filter((item) => {
+    // If hidden flag is set, don't show
+    if (item.hidden) return false;
     // If service and route are empty, show to everyone
     if (!item.service || !item.route) return true;
     // Otherwise check permission

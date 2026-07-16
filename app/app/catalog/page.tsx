@@ -384,7 +384,7 @@ export default function CatalogPage() {
           </div>
           <RefreshButton onRefresh={loadData} />
           <Tooltip title="รายการคำร้องขอ">
-            <div className="relative">
+            <div className="relative" style={{ display: 'none' }}>
               <IconButton onClick={() => setCartOpen(true)} color="primary">
                 <Icon icon="mdi:cart" className="w-6 h-6" />
               </IconButton>
@@ -583,6 +583,7 @@ export default function CatalogPage() {
                 <button
                   onClick={() => toggleCart({ type: 'dataset', id: dataset.id, name: dataset.name })}
                   disabled={isAccessDisabled}
+                  style={{ display: 'none' }}
                   className={`px-3 py-1 text-sm rounded ${accessLevel === 'disabled'
                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                     : cart.find((i) => i.id === dataset.id && i.type === 'dataset')
@@ -606,6 +607,7 @@ export default function CatalogPage() {
                 <button
                   onClick={() => toggleCart({ type: 'service', id: service.id, name: service.name, datasetId: dataset.id, datasetName: dataset.name })}
                   disabled={isAccessDisabled}
+                  style={{ display: 'none' }}
                   className={`px-3 py-1 text-sm rounded ${accessLevel === 'disabled'
                     ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
                     : cart.find((i) => i.id === service.id && i.type === 'service')
