@@ -564,6 +564,7 @@ export default function CatalogPage() {
             rows={filteredData}
             getRowId={(row) => row.id}
             flatMode={viewMode === 'flat' && activeTab === 1}
+            hideActions
             level1Header={activeTab === 0 ? 'หน่วยงาน' : 'นโยบายและแผนความมั่นคง'}
             level1NameField="name"
             level1ShortNameField="shortName"

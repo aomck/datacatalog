@@ -69,6 +69,7 @@ interface NestedCollapsibleTableProps {
   level3ApiField?: string;
   level3Actions?: (row: any, parentRow: any) => React.ReactNode;
   flatMode?: boolean; // When true, rows are datasets directly (skip level 1 grouping)
+  hideActions?: boolean; // If true, hide the "การดำเนินการ" column entirely
 }
 
 export function NestedCollapsibleTable({
@@ -93,6 +94,7 @@ export function NestedCollapsibleTable({
   level3ApiField,
   level3Actions,
   flatMode = false,
+  hideActions = false,
 }: NestedCollapsibleTableProps) {
   const [openLevel1, setOpenLevel1] = useState<Set<string>>(new Set());
   const [openLevel2, setOpenLevel2] = useState<Set<string>>(new Set());
@@ -139,7 +141,7 @@ export function NestedCollapsibleTable({
               <TableCell align="center" sx={{ ...headerCellSx, width: 100 }}>Metadata</TableCell>
               <TableCell align="center" sx={{ ...headerCellSx, width: 100 }}>Data Dictionary</TableCell>
               <TableCell align="center" sx={{ ...headerCellSx, width: 120 }}>ชั้นความลับ</TableCell>
-              <TableCell align="right" sx={{ ...headerCellSx, width: 150 }}>การดำเนินการ</TableCell>
+              {!hideActions && <TableCell align="right" sx={{ ...headerCellSx, width: 150 }}>การดำเนินการ</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -193,9 +195,9 @@ export function NestedCollapsibleTable({
                           </Tooltip>
                         ) : '-'}
                       </TableCell>
-                      <TableCell align="right" sx={{ py: 1.5, px: 3, width: 150 }}>
+                      {!hideActions && <TableCell align="right" sx={{ py: 1.5, px: 3, width: 150 }}>
                         {level2Actions && level2Actions(datasetRow)}
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                     {level2Collapsible && (
                       <TableRow>
@@ -220,7 +222,7 @@ export function NestedCollapsibleTable({
                                           <p className="text-xs text-gray-600 mt-0.5">{serviceRow[level3MethodField]} {serviceRow[level3ApiField]}</p>
                                         )}
                                       </div>
-                                      {level3Actions && level3Actions(serviceRow, datasetRow)}
+                                      {!hideActions && level3Actions && level3Actions(serviceRow, datasetRow)}
                                     </div>
                                   ))}
                                 </div>
@@ -463,7 +465,7 @@ export function NestedCollapsibleTable({
                                   >
                                     ชั้นความลับ
                                   </TableCell>
-                                  <TableCell
+                                  {!hideActions && <TableCell
                                     align="right"
                                     sx={{
                                       fontWeight: 600,
@@ -476,7 +478,7 @@ export function NestedCollapsibleTable({
                                     }}
                                   >
                                     การดำเนินการ
-                                  </TableCell>
+                                  </TableCell>}
                                 </TableRow>
                               </TableHead>
                               <TableBody>
@@ -571,12 +573,12 @@ export function NestedCollapsibleTable({
                                             '-'
                                           )}
                                         </TableCell>
-                                        <TableCell
+                                        {!hideActions && <TableCell
                                           align="right"
                                           sx={{ py: 1.5, px: 2, width: 150 }}
                                         >
                                           {level2Actions && level2Actions(level2Row)}
-                                        </TableCell>
+                                        </TableCell>}
                                       </TableRow>
                                       {level2Collapsible && (
                                         <TableRow>
@@ -626,7 +628,7 @@ export function NestedCollapsibleTable({
                                                               </p>
                                                             )}
                                                         </div>
-                                                        {level3Actions && level3Actions(level3Row, level2Row)}
+                                                        {!hideActions && level3Actions && level3Actions(level3Row, level2Row)}
                                                       </div>
                                                     ))}
                                                   </div>
