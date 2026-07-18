@@ -3,6 +3,7 @@ import { getMeAction, getPermissionAction } from '@/lib/auth-actions';
 import { PermissionProvider } from '@/components/providers/permission-provider';
 import { Sidebar } from '@/components/sidebar/sidebar';
 import { TopBar } from '@/components/layout/TopBar';
+import { IdleTimerProvider } from '@/components/idle/IdleTimerProvider';
 import { ensureUserExists } from '@/lib/actions/user-actions';
 import type { PermissionResponse } from '@/types';
 
@@ -50,15 +51,17 @@ export default async function AppLayout({
 
   return (
     <PermissionProvider user={user} permissions={permissions}>
-      <div className="flex min-h-screen bg-gray-50">
-        <Sidebar />
-        <main className="flex-1 overflow-x-hidden">
-          <TopBar user={user} />
-          <div className="container mx-auto px-6 py-8">
-            {children}
-          </div>
-        </main>
-      </div>
+      <IdleTimerProvider>
+        <div className="flex min-h-screen bg-gray-50">
+          <Sidebar />
+          <main className="flex-1 overflow-x-hidden">
+            <TopBar user={user} />
+            <div className="container mx-auto px-6 py-8">
+              {children}
+            </div>
+          </main>
+        </div>
+      </IdleTimerProvider>
     </PermissionProvider>
   );
 }

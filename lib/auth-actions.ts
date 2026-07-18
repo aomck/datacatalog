@@ -159,6 +159,13 @@ export async function refreshTokenAction(): Promise<boolean> {
 }
 
 /**
+ * Clear session - clears cookies only (no redirect, for client-side use)
+ */
+export async function clearSessionAction() {
+  await clearAuthCookies();
+}
+
+/**
  * Logout action - clears cookies and redirects to login
  */
 export async function logoutAction() {

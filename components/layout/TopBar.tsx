@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Avatar } from '@mui/material';
 import { Icon } from '@iconify/react';
 import { getFileUrl } from '@/lib/file-url';
-import { logoutAction } from '@/lib/auth-actions';
+import { clearSessionAction } from '@/lib/auth-actions';
 import type { User } from '@/types';
 
 interface TopBarProps {
@@ -15,7 +15,8 @@ export function TopBar({ user }: TopBarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleLogout = async () => {
-    await logoutAction();
+    await clearSessionAction();
+    window.location.href = 'https://isoc360.isoc.go.th';
   };
 
   return (
