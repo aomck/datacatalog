@@ -6,9 +6,9 @@ import { clearSessionAction } from '@/lib/auth-actions';
 import { SlideToUnlock } from './SlideToUnlock';
 
 const IDLE_TIMEOUT = 1000 * 60 * 10;       // 10 นาที
-const PROMPT_BEFORE_IDLE = 1000 * 60 * 1;  // แสดง warning ก่อน 1 นาที
+const PROMPT_BEFORE_IDLE = 1000 * 90;      // แสดง warning 90 วินาทีสุดท้าย
 
-const REDIRECT_URL = 'https://isoc360.isoc.go.th';
+const REDIRECT_URL = 'https://isoc360.isoc.go.th/service/mainpage';
 
 export function IdleTimerProvider({ children }: { children: React.ReactNode }) {
   const [showPrompt, setShowPrompt] = useState(false);
